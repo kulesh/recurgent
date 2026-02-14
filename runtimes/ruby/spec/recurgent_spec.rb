@@ -1274,5 +1274,23 @@ RSpec.describe Agent do
         }
       )
     end
+
+    it "enforces timeout_seconds with Timeout.timeout" do
+      allow(mock_responses).to receive(:create) do |_request|
+        sleep 0.05
+        stub_responses_api("result = 1")
+      end
+
+      provider = described_class.new
+      expect do
+        provider.generate_program(
+          model: "gpt-4o",
+          system_prompt: "test",
+          user_prompt: "test",
+          tool_schema: { name: "execute_code", description: "test", input_schema: {} },
+          timeout_seconds: 0.01
+        )
+      end.to raise_error(Timeout::Error)
+    end
   end
 end

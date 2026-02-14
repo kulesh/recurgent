@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "timeout"
 
 class Agent
   # Provider abstraction for LLM APIs.
@@ -63,24 +64,28 @@ class Agent
       # guarantee the response is valid JSON matching our schema.
       # The response may contain reasoning items (chain-of-thought)
       # before the message — we skip those and find the message output.
-      # OpenAI Responses API does not support per-request timeout.
-      # TODO: Implement client-level timeout when openai-ruby adds support.
-      def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, _timeout_seconds: nil)
-        response = @client.responses.create(
-          model: model,
-          input: [
-            { role: :system, content: system_prompt },
-            { role: :user, content: user_prompt }
-          ],
-          text: {
-            format: {
-              type: :json_schema,
-              name: tool_schema[:name],
-              strict: true,
-              schema: tool_schema[:input_schema]
+      # OpenAI Responses API does not expose a request timeout option here.
+      # Enforce runtime timeout externally so provider_timeout_seconds applies.
+      def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
+        request = lambda do
+          @client.responses.create(
+            model: model,
+            input: [
+              { role: :system, content: system_prompt },
+              { role: :user, content: user_prompt }
+            ],
+            text: {
+              format: {
+                type: :json_schema,
+                name: tool_schema[:name],
+                strict: true,
+                schema: tool_schema[:input_schema]
+              }
             }
-          }
-        )
+          )
+        end
+
+        response = timeout_seconds ? Timeout.timeout(timeout_seconds) { request.call } : request.call
         output_message = response.output.find { |o| o.type.to_s == "message" }
         text_content = output_message&.content&.first
         raise "No output in OpenAI response" unless text_content
