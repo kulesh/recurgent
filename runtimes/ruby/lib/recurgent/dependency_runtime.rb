@@ -10,9 +10,15 @@ class Agent
 
     _enforce_dependency_policy!(manifest)
     env_info = _environment_manager.ensure_environment!(manifest)
-    _activate_environment!(env_info[:env_dir])
     @env_id = env_info[:env_id]
+    _reset_worker_for_env_change!(env_info[:env_id])
     env_info
+  end
+
+  def _prepare_specialist_environment!(dependencies:, prep_ticket_id:)
+    normalized_dependencies = DependencyManifest.normalize!(dependencies)
+    @prep_ticket_id = prep_ticket_id
+    _prepare_dependency_environment!(method_name: "prepare", normalized_dependencies: normalized_dependencies)
   end
 
   def _resolve_call_manifest(normalized_dependencies)
@@ -77,14 +83,12 @@ class Agent
     )
   end
 
-  def _activate_environment!(env_dir)
-    return unless env_dir
+  def _reset_worker_for_env_change!(env_id)
+    return unless @worker_supervisor
+    return if @worker_supervisor.env_id == env_id
 
-    ENV["BUNDLE_GEMFILE"] = File.join(env_dir, "Gemfile")
-    ENV["BUNDLE_PATH"] = File.join(env_dir, "vendor", "bundle")
-    require "bundler/setup"
-  rescue StandardError => e
-    raise DependencyActivationError, "Dependency activation failed for #{@role}: #{e.message}"
+    @worker_supervisor.shutdown
+    @worker_supervisor = nil
   end
 
   def _empty_environment_info

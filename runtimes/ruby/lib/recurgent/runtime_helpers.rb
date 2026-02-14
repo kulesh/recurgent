@@ -53,6 +53,7 @@ class Agent
       - You may require any Ruby standard library (net/http, json, date, socket, etc.) but NOT external gems
       - If your design would need non-stdlib gems, declare each one in `dependencies` and fail with unsupported_capability
       - Keep `dependencies` minimal; do not speculate
+      - For dependency-backed execution, results and context must stay JSON-serializable
       - Set the 'result' variable to the raw domain value you want to return (runtime wraps it in Outcome)
       - Do NOT use 'return' statements - just set 'result'
       - Capability boundaries:
@@ -146,6 +147,7 @@ class Agent
     <<~PROMPT.chomp
       - You may require any Ruby standard library (net/http, json, date, socket, etc.) but NOT external gems
       - If non-stdlib gems are required, declare them in `dependencies` (name + optional version constraint) and fail with unsupported_capability
+      - If using dependencies, keep returned values and context JSON-serializable
       - Delegation cannot add new runtime capabilities. Child specialists have the same limits.
       - If the task needs unavailable capability, fail fast with typed non-retriable error outcome.
     PROMPT
@@ -202,7 +204,10 @@ class Agent
       environment_cache_hit: log_context[:environment_cache_hit],
       env_prepare_ms: log_context[:env_prepare_ms],
       env_resolve_ms: log_context[:env_resolve_ms],
-      env_install_ms: log_context[:env_install_ms]
+      env_install_ms: log_context[:env_install_ms],
+      worker_pid: log_context[:worker_pid],
+      worker_restart_count: log_context[:worker_restart_count],
+      prep_ticket_id: log_context[:prep_ticket_id]
     }
   end
 

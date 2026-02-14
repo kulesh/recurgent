@@ -269,6 +269,6 @@ Out of scope:
 
 1. [x] Phase 1 merged with tests and docs.
 2. [x] Phase 2 merged with policy enforcement and monotonic environment behavior.
-3. Phase 3 merged with supervisor, JSON boundary, and `Agent.prepare`.
+3. [x] Phase 3 merged with supervisor, JSON boundary, and `Agent.prepare`.
 4. Contract docs updated at each phase gate.
 5. Observability dashboards/watch tooling can display new environment fields.

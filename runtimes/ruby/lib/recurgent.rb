@@ -12,6 +12,10 @@ require_relative "recurgent/runtime_helpers"
 require_relative "recurgent/dependency_runtime"
 require_relative "recurgent/runtime_config"
 require_relative "recurgent/dynamic_call_state"
+require_relative "recurgent/worker_executor"
+require_relative "recurgent/worker_supervisor"
+require_relative "recurgent/preparation_ticket"
+require_relative "recurgent/worker_runtime"
 
 # An Agent object intercepts all method calls, asks an LLM what Ruby code
 # to run, then eval's that code in its own context. The agent's "role"
@@ -61,6 +65,9 @@ class Agent
   class DependencyResolutionError < ProviderError; end
   class DependencyInstallError < ProviderError; end
   class DependencyActivationError < ProviderError; end
+  class WorkerCrashError < Error; end
+  class NonSerializableResultError < Error; end
+  class EnvironmentPreparingError < Error; end
   class TimeoutError < ProviderError; end
   class ExecutionError < Error; end
   class BudgetExceededError < Error; end
@@ -77,6 +84,9 @@ class Agent
     [DependencyResolutionError, "dependency_resolution_failed"],
     [DependencyInstallError, "dependency_install_failed"],
     [DependencyActivationError, "dependency_activation_failed"],
+    [EnvironmentPreparingError, "environment_preparing"],
+    [WorkerCrashError, "worker_crash"],
+    [NonSerializableResultError, "non_serializable_result"],
     [ProviderError, "provider"]
   ].freeze
   RETRIABLE_ERROR_TYPES = %w[
@@ -85,6 +95,8 @@ class Agent
     invalid_code
     dependency_install_failed
     dependency_activation_failed
+    environment_preparing
+    worker_crash
   ].freeze
 
   # XDG-compliant default path for the JSONL call log.
@@ -102,6 +114,26 @@ class Agent
       failure_policy: failure_policy
     )
     new(role, **, delegation_contract: contract, delegation_contract_source: source)
+  end
+
+  def self.prepare(role, dependencies: nil, timeout_seconds: nil, **options)
+    ticket = PreparationTicket.new
+    Thread.new do
+      agent = self.for(role, **options)
+      agent.send(:_prepare_specialist_environment!, dependencies: dependencies, prep_ticket_id: ticket.id)
+      ticket._resolve(agent: agent)
+    rescue StandardError => e
+      outcome = Outcome.error(
+        error_type: "environment_preparing",
+        error_message: "Environment preparation failed for #{role}: #{e.message}",
+        retriable: true,
+        specialist_role: role,
+        method_name: "prepare"
+      )
+      ticket._reject(outcome: outcome)
+    end
+    ticket.await(timeout: timeout_seconds) if timeout_seconds
+    ticket
   end
 
   def self._compose_delegation_contract(explicit_contract, **fields)
@@ -134,6 +166,8 @@ class Agent
     @environment_manager = nil
     @env_manifest = nil
     @env_id = nil
+    @worker_supervisor = nil
+    @prep_ticket_id = nil
     @trace_id = _validate_trace_id(config[:trace_id] || _new_trace_id)
     @log_dir_exists = false
   end
@@ -527,18 +561,9 @@ class Agent
     started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     state = _initial_dynamic_call_state
 
-    generated_program, state[:generation_attempt] = _generate_program_with_retry(name, system_prompt, user_prompt) do |attempt_number|
-      state[:generation_attempt] = attempt_number
-    end
-    _capture_generated_program_state!(state, generated_program)
-    environment_info = _prepare_dependency_environment!(
-      method_name: name,
-      normalized_dependencies: state[:normalized_dependencies]
-    )
-    _capture_environment_state!(state, environment_info)
-    state[:outcome] = _execute_generated_program(name, state[:code], args, kwargs)
+    state[:outcome] = _perform_dynamic_call(name, args, kwargs, system_prompt, user_prompt, state)
     state[:outcome]
-  rescue ProviderError, ExecutionError, BudgetExceededError => e
+  rescue ProviderError, ExecutionError, BudgetExceededError, WorkerCrashError, NonSerializableResultError => e
     state[:error] = e
     state[:outcome] = _error_outcome_for(name, e)
     state[:outcome]
@@ -556,8 +581,34 @@ class Agent
     )
   end
 
-  def _execute_generated_program(name, code, args, kwargs)
+  def _perform_dynamic_call(name, args, kwargs, system_prompt, user_prompt, state)
+    generated_program, state[:generation_attempt] = _generate_program_with_retry(name, system_prompt, user_prompt) do |attempt_number|
+      state[:generation_attempt] = attempt_number
+    end
+    _capture_generated_program_state!(state, generated_program)
+    environment_info = _prepare_dependency_environment!(
+      method_name: name,
+      normalized_dependencies: state[:normalized_dependencies]
+    )
+    _capture_environment_state!(state, environment_info)
+    _execute_generated_program(
+      name,
+      state[:code],
+      args,
+      kwargs,
+      normalized_dependencies: state[:normalized_dependencies],
+      environment_info: environment_info,
+      state: state
+    )
+  end
+
+  def _execute_generated_program(name, code, args, kwargs, normalized_dependencies:, environment_info:, state:)
     _print_generated_code(name, code) if @verbose
+
+    if _worker_execution_required?(normalized_dependencies)
+      return _execute_generated_program_in_worker(name, code, args, kwargs, environment_info: environment_info,
+                                                                            state: state)
+    end
 
     result = _execute_code(code, name, *args, **kwargs)
     result.is_a?(Outcome) ? result : Outcome.ok(value: result, specialist_role: @role, method_name: name)

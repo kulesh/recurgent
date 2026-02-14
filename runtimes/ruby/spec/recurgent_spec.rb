@@ -435,6 +435,7 @@ RSpec.describe Agent do
 
   describe "dependency environment behavior" do
     let(:env_manager) { instance_double(Agent::EnvironmentManager) }
+    let(:worker_supervisor) { instance_double(Agent::WorkerSupervisor) }
 
     before do
       allow(env_manager).to receive(:ensure_environment!) do |manifest|
@@ -447,12 +448,14 @@ RSpec.describe Agent do
           env_install_ms: 4.5
         }
       end
+      allow(worker_supervisor).to receive(:env_id).and_return("env-httparty-nokogiri")
+      allow(worker_supervisor).to receive(:shutdown)
     end
 
     it "supports additive dependency manifest growth across calls" do
       g = described_class.new("calculator")
       allow(g).to receive(:_environment_manager).and_return(env_manager)
-      allow(g).to receive(:_activate_environment!).and_return(nil)
+      allow(g).to receive(:_worker_supervisor).and_return(worker_supervisor)
       allow(mock_provider).to receive(:generate_program).and_return(
         program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }]),
         program_payload(
@@ -463,6 +466,22 @@ RSpec.describe Agent do
           ]
         ),
         program_payload(code: "result = 3", dependencies: [])
+      )
+      allow(worker_supervisor).to receive(:execute).and_return(
+        {
+          status: "ok",
+          value: 1,
+          context_snapshot: { "value" => 1 },
+          worker_pid: 4321,
+          worker_restart_count: 0
+        },
+        {
+          status: "ok",
+          value: 2,
+          context_snapshot: { "value" => 2 },
+          worker_pid: 4321,
+          worker_restart_count: 0
+        }
       )
 
       expect_ok_outcome(g.step_one, value: 1)
@@ -482,10 +501,19 @@ RSpec.describe Agent do
     it "returns dependency_manifest_incompatible for non-additive manifest changes" do
       g = described_class.new("calculator")
       allow(g).to receive(:_environment_manager).and_return(env_manager)
-      allow(g).to receive(:_activate_environment!).and_return(nil)
+      allow(g).to receive(:_worker_supervisor).and_return(worker_supervisor)
       allow(mock_provider).to receive(:generate_program).and_return(
         program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }]),
         program_payload(code: "result = 2", dependencies: [{ name: "nokogiri", version: "~> 1.17" }])
+      )
+      allow(worker_supervisor).to receive(:execute).and_return(
+        {
+          status: "ok",
+          value: 1,
+          context_snapshot: {},
+          worker_pid: 4321,
+          worker_restart_count: 0
+        }
       )
 
       expect_ok_outcome(g.step_one, value: 1)
@@ -497,7 +525,6 @@ RSpec.describe Agent do
       Agent.configure_runtime(allowed_gems: ["httparty"])
       g = described_class.new("calculator")
       allow(g).to receive(:_environment_manager).and_return(env_manager)
-      allow(g).to receive(:_activate_environment!).and_return(nil)
       allow(mock_provider).to receive(:generate_program).and_return(
         program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }])
       )
@@ -510,7 +537,6 @@ RSpec.describe Agent do
       Agent.configure_runtime(blocked_gems: ["nokogiri"])
       g = described_class.new("calculator")
       allow(g).to receive(:_environment_manager).and_return(env_manager)
-      allow(g).to receive(:_activate_environment!).and_return(nil)
       allow(mock_provider).to receive(:generate_program).and_return(
         program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }])
       )
@@ -523,13 +549,84 @@ RSpec.describe Agent do
       Agent.configure_runtime(source_mode: "internal_only", gem_sources: ["https://rubygems.org"])
       g = described_class.new("calculator")
       allow(g).to receive(:_environment_manager).and_return(env_manager)
-      allow(g).to receive(:_activate_environment!).and_return(nil)
       allow(mock_provider).to receive(:generate_program).and_return(
         program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }])
       )
 
       expect_error_outcome(g.step_one, type: "dependency_policy_violation", retriable: false)
       expect(env_manager).not_to have_received(:ensure_environment!)
+    end
+
+    it "executes dependency-backed programs via worker and updates context snapshot" do
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_worker_supervisor).and_return(worker_supervisor)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "context[:value] = context.fetch(:value, 0) + 1; result = context[:value]", dependencies: [{ name: "nokogiri" }])
+      )
+      allow(worker_supervisor).to receive(:execute).and_return(
+        {
+          status: "ok",
+          value: 1,
+          context_snapshot: { "value" => 1 },
+          worker_pid: 4321,
+          worker_restart_count: 0
+        }
+      )
+
+      outcome = g.increment
+      expect_ok_outcome(outcome, value: 1)
+      expect(g.memory[:value]).to eq(1)
+      expect(worker_supervisor).to have_received(:execute).once
+    end
+
+    it "returns non_serializable_result when dependency-backed args fail JSON boundary" do
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_worker_supervisor).and_return(worker_supervisor)
+      allow(worker_supervisor).to receive(:execute)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1", dependencies: [{ name: "nokogiri" }])
+      )
+
+      outcome = g.increment(Object.new)
+      expect_error_outcome(outcome, type: "non_serializable_result", retriable: false)
+      expect(worker_supervisor).not_to have_received(:execute)
+    end
+
+    it "returns timeout outcome when worker times out" do
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_worker_supervisor).and_return(worker_supervisor)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1", dependencies: [{ name: "nokogiri" }])
+      )
+      allow(worker_supervisor).to receive(:execute).and_return(
+        {
+          status: "error",
+          error_type: "timeout",
+          error_message: "worker timed out",
+          worker_pid: 4321,
+          worker_restart_count: 1
+        }
+      )
+
+      expect_error_outcome(g.increment, type: "timeout", retriable: true)
+    end
+  end
+
+  describe ".prepare" do
+    it "returns a preparation ticket that resolves with an agent" do
+      prepared_agent = described_class.for("calculator", log: false)
+      allow(described_class).to receive(:for).and_return(prepared_agent)
+      allow(prepared_agent).to receive(:_prepare_specialist_environment!).and_return(nil)
+
+      ticket = described_class.prepare("calculator", dependencies: [{ name: "nokogiri" }], log: false)
+      prepared = ticket.await(timeout: 1)
+
+      expect(ticket).to be_a(Agent::PreparationTicket)
+      expect(prepared).to be_a(described_class)
+      expect(ticket.status).to eq(:ready)
     end
   end
 
@@ -907,8 +1004,9 @@ RSpec.describe Agent do
     it "logs program and normalized dependencies for generated programs" do
       g = described_class.new("calculator", log: log_path)
       env_manager = instance_double(Agent::EnvironmentManager)
+      worker_supervisor = instance_double(Agent::WorkerSupervisor)
       allow(g).to receive(:_environment_manager).and_return(env_manager)
-      allow(g).to receive(:_activate_environment!).and_return(nil)
+      allow(g).to receive(:_worker_supervisor).and_return(worker_supervisor)
       allow(env_manager).to receive(:ensure_environment!).and_return(
         {
           env_id: "env-httparty-nokogiri",
@@ -917,6 +1015,15 @@ RSpec.describe Agent do
           env_prepare_ms: 12.1,
           env_resolve_ms: 5.2,
           env_install_ms: 6.9
+        }
+      )
+      allow(worker_supervisor).to receive(:execute).and_return(
+        {
+          status: "ok",
+          value: 1,
+          context_snapshot: { "value" => 1 },
+          worker_pid: 4321,
+          worker_restart_count: 0
         }
       )
       allow(mock_provider).to receive(:generate_program).and_return(
@@ -949,6 +1056,8 @@ RSpec.describe Agent do
       expect(entry["env_prepare_ms"]).to eq(12.1)
       expect(entry["env_resolve_ms"]).to eq(5.2)
       expect(entry["env_install_ms"]).to eq(6.9)
+      expect(entry["worker_pid"]).to eq(4321)
+      expect(entry["worker_restart_count"]).to eq(0)
     end
   end
 

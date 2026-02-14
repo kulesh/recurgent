@@ -13,6 +13,8 @@ class Agent
       env_prepare_ms: nil,
       env_resolve_ms: nil,
       env_install_ms: nil,
+      worker_pid: nil,
+      worker_restart_count: nil,
       generation_attempt: 0,
       error: nil,
       outcome: nil
@@ -46,6 +48,9 @@ class Agent
       env_prepare_ms: state[:env_prepare_ms],
       env_resolve_ms: state[:env_resolve_ms],
       env_install_ms: state[:env_install_ms],
+      worker_pid: state[:worker_pid],
+      worker_restart_count: state[:worker_restart_count],
+      prep_ticket_id: @prep_ticket_id,
       duration_ms: duration_ms,
       generation_attempt: state[:generation_attempt],
       system_prompt: system_prompt,
