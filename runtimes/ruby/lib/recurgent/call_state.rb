@@ -22,6 +22,8 @@ class Agent
   end
 
   def _capture_environment_state!(state, environment_info)
+    effective_manifest = environment_info[:effective_manifest]
+    state.normalized_dependencies = effective_manifest unless effective_manifest.nil?
     state.env_id = environment_info[:env_id]
     state.environment_cache_hit = environment_info[:environment_cache_hit]
     state.env_prepare_ms = environment_info[:env_prepare_ms]

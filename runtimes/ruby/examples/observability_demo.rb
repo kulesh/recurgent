@@ -9,7 +9,7 @@ class DemoProvider
     @calls = Hash.new(0)
   end
 
-  def generate_code(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
+  def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
     _ = [model, tool_schema, timeout_seconds]
     role = system_prompt[/called '([^']+)'/, 1]
     method_name = user_prompt[/Someone called '([^']+)'/, 1]
@@ -17,15 +17,15 @@ class DemoProvider
 
     case [role, method_name]
     when %w[observability_demo_solver run]
-      solver_run_code
+      { code: solver_run_code }
     when %w[stable_finance_specialist analyze]
-      'result = { specialist: "stable_finance_specialist", topic: args[0], signal: "ok" }'
+      { code: 'result = { specialist: "stable_finance_specialist", topic: args[0], signal: "ok" }' }
     when %w[stable_reasoning_specialist analyze]
-      'result = { specialist: "stable_reasoning_specialist", topic: args[0], signal: "ok" }'
+      { code: 'result = { specialist: "stable_reasoning_specialist", topic: args[0], signal: "ok" }' }
     when %w[flaky_places_specialist analyze]
-      nil
+      { code: nil }
     else
-      "result = nil"
+      { code: "result = nil" }
     end
   end
 

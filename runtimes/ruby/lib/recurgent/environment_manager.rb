@@ -13,6 +13,7 @@ class Agent
     def initialize(gem_sources:, source_mode:, cache_root: nil, command_runner: nil)
       @gem_sources = Array(gem_sources).map(&:to_s).map(&:strip).reject(&:empty?).uniq
       @source_mode = source_mode.to_s
+      @policy_sources = @gem_sources.sort
       @cache_root = cache_root || self.class.default_cache_root
       @command_runner = command_runner || method(:_default_command_runner)
     end
@@ -24,11 +25,14 @@ class Agent
 
     def env_id_for(manifest)
       serialized_manifest = JSON.generate(manifest)
+      serialized_sources = JSON.generate(@policy_sources)
       payload = [
         "engine:#{RUBY_ENGINE}",
         "ruby:#{RUBY_VERSION}",
         "patchlevel:#{RUBY_PATCHLEVEL}",
         "platform:#{RUBY_PLATFORM}",
+        "source_mode:#{@source_mode}",
+        "sources:#{serialized_sources}",
         "deps:#{serialized_manifest}"
       ].join("|")
       Digest::SHA256.hexdigest(payload)
@@ -84,6 +88,8 @@ class Agent
       return false unless ready_metadata
 
       ready_metadata["manifest"] == _serialized_manifest(manifest) &&
+        ready_metadata["source_mode"] == @source_mode &&
+        ready_metadata["gem_sources"] == @policy_sources &&
         ready_metadata["lock_checksum"] == _lock_checksum(env_dir)
     end
 
@@ -140,7 +146,7 @@ class Agent
         manifest: _serialized_manifest(manifest),
         lock_checksum: _lock_checksum(env_dir),
         source_mode: @source_mode,
-        gem_sources: @gem_sources,
+        gem_sources: @policy_sources,
         prepared_at: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S.%3NZ")
       }
       File.write(File.join(env_dir, READY_FILENAME), JSON.generate(payload))

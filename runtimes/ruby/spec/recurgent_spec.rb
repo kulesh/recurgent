@@ -481,6 +481,13 @@ RSpec.describe Agent do
           context_snapshot: { "value" => 2 },
           worker_pid: 4321,
           worker_restart_count: 0
+        },
+        {
+          status: "ok",
+          value: 3,
+          context_snapshot: { "value" => 3 },
+          worker_pid: 4321,
+          worker_restart_count: 0
         }
       )
 
@@ -495,6 +502,40 @@ RSpec.describe Agent do
           { name: "httparty", version: ">= 0" },
           { name: "nokogiri", version: "~> 1.16" }
         ]
+      ).twice
+      expect(worker_supervisor).to have_received(:execute).exactly(3).times
+    end
+
+    it "routes through worker when effective manifest is non-empty even if call omits dependencies" do
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_worker_supervisor).and_return(worker_supervisor)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }]),
+        program_payload(code: "result = 2", dependencies: [])
+      )
+      allow(worker_supervisor).to receive(:execute).and_return(
+        {
+          status: "ok",
+          value: 1,
+          context_snapshot: { "value" => 1 },
+          worker_pid: 4321,
+          worker_restart_count: 0
+        },
+        {
+          status: "ok",
+          value: 2,
+          context_snapshot: { "value" => 2 },
+          worker_pid: 4321,
+          worker_restart_count: 0
+        }
+      )
+
+      expect_ok_outcome(g.step_one, value: 1)
+      expect_ok_outcome(g.step_two, value: 2)
+      expect(worker_supervisor).to have_received(:execute).twice
+      expect(env_manager).to have_received(:ensure_environment!).with(
+        [{ name: "nokogiri", version: "~> 1.16" }]
       ).twice
     end
 

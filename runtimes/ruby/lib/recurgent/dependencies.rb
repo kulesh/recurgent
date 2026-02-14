@@ -9,13 +9,13 @@ class Agent
     def _prepare_dependency_environment!(method_name:, normalized_dependencies:)
       _ = method_name
       manifest = _resolve_call_manifest(normalized_dependencies)
-      return _empty_environment_info if manifest.empty?
+      return _empty_environment_info(manifest) if manifest.empty?
 
       _enforce_dependency_policy!(manifest)
       env_info = _environment_manager.ensure_environment!(manifest)
       @env_id = env_info[:env_id]
       _reset_worker_for_env_change!(env_info[:env_id])
-      env_info
+      env_info.merge(effective_manifest: manifest)
     end
 
     def _prepare_specialist_environment!(dependencies:, prep_ticket_id:)
@@ -94,14 +94,15 @@ class Agent
       @worker_supervisor = nil
     end
 
-    def _empty_environment_info
+    def _empty_environment_info(manifest)
       {
         env_id: @env_id,
         environment_cache_hit: nil,
         env_prepare_ms: nil,
         env_resolve_ms: nil,
         env_install_ms: nil,
-        env_dir: nil
+        env_dir: nil,
+        effective_manifest: manifest
       }
     end
   end
