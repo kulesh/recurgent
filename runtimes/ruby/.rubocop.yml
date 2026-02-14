@@ -7,10 +7,13 @@ Style/Documentation:
   Enabled: false
 
 Metrics/MethodLength:
-  Max: 45
+  Max: 50
 
 Metrics/ClassLength:
   Max: 300
+
+Metrics/ModuleLength:
+  Max: 160
 
 Metrics/AbcSize:
   Max: 25

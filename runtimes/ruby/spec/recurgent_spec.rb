@@ -289,14 +289,14 @@ RSpec.describe Agent do
       g = described_class.new("calculator")
       stub_llm_response("result = nil")
       g.value = 5
-      expect(g.instance_variable_get(:@context)[:value]).to eq(5)
+      expect(g.memory[:value]).to eq(5)
       expect(mock_provider).not_to have_received(:generate_program)
     end
 
     it "handles complex values" do
       g = described_class.new("csv_explorer")
       g.rows = [{ name: "apple", price: 1.50 }]
-      expect(g.instance_variable_get(:@context)[:rows]).to eq([{ name: "apple", price: 1.50 }])
+      expect(g.memory[:rows]).to eq([{ name: "apple", price: 1.50 }])
     end
   end
 
@@ -309,7 +309,7 @@ RSpec.describe Agent do
 
     it "passes positional arguments to generated code" do
       g = described_class.new("calculator")
-      g.instance_variable_get(:@context)[:value] = 5
+      g.remember(value: 5)
       stub_llm_response("context[:value] = context.fetch(:value, 0) + args[0]; result = context[:value]")
       expect_ok_outcome(g.increment(3), value: 8)
     end
@@ -594,6 +594,19 @@ RSpec.describe Agent do
       expect(worker_supervisor).not_to have_received(:execute)
     end
 
+    it "skips worker execution when program has no dependencies" do
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_worker_supervisor).and_return(worker_supervisor)
+      allow(worker_supervisor).to receive(:execute)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 42", dependencies: [])
+      )
+
+      expect_ok_outcome(g.compute, value: 42)
+      expect(worker_supervisor).not_to have_received(:execute)
+    end
+
     it "returns timeout outcome when worker times out" do
       g = described_class.new("calculator")
       allow(g).to receive(:_environment_manager).and_return(env_manager)
@@ -705,7 +718,7 @@ RSpec.describe Agent do
 
     it "includes context keys after assignment" do
       g = described_class.new("calculator")
-      g.instance_variable_get(:@context)[:value] = 5
+      g.value = 5
       expect(g.inspect).to eq("<Agent(calculator) context=[:value]>")
     end
   end
@@ -751,7 +764,7 @@ RSpec.describe Agent do
 
     it "includes context state in user prompt" do
       g = described_class.new("calculator")
-      g.instance_variable_get(:@context)[:value] = 5
+      g.value = 5
       expect_llm_call_with(
         code: "result = context[:value]",
         user_prompt: a_string_including("value")
@@ -857,7 +870,7 @@ RSpec.describe Agent do
 
     it "includes prompts and context in debug mode" do
       g = described_class.new("calculator", log: log_path, debug: true)
-      g.instance_variable_get(:@context)[:value] = 5
+      g.value = 5
       stub_llm_response("context[:value] = context.fetch(:value, 0) + 1; result = context[:value]")
       g.increment
 
@@ -872,7 +885,7 @@ RSpec.describe Agent do
 
     it "normalizes binary-encoded UTF-8 strings in logged context" do
       g = described_class.new("calculator", log: log_path, debug: true)
-      g.instance_variable_get(:@context)[:binary_text] = "agent’s note".dup.force_encoding(Encoding::ASCII_8BIT)
+      g.remember(binary_text: "agent\u2019s note".dup.force_encoding(Encoding::ASCII_8BIT))
       stub_llm_response("result = :ok")
 
       expect_ok_outcome(g.echo, value: :ok)
@@ -884,7 +897,7 @@ RSpec.describe Agent do
     it "normalizes nested binary-encoded strings in logged context" do
       g = described_class.new("calculator", log: log_path, debug: true)
       nested = "nested insight".dup.force_encoding(Encoding::ASCII_8BIT)
-      g.instance_variable_get(:@context)[:nested] = { inner: [nested] }
+      g.remember(nested: { inner: [nested] })
       stub_llm_response("result = :ok")
 
       expect_ok_outcome(g.echo, value: :ok)

@@ -63,8 +63,9 @@ class Agent
       # guarantee the response is valid JSON matching our schema.
       # The response may contain reasoning items (chain-of-thought)
       # before the message — we skip those and find the message output.
-      def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
-        _ = timeout_seconds
+      # OpenAI Responses API does not support per-request timeout.
+      # TODO: Implement client-level timeout when openai-ruby adds support.
+      def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, _timeout_seconds: nil)
         response = @client.responses.create(
           model: model,
           input: [

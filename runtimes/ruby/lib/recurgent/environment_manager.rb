@@ -176,8 +176,9 @@ class Agent
       value.round(1)
     end
 
+    # Normalize symbol keys to strings for stable cache comparison.
     def _serialized_manifest(manifest)
-      JSON.parse(JSON.generate(manifest))
+      manifest.map { |dep| dep.transform_keys(&:to_s) }
     end
   end
 end

@@ -41,6 +41,23 @@ RSpec.describe Agent::PreparationTicket do
     expect(received).to eq(agent)
   end
 
+  it "runs error callback when rejected" do
+    ticket = described_class.new
+    outcome = Agent::Outcome.error(
+      error_type: "environment_preparing",
+      error_message: "failed",
+      retriable: true,
+      specialist_role: "solver",
+      method_name: "prepare"
+    )
+    received = nil
+    ticket.on_error { |error_outcome| received = error_outcome }
+
+    ticket._reject(outcome: outcome)
+
+    expect(received).to eq(outcome)
+  end
+
   it "returns nil when await times out while pending" do
     ticket = described_class.new
 

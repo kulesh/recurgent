@@ -8,14 +8,15 @@ require_relative "recurgent/environment_manager"
 require_relative "recurgent/generated_program"
 require_relative "recurgent/outcome"
 require_relative "recurgent/providers"
-require_relative "recurgent/runtime_helpers"
-require_relative "recurgent/dependency_runtime"
+require_relative "recurgent/prompting"
+require_relative "recurgent/observability"
+require_relative "recurgent/dependencies"
 require_relative "recurgent/runtime_config"
-require_relative "recurgent/dynamic_call_state"
+require_relative "recurgent/call_state"
 require_relative "recurgent/worker_executor"
 require_relative "recurgent/worker_supervisor"
 require_relative "recurgent/preparation_ticket"
-require_relative "recurgent/worker_runtime"
+require_relative "recurgent/worker_execution"
 
 # An Agent object intercepts all method calls, asks an LLM what Ruby code
 # to run, then eval's that code in its own context. The agent's "role"
@@ -98,6 +99,11 @@ class Agent
     environment_preparing
     worker_crash
   ].freeze
+
+  include Prompting
+  include Observability
+  include Dependencies
+  include WorkerExecution
 
   # XDG-compliant default path for the JSONL call log.
   def self.default_log_path
@@ -192,7 +198,7 @@ class Agent
       # data from parents (the parent's LLM code does `result.items = data`).
       @context[method_name.chomp("=").to_sym] = args[0]
     else
-      _handle_dynamic_access(method_name, *args, **)
+      _dispatch_method_call(method_name, *args, **)
     end
   end
 
@@ -212,7 +218,7 @@ class Agent
   # asks the LLM for a string representation), and inspect to return a safe
   # debug string without an LLM call.
   def to_s
-    outcome = _handle_dynamic_access("to_s")
+    outcome = _dispatch_method_call("to_s")
     return outcome.value.to_s if outcome.ok?
 
     inspect
@@ -311,13 +317,13 @@ class Agent
     end
   end
 
-  # The main dispatch: build prompts → ask LLM for code → execute it.
+  # The main dispatch: build prompts, ask LLM for code, execute it.
   # Only handles method calls — setters are handled directly in method_missing.
-  def _handle_dynamic_access(name, *args, **kwargs)
+  def _dispatch_method_call(name, *args, **kwargs)
     system_prompt = _build_system_prompt
     user_prompt = _build_user_prompt(name, args, kwargs)
     _with_call_frame do |call_context|
-      _run_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
+      _execute_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
     end
   end
 
@@ -557,16 +563,16 @@ class Agent
     _call_stack.pop
   end
 
-  def _run_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
+  def _execute_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
     started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    state = _initial_dynamic_call_state
+    state = _initial_call_state
 
-    state[:outcome] = _perform_dynamic_call(name, args, kwargs, system_prompt, user_prompt, state)
-    state[:outcome]
+    state.outcome = _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
+    state.outcome
   rescue ProviderError, ExecutionError, BudgetExceededError, WorkerCrashError, NonSerializableResultError => e
-    state[:error] = e
-    state[:outcome] = _error_outcome_for(name, e)
-    state[:outcome]
+    state.error = e
+    state.outcome = _error_outcome_for(name, e)
+    state.outcome
   ensure
     duration_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
     _log_dynamic_call(
@@ -581,22 +587,22 @@ class Agent
     )
   end
 
-  def _perform_dynamic_call(name, args, kwargs, system_prompt, user_prompt, state)
-    generated_program, state[:generation_attempt] = _generate_program_with_retry(name, system_prompt, user_prompt) do |attempt_number|
-      state[:generation_attempt] = attempt_number
+  def _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
+    generated_program, state.generation_attempt = _generate_program_with_retry(name, system_prompt, user_prompt) do |attempt_number|
+      state.generation_attempt = attempt_number
     end
     _capture_generated_program_state!(state, generated_program)
     environment_info = _prepare_dependency_environment!(
       method_name: name,
-      normalized_dependencies: state[:normalized_dependencies]
+      normalized_dependencies: state.normalized_dependencies
     )
     _capture_environment_state!(state, environment_info)
     _execute_generated_program(
       name,
-      state[:code],
+      state.code,
       args,
       kwargs,
-      normalized_dependencies: state[:normalized_dependencies],
+      normalized_dependencies: state.normalized_dependencies,
       environment_info: environment_info,
       state: state
     )

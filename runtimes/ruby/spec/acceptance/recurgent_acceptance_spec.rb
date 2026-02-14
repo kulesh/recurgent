@@ -78,13 +78,13 @@ RSpec.describe "Agent acceptance" do
     log_dir = Dir.mktmpdir("recurgent-acceptance-")
     log_path = File.join(log_dir, "calls.jsonl")
 
-    counter = Agent.for("counter", log: log_path, debug: true)
-    increment_outcome = counter.increment
+    calculator = Agent.for("calculator", log: log_path, debug: true)
+    increment_outcome = calculator.increment
     expect(increment_outcome).to be_ok
     expect(increment_outcome.value).to eq(1)
 
     entry = JSON.parse(File.read(log_path))
-    expect(entry["role"]).to eq("counter")
+    expect(entry["role"]).to eq("calculator")
     expect(entry["method"]).to eq("increment")
     expect(entry).to have_key("system_prompt")
     expect(entry).to have_key("user_prompt")

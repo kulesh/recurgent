@@ -49,6 +49,24 @@ RSpec.describe Agent::WorkerSupervisor do
     expect(response[:error_type]).to eq("timeout")
   end
 
+  it "stops restarting after max_restarts budget is exhausted" do
+    call_count = 0
+    allow(executor).to receive(:execute) do
+      call_count += 1
+      raise Agent::WorkerExecutor::WorkerExited, "worker died (call #{call_count})"
+    end
+
+    first = supervisor.execute(env_id: "env-a", env_dir: "/tmp/a", payload: payload, timeout_seconds: 1)
+    expect(first[:error_type]).to eq("worker_crash")
+    # After first failure: restart_count=1, executor re-created (budget allows 1 restart)
+    expect(executor).to have_received(:start).twice
+
+    second = supervisor.execute(env_id: "env-a", env_dir: "/tmp/a", payload: payload, timeout_seconds: 1)
+    expect(second[:error_type]).to eq("worker_crash")
+    # After second failure: restart_count=2, exceeds max_restarts=1, no new executor
+    expect(executor).to have_received(:start).twice
+  end
+
   it "maps executor crashes to worker_crash payload" do
     allow(executor).to receive(:execute).and_raise(Agent::WorkerExecutor::WorkerExited, "worker died")
 
