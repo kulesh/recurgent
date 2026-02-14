@@ -42,6 +42,12 @@ class Agent
           delegated specialists inherit the same runtime/tooling limits (Ruby stdlib only; no external gems)
           do NOT delegate recursively to bypass unavailable capabilities
           if blocked by unavailable capability, return a typed non-retriable error outcome instead of fake success
+      - Delegation and tool shape:
+          prefer reusable, parameterized specialists over one-off specialists
+          generalize one step above the immediate task (task-adjacent generality)
+          example: prefer fetch_url(url) over fetch_specific_article()
+          do NOT over-generalize into frameworks or speculative abstractions
+          if reuse is unlikely or semantics are unclear, keep scope narrow and explicit
       - For specialist delegation, strongly prefer an explicit contract:
           specialist = delegate(
             "translator",
@@ -64,6 +70,7 @@ class Agent
     current_context = @context.dup
     action_desc = "Someone called '#{name}' with args #{args.inspect} and kwargs #{kwargs.inspect}"
     contract_guidance = _delegation_contract_prompt
+    generality_guidance = _task_adjacent_generality_prompt
 
     <<~PROMPT
       #{action_desc}
@@ -78,6 +85,7 @@ class Agent
       - You may require any Ruby standard library (net/http, json, date, socket, etc.) but NOT external gems
       - Delegation cannot add new runtime capabilities. Child specialists have the same limits.
       - If the task needs unavailable capability, fail fast with typed non-retriable error outcome.
+      #{generality_guidance}
 
       For method calls like 'sum', just do the operation:
       ```ruby
@@ -90,7 +98,7 @@ class Agent
       result = context.fetch(:value, 0)
       ```
 
-      To delegate tasks that need reasoning, summon specialists with delegate and define a contract:
+      To delegate reasoning or external-subtask work, summon a specialist with delegate, define a contract, and prefer parameterized method names that can be reused across similar tasks:
       ```ruby
       specialist = delegate(
         "analyst",
@@ -113,6 +121,15 @@ class Agent
         method_name: "#{name}"
       )
       ```
+    PROMPT
+  end
+
+  def _task_adjacent_generality_prompt
+    <<~PROMPT.chomp
+      - When creating specialists/methods, prefer task-adjacent reusable interfaces:
+          parameterize obvious inputs (url, query, filepath, etc.)
+          generalize one level only; avoid speculative generic frameworks
+          choose narrow scope when validation/semantics would otherwise be ambiguous
     PROMPT
   end
 

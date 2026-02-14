@@ -13,6 +13,7 @@ This directory captures architecture decisions that shape Recurgent's runtime be
 - `0007-runtime-agnostic-contract-spec.md`
 - `0008-solver-specialist-language-and-tolerant-delegations.md`
 - `0009-issue-first-pr-compliance-gate.md`
+- `0010-dependency-aware-generated-programs-and-environment-contract-v1.md`
 
 ## Status Values
 

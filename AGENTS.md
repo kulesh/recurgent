@@ -196,7 +196,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-14T02:14:37Z
+Last Updated (UTC): 2026-02-14T15:26:11Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -230,6 +230,7 @@ Last Updated (UTC): 2026-02-14T02:14:37Z
 - `docs/adrs/0007-runtime-agnostic-contract-spec.md` - versioned cross-runtime behavior contract decision
 - `docs/adrs/0008-solver-specialist-language-and-tolerant-delegations.md` - vocabulary and tolerant delegation design decision
 - `docs/adrs/0009-issue-first-pr-compliance-gate.md` - issue-first PR quality gate decision for OSS maintenance
+- `docs/adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md` - proposed specialist-declared dependency manifest and environment contract v1
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog
