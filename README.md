@@ -63,6 +63,33 @@ cd runtimes/ruby
 ruby examples/calculator.rb
 ```
 
+### Configure Runtime Before Solver Calls
+
+Configure dependency and source policy once before creating Solvers/Specialists:
+
+```ruby
+Agent.configure_runtime(
+  gem_sources: ["https://rubygems.org"], # default
+  source_mode: "public_only",            # or "internal_only"
+  allowed_gems: nil,                     # optional whitelist
+  blocked_gems: nil                      # optional blacklist
+)
+
+solver = Agent.for("research solver")
+```
+
+Optional asynchronous environment warmup:
+
+```ruby
+ticket = Agent.prepare(
+  "pdf specialist",
+  dependencies: [{ name: "prawn", version: "~> 2.5" }]
+)
+
+prepared = ticket.await(timeout: 30)
+specialist = prepared.is_a?(Agent) ? prepared : nil
+```
+
 ### Verify
 
 ```bash
@@ -158,7 +185,8 @@ Anthropic by default; OpenAI-compatible models are auto-routed by model prefix o
 
 ### Can generated code use gems?
 
-Prompt constraints allow Ruby standard library, not external gems.
+Yes. Generated programs can declare `dependencies`, and Recurgent materializes an environment for them.
+Dependency-backed execution runs through worker isolation with a JSON boundary for args, context, and results.
 
 ### How are low-value bot PRs handled?
 
@@ -177,7 +205,7 @@ See `docs/observability.md`.
 
 ## Known Limitations
 
-- Runtime-generated code is constrained to Ruby standard library by prompt contract (no external gems).
+- Dependency-backed execution requires JSON-compatible args/context/results across worker boundaries.
 - Provider responses can still be invalid at runtime (for example missing `code` in structured output).
 - Tolerant outcome handling prevents hard crashes, but callers should validate artifact quality before treating results as final.
 

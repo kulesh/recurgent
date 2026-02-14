@@ -15,6 +15,33 @@ export ANTHROPIC_API_KEY=...
 export OPENAI_API_KEY=...
 ```
 
+## Runtime Configuration Before Solver Invocation
+
+Configure runtime policy before creating a Solver:
+
+```ruby
+Agent.configure_runtime(
+  gem_sources: ["https://rubygems.org"], # default
+  source_mode: "public_only",            # "internal_only" supported
+  allowed_gems: nil,                     # optional allowlist
+  blocked_gems: nil                      # optional blocklist
+)
+
+solver = Agent.for("assistant solver")
+```
+
+Optional async prewarm for a known dependency-backed specialist:
+
+```ruby
+ticket = Agent.prepare(
+  "pdf specialist",
+  dependencies: [{ name: "prawn", version: "~> 2.5" }]
+)
+
+prepared = ticket.await(timeout: 30)
+# prepared is Agent on success, or Agent::Outcome on failure
+```
+
 ## Local Development Workflow
 
 1. Recover workflow context:

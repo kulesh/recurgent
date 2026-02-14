@@ -38,6 +38,11 @@ The Ruby runtime (`runtimes/ruby`) keeps a narrow architecture:
 - `runtimes/ruby/lib/recurgent/runtime_helpers.rb` - prompt and logging helpers
 - `runtimes/ruby/lib/recurgent/outcome.rb` - `Agent::Outcome` envelope model
 - `runtimes/ruby/lib/recurgent/providers.rb` - provider adapters (Anthropic/OpenAI)
+- `runtimes/ruby/lib/recurgent/dependency_manifest.rb` - dependency declaration normalization
+- `runtimes/ruby/lib/recurgent/environment_manager.rb` - environment materialization and cache
+- `runtimes/ruby/lib/recurgent/worker_executor.rb` - worker process IPC execution
+- `runtimes/ruby/lib/recurgent/worker_supervisor.rb` - worker lifecycle and restart handling
+- `runtimes/ruby/lib/recurgent/preparation_ticket.rb` - async environment preparation lifecycle
 - `runtimes/ruby/spec/recurgent_spec.rb` - unit/contract tests
 - `runtimes/ruby/examples/` - executable behavior demonstrations
 
@@ -48,11 +53,17 @@ sequenceDiagram
   participant C as Caller
   participant A as Agent
   participant L as LLM Provider
+  participant W as Worker
 
   C->>A: missing_method(args, kwargs)
-  A->>L: generate_code(system_prompt, user_prompt, schema)
-  L-->>A: Ruby code
-  A->>A: eval(code, binding)
+  A->>L: generate_program(system_prompt, user_prompt, schema)
+  L-->>A: { code, dependencies }
+  alt dependencies empty
+    A->>A: eval(code, binding)
+  else dependencies declared
+    A->>W: execute via JSON IPC
+    W-->>A: value/context snapshot
+  end
   A-->>C: Outcome
 ```
 

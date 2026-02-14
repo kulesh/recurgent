@@ -29,6 +29,46 @@ Dynamic method calls return `Agent::Outcome`:
 - `ok?` + `value` for successful calls
 - `error?` + typed `error_type`/`error_message` for failures
 
+## Runtime Configuration
+
+Configure runtime dependency policy before creating Solvers:
+
+```ruby
+Agent.configure_runtime(
+  gem_sources: ["https://rubygems.org"],
+  source_mode: "public_only",
+  allowed_gems: nil,
+  blocked_gems: nil
+)
+```
+
+To force internal source only:
+
+```ruby
+Agent.configure_runtime(
+  gem_sources: ["https://artifactory.example.org/api/gems/ruby"],
+  source_mode: "internal_only",
+  allowed_gems: %w[nokogiri prawn]
+)
+```
+
+## Async Preparation
+
+Warm up dependency environments before first call:
+
+```ruby
+ticket = Agent.prepare(
+  "pdf specialist",
+  dependencies: [{ name: "prawn", version: "~> 2.5" }]
+)
+
+result = ticket.await(timeout: 30)
+```
+
+`result` is:
+- `Agent` when preparation succeeds
+- `Agent::Outcome` when preparation fails (`error_type: "environment_preparing"`)
+
 ## Contract Parity
 
 Shared cross-runtime contract artifacts live at:
