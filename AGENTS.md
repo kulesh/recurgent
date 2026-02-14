@@ -196,7 +196,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-14T16:30:00Z
+Last Updated (UTC): 2026-02-14T21:36:02Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -232,6 +232,7 @@ Last Updated (UTC): 2026-02-14T16:30:00Z
 - `docs/adrs/0008-solver-specialist-language-and-tolerant-delegations.md` - vocabulary and tolerant delegation design decision
 - `docs/adrs/0009-issue-first-pr-compliance-gate.md` - issue-first PR quality gate decision for OSS maintenance
 - `docs/adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md` - proposed specialist-declared dependency manifest and environment contract v1
+- `docs/adrs/0011-env-cache-policy-and-effective-manifest-execution.md` - source-policy-aware env caching and effective-manifest execution invariant
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog
@@ -240,7 +241,9 @@ Last Updated (UTC): 2026-02-14T16:30:00Z
 - `specs/contract/v1/tolerant-delegation-scenarios.yaml` - tolerant delegation scenario suite (v1)
 - `specs/contract/v1/conformance.md` - runtime harness conformance guidance
 - `runtimes/ruby/lib/recurgent.rb` - core runtime dispatch, execution, retry, and outcome mapping
-- `runtimes/ruby/lib/recurgent/runtime_helpers.rb` - prompt and logging helpers for Agent runtime
+- `runtimes/ruby/lib/recurgent/prompting.rb` - system/user prompt construction and tool schema
+- `runtimes/ruby/lib/recurgent/observability.rb` - JSONL log composition and debug capture
+- `runtimes/ruby/lib/recurgent/call_execution.rb` - dynamic call orchestration and execution-path selection
 - `runtimes/ruby/lib/recurgent/outcome.rb` - Outcome envelope model and delegation-friendly value proxy behavior
 - `runtimes/ruby/lib/recurgent/providers.rb` - Anthropic/OpenAI provider adapters
 - `runtimes/ruby/spec/recurgent_spec.rb` - core behavior, provider, and logging tests

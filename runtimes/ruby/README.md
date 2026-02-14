@@ -69,6 +69,13 @@ result = ticket.await(timeout: 30)
 - `Agent` when preparation succeeds
 - `Agent::Outcome` when preparation fails (`error_type: "environment_preparing"`)
 
+## Dependency Environment Invariants
+
+- Environment cache identity includes Ruby version/platform, normalized dependency manifest, `source_mode`, and normalized `gem_sources`.
+- Worker-vs-inline execution follows the specialist's effective manifest:
+  once a specialist has a non-empty manifest, later calls with `dependencies: []` still execute in the worker-backed environment.
+- Dependency manifests are monotonic per specialist instance: existing gems/versions must remain identical, while new gems may be added.
+
 ## Contract Parity
 
 Shared cross-runtime contract artifacts live at:

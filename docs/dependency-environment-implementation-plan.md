@@ -38,7 +38,7 @@ Out of scope:
    - `runtimes/ruby/lib/recurgent/generated_program.rb`
    - `runtimes/ruby/lib/recurgent/dependency_manifest.rb`
    - updates to `runtimes/ruby/lib/recurgent/providers.rb`
-   - updates to `runtimes/ruby/lib/recurgent/runtime_helpers.rb`
+   - updates to `runtimes/ruby/lib/recurgent/prompting.rb`
    - updates to `runtimes/ruby/lib/recurgent.rb`
    - tests:
      - `runtimes/ruby/spec/dependency_manifest_spec.rb`

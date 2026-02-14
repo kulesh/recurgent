@@ -365,7 +365,7 @@ Example (enterprise policy):
 1. `runtimes/ruby/lib/recurgent/providers.rb`
    - Introduce `generate_program`.
    - Keep compatibility shim so older adapters returning String still function.
-2. `runtimes/ruby/lib/recurgent/runtime_helpers.rb`
+2. `runtimes/ruby/lib/recurgent/prompting.rb`
    - Update provider tool schema to include `dependencies`.
    - Add prompt instructions requiring non-stdlib dependencies be declared in payload.
 3. `runtimes/ruby/lib/recurgent.rb`

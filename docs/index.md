@@ -35,7 +35,9 @@
 The Ruby runtime (`runtimes/ruby`) keeps a narrow architecture:
 
 - `runtimes/ruby/lib/recurgent.rb` - dynamic dispatch, execution, retry, and outcome mapping
-- `runtimes/ruby/lib/recurgent/runtime_helpers.rb` - prompt and logging helpers
+- `runtimes/ruby/lib/recurgent/prompting.rb` - system/user prompt construction and tool schema
+- `runtimes/ruby/lib/recurgent/observability.rb` - JSONL log entry construction and debug metadata
+- `runtimes/ruby/lib/recurgent/call_execution.rb` - dynamic call orchestration and execution path selection
 - `runtimes/ruby/lib/recurgent/outcome.rb` - `Agent::Outcome` envelope model
 - `runtimes/ruby/lib/recurgent/providers.rb` - provider adapters (Anthropic/OpenAI)
 - `runtimes/ruby/lib/recurgent/dependency_manifest.rb` - dependency declaration normalization
