@@ -13,6 +13,7 @@ require_relative "recurgent/observability"
 require_relative "recurgent/dependencies"
 require_relative "recurgent/runtime_config"
 require_relative "recurgent/call_state"
+require_relative "recurgent/call_execution"
 require_relative "recurgent/worker_executor"
 require_relative "recurgent/worker_supervisor"
 require_relative "recurgent/preparation_ticket"
@@ -103,6 +104,7 @@ class Agent
   include Prompting
   include Observability
   include Dependencies
+  include CallExecution
   include WorkerExecution
 
   # XDG-compliant default path for the JSONL call log.
@@ -314,16 +316,6 @@ class Agent
     when :openai then Providers::OpenAI.new
     when :anthropic then Providers::Anthropic.new
     else raise ArgumentError, "Unknown provider: #{kind}"
-    end
-  end
-
-  # The main dispatch: build prompts, ask LLM for code, execute it.
-  # Only handles method calls — setters are handled directly in method_missing.
-  def _dispatch_method_call(name, *args, **kwargs)
-    system_prompt = _build_system_prompt
-    user_prompt = _build_user_prompt(name, args, kwargs)
-    _with_call_frame do |call_context|
-      _execute_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
     end
   end
 
@@ -544,87 +536,6 @@ class Agent
     return source if source.is_a?(String) && !source.strip.empty?
 
     "hash"
-  end
-
-  def _call_stack
-    Thread.current[CALL_STACK_KEY] ||= []
-  end
-
-  def _with_call_frame
-    frame = {
-      trace_id: @trace_id,
-      call_id: SecureRandom.hex(8),
-      parent_call_id: _call_stack.last&.fetch(:call_id, nil),
-      depth: _call_stack.length
-    }
-    _call_stack.push(frame)
-    yield frame
-  ensure
-    _call_stack.pop
-  end
-
-  def _execute_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
-    started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    state = _initial_call_state
-
-    state.outcome = _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
-    state.outcome
-  rescue ProviderError, ExecutionError, BudgetExceededError, WorkerCrashError, NonSerializableResultError => e
-    state.error = e
-    state.outcome = _error_outcome_for(name, e)
-    state.outcome
-  ensure
-    duration_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
-    _log_dynamic_call(
-      method_name: name,
-      args: args,
-      kwargs: kwargs,
-      duration_ms: duration_ms,
-      system_prompt: system_prompt,
-      user_prompt: user_prompt,
-      call_context: call_context,
-      state: state
-    )
-  end
-
-  def _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
-    generated_program, state.generation_attempt = _generate_program_with_retry(name, system_prompt, user_prompt) do |attempt_number|
-      state.generation_attempt = attempt_number
-    end
-    _capture_generated_program_state!(state, generated_program)
-    environment_info = _prepare_dependency_environment!(
-      method_name: name,
-      normalized_dependencies: state.normalized_dependencies
-    )
-    _capture_environment_state!(state, environment_info)
-    _execute_generated_program(
-      name,
-      state.code,
-      args,
-      kwargs,
-      normalized_dependencies: state.normalized_dependencies,
-      environment_info: environment_info,
-      state: state
-    )
-  end
-
-  def _execute_generated_program(name, code, args, kwargs, normalized_dependencies:, environment_info:, state:)
-    _print_generated_code(name, code) if @verbose
-
-    if _worker_execution_required?(normalized_dependencies)
-      return _execute_generated_program_in_worker(name, code, args, kwargs, environment_info: environment_info,
-                                                                            state: state)
-    end
-
-    result = _execute_code(code, name, *args, **kwargs)
-    result.is_a?(Outcome) ? result : Outcome.ok(value: result, specialist_role: @role, method_name: name)
-  end
-
-  def _print_generated_code(name, code)
-    puts "[AGENT #{@role}.#{name}] Generated code:"
-    puts "=" * 50
-    puts code
-    puts "=" * 50
   end
 end
 
