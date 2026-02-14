@@ -3,9 +3,15 @@
 require "fileutils"
 require "json"
 require "securerandom"
+require_relative "recurgent/dependency_manifest"
+require_relative "recurgent/environment_manager"
+require_relative "recurgent/generated_program"
 require_relative "recurgent/outcome"
 require_relative "recurgent/providers"
 require_relative "recurgent/runtime_helpers"
+require_relative "recurgent/dependency_runtime"
+require_relative "recurgent/runtime_config"
+require_relative "recurgent/dynamic_call_state"
 
 # An Agent object intercepts all method calls, asks an LLM what Ruby code
 # to run, then eval's that code in its own context. The agent's "role"
@@ -41,18 +47,45 @@ class Agent
   DEFAULT_MAX_GENERATION_ATTEMPTS = 2
   DEFAULT_PROVIDER_TIMEOUT_SECONDS = 120.0
   DEFAULT_DELEGATION_BUDGET = 8
+  DEFAULT_GEM_SOURCES = ["https://rubygems.org"].freeze
+  DEFAULT_SOURCE_MODE = "public_only"
   CALL_STACK_KEY = :__recurgent_call_stack
   RUNTIME_NAME = "ruby"
   DELEGATION_CONTRACT_FIELDS = %i[purpose deliverable acceptance failure_policy].freeze
   class Error < StandardError; end
   class ProviderError < Error; end
   class InvalidCodeError < ProviderError; end
+  class InvalidDependencyManifestError < ProviderError; end
+  class DependencyManifestIncompatibleError < ProviderError; end
+  class DependencyPolicyViolationError < ProviderError; end
+  class DependencyResolutionError < ProviderError; end
+  class DependencyInstallError < ProviderError; end
+  class DependencyActivationError < ProviderError; end
   class TimeoutError < ProviderError; end
   class ExecutionError < Error; end
   class BudgetExceededError < Error; end
 
   # Model name prefixes that route to the OpenAI provider.
   OPENAI_MODEL_PATTERN = /\A(gpt-|o[134]-|chatgpt-)/
+  ERROR_TYPE_BY_CLASS = [
+    [BudgetExceededError, "budget_exceeded"],
+    [TimeoutError, "timeout"],
+    [InvalidCodeError, "invalid_code"],
+    [InvalidDependencyManifestError, "invalid_dependency_manifest"],
+    [DependencyManifestIncompatibleError, "dependency_manifest_incompatible"],
+    [DependencyPolicyViolationError, "dependency_policy_violation"],
+    [DependencyResolutionError, "dependency_resolution_failed"],
+    [DependencyInstallError, "dependency_install_failed"],
+    [DependencyActivationError, "dependency_activation_failed"],
+    [ProviderError, "provider"]
+  ].freeze
+  RETRIABLE_ERROR_TYPES = %w[
+    timeout
+    provider
+    invalid_code
+    dependency_install_failed
+    dependency_activation_failed
+  ].freeze
 
   # XDG-compliant default path for the JSONL call log.
   def self.default_log_path
@@ -95,14 +128,12 @@ class Agent
     @provider = _build_provider(config[:model], config[:provider])
     @context = {}
     @verbose, @log, @debug = config.values_at(:verbose, :log, :debug)
-    @max_generation_attempts = _validate_max_generation_attempts(config[:max_generation_attempts])
-    @provider_timeout_seconds = _validate_provider_timeout_seconds(config[:provider_timeout_seconds])
-    @delegation_budget = _validate_delegation_budget(config[:delegation_budget])
-    @delegation_contract = _normalize_delegation_contract(config[:delegation_contract])
-    @delegation_contract_source = _normalize_delegation_contract_source(
-      config[:delegation_contract_source],
-      @delegation_contract
-    )
+    @max_generation_attempts, @provider_timeout_seconds, @delegation_budget = _resolve_runtime_limits(config)
+    @delegation_contract, @delegation_contract_source = _resolve_delegation_contract(config)
+    @runtime_config = Agent.runtime_config
+    @environment_manager = nil
+    @env_manifest = nil
+    @env_id = nil
     @trace_id = _validate_trace_id(config[:trace_id] || _new_trace_id)
     @log_dir_exists = false
   end
@@ -222,6 +253,20 @@ class Agent
     defaults.merge(options)
   end
 
+  def _resolve_runtime_limits(config)
+    [
+      _validate_max_generation_attempts(config[:max_generation_attempts]),
+      _validate_provider_timeout_seconds(config[:provider_timeout_seconds]),
+      _validate_delegation_budget(config[:delegation_budget])
+    ]
+  end
+
+  def _resolve_delegation_contract(config)
+    contract = _normalize_delegation_contract(config[:delegation_contract])
+    source = _normalize_delegation_contract_source(config[:delegation_contract_source], contract)
+    [contract, source]
+  end
+
   # Picks the right provider based on model name or explicit hint.
   def _build_provider(model, hint)
     kind = hint || (model.match?(OPENAI_MODEL_PATTERN) ? :openai : :anthropic)
@@ -277,7 +322,7 @@ class Agent
     warn "[AGENT LOG ERROR #{@role}.#{log_context[:method_name]}] #{e.class}: #{e.message}" if @debug
   end
 
-  def _generate_code_with_retry(method_name, system_prompt, user_prompt)
+  def _generate_program_with_retry(method_name, system_prompt, user_prompt)
     last_error = nil
 
     @max_generation_attempts.times do |attempt|
@@ -286,15 +331,15 @@ class Agent
       attempt_user_prompt = _retry_user_prompt(user_prompt, attempt_number, last_error)
 
       begin
-        code = @provider.generate_code(
+        payload = @provider.generate_program(
           model: @model_name,
           system_prompt: system_prompt,
           user_prompt: attempt_user_prompt,
           tool_schema: _tool_schema,
           timeout_seconds: @provider_timeout_seconds
         )
-        _validate_generated_code!(method_name, code)
-        return [code, attempt_number]
+        program = GeneratedProgram.from_provider_payload!(method_name: method_name, payload: payload)
+        return [program, attempt_number]
       rescue ProviderError => e
         last_error = e
       rescue StandardError => e
@@ -309,7 +354,7 @@ class Agent
       )
     end
 
-    raise last_error || ProviderError.new("Provider failed to generate code for #{@role}.#{method_name}")
+    raise last_error || ProviderError.new("Provider failed to generate program for #{@role}.#{method_name}")
   end
 
   def _retry_user_prompt(base_user_prompt, attempt_number, last_error)
@@ -320,8 +365,9 @@ class Agent
 
       IMPORTANT: Previous generation failed (#{last_error&.message || "invalid provider output"}).
       Retry #{attempt_number}/#{@max_generation_attempts}.
-      You MUST return non-empty Ruby code in the execute_code tool's `code` field.
-      The code MUST assign `result` and MUST NOT be blank.
+      You MUST return a valid GeneratedProgram payload in the execute_code tool.
+      The payload MUST contain non-empty `code` and optional `dependencies` array.
+      The `code` MUST assign `result` and MUST NOT be blank.
       If unavailable capability is the blocker, do NOT recurse via delegation.
       Return a typed non-retriable error outcome with error_type "unsupported_capability".
     PROMPT
@@ -365,21 +411,6 @@ class Agent
     raise ArgumentError, "trace_id must be a non-empty String"
   end
 
-  def _validate_generated_code!(method_name, code)
-    return if code.is_a?(String) && !code.strip.empty?
-
-    detail =
-      if code.nil?
-        "provider returned nil `code`"
-      elsif !code.is_a?(String)
-        "provider returned #{code.class} for `code`"
-      else
-        "provider returned blank `code`"
-      end
-
-    raise InvalidCodeError, "Provider returned invalid code for #{@role}.#{method_name} (#{detail}; expected non-empty String)"
-  end
-
   def _normalize_provider_error(method_name, error)
     return TimeoutError.new("Provider timeout in #{@role}.#{method_name}: #{error.message}") if _timeout_error?(error)
 
@@ -395,16 +426,8 @@ class Agent
   end
 
   def _error_outcome_for(method_name, error)
-    error_type =
-      case error
-      when BudgetExceededError then "budget_exceeded"
-      when TimeoutError then "timeout"
-      when InvalidCodeError then "invalid_code"
-      when ProviderError then "provider"
-      else "execution"
-      end
-
-    retriable = %w[timeout provider invalid_code].include?(error_type)
+    error_type = ERROR_TYPE_BY_CLASS.find { |klass, _| error.is_a?(klass) }&.last || "execution"
+    retriable = RETRIABLE_ERROR_TYPES.include?(error_type)
     Outcome.error(
       error_type: error_type,
       error_message: error.message,
@@ -502,37 +525,42 @@ class Agent
 
   def _run_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
     started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    code = nil
-    generation_attempt = 0
-    error = nil
-    outcome = nil
+    state = _initial_dynamic_call_state
 
-    code, generation_attempt = _generate_code_with_retry(name, system_prompt, user_prompt) do |attempt_number|
-      generation_attempt = attempt_number
+    generated_program, state[:generation_attempt] = _generate_program_with_retry(name, system_prompt, user_prompt) do |attempt_number|
+      state[:generation_attempt] = attempt_number
     end
-    _print_generated_code(name, code) if @verbose
-    result = _execute_code(code, name, *args, **kwargs)
-    outcome = result.is_a?(Outcome) ? result : Outcome.ok(value: result, specialist_role: @role, method_name: name)
-    outcome
+    _capture_generated_program_state!(state, generated_program)
+    environment_info = _prepare_dependency_environment!(
+      method_name: name,
+      normalized_dependencies: state[:normalized_dependencies]
+    )
+    _capture_environment_state!(state, environment_info)
+    state[:outcome] = _execute_generated_program(name, state[:code], args, kwargs)
+    state[:outcome]
   rescue ProviderError, ExecutionError, BudgetExceededError => e
-    error = e
-    outcome = _error_outcome_for(name, e)
-    outcome
+    state[:error] = e
+    state[:outcome] = _error_outcome_for(name, e)
+    state[:outcome]
   ensure
     duration_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
-    _log_call(
+    _log_dynamic_call(
       method_name: name,
       args: args,
       kwargs: kwargs,
-      code: code,
       duration_ms: duration_ms,
-      generation_attempt: generation_attempt,
       system_prompt: system_prompt,
       user_prompt: user_prompt,
-      outcome: outcome,
-      error: error,
-      call_context: call_context
+      call_context: call_context,
+      state: state
     )
+  end
+
+  def _execute_generated_program(name, code, args, kwargs)
+    _print_generated_code(name, code) if @verbose
+
+    result = _execute_code(code, name, *args, **kwargs)
+    result.is_a?(Outcome) ? result : Outcome.ok(value: result, specialist_role: @role, method_name: name)
   end
 
   def _print_generated_code(name, code)

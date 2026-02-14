@@ -7,11 +7,13 @@ class Agent
   #
   # Each provider wraps a single SDK and exposes one method:
   #
-  #   generate_code(model:, system_prompt:, user_prompt:, tool_schema:) → String
+  #   generate_program(model:, system_prompt:, user_prompt:, tool_schema:) → Hash
   #
-  # The returned string is Ruby code that will be eval'd in the Agent
-  # object's binding. Both providers force structured output so the LLM
-  # returns JSON with a "code" key — they just use different mechanisms:
+  # The returned hash contains:
+  #   - code: Ruby code to eval in the Agent binding
+  #   - dependencies: optional dependency declarations
+  #
+  # Both providers force structured output through provider-specific APIs:
   #
   #   Anthropic: tool_use with tool_choice (forces a specific tool call)
   #   OpenAI:    Responses API with json_schema structured output
@@ -28,9 +30,9 @@ class Agent
         raise LoadError, 'gem "anthropic" is required for Claude models. Add it to your Gemfile.'
       end
 
-      # Forces a tool_use response via tool_choice, then extracts the
-      # "code" field from the tool's input JSON.
-      def generate_code(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
+      # Forces a tool_use response via tool_choice, then returns the tool
+      # input object for runtime-side validation.
+      def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
         params = {
           model: model,
           max_tokens: 2048,
@@ -45,11 +47,7 @@ class Agent
         tool_block = message.content.find { |block| block.type == :tool_use }
         raise "No tool_use block in LLM response" unless tool_block
 
-        code = tool_block.input["code"] || tool_block.input[:code]
-        return code if code
-
-        input_keys = tool_block.input.respond_to?(:keys) ? tool_block.input.keys.inspect : "unknown"
-        raise "Tool response missing `code` field (input keys: #{input_keys})"
+        tool_block.input
       end
     end
 
@@ -65,7 +63,7 @@ class Agent
       # guarantee the response is valid JSON matching our schema.
       # The response may contain reasoning items (chain-of-thought)
       # before the message — we skip those and find the message output.
-      def generate_code(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
+      def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
         _ = timeout_seconds
         response = @client.responses.create(
           model: model,
@@ -86,7 +84,7 @@ class Agent
         text_content = output_message&.content&.first
         raise "No output in OpenAI response" unless text_content
 
-        JSON.parse(text_content.text)["code"]
+        JSON.parse(text_content.text)
       end
     end
   end

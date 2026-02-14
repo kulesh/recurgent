@@ -1,6 +1,6 @@
 # ADR 0010: Dependency-Aware Generated Programs and Environment Contract v1
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-02-14
 
 ## Context

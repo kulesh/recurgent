@@ -9,10 +9,25 @@ class Agent
   def _tool_schema
     {
       name: "execute_code",
-      description: "Provide Ruby code to execute",
+      description: "Provide Ruby code and dependency declarations",
       input_schema: {
         type: "object",
-        properties: { code: { type: "string", description: "Ruby code to execute" } },
+        properties: {
+          code: { type: "string", description: "Ruby code to execute" },
+          dependencies: {
+            type: "array",
+            description: "Optional gem dependencies required by the generated code",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string", description: "Gem name" },
+                version: { type: "string", description: "Version constraint (optional)" }
+              },
+              required: ["name"],
+              additionalProperties: false
+            }
+          }
+        },
         required: ["code"],
         additionalProperties: false
       }
@@ -30,11 +45,14 @@ class Agent
       #{contract_guidance}
 
       Rules:
-      - Always respond with valid Ruby code via the execute_code tool
+      - Always respond with valid GeneratedProgram payload via the execute_code tool
+      - The payload MUST include `code` and MAY include `dependencies`
       - Implement exactly what the user expects - be helpful and predictable
       - You can access and modify context to store persistent data
       - Make the object behave naturally as a #{@role} would
       - You may require any Ruby standard library (net/http, json, date, socket, etc.) but NOT external gems
+      - If your design would need non-stdlib gems, declare each one in `dependencies` and fail with unsupported_capability
+      - Keep `dependencies` minimal; do not speculate
       - Set the 'result' variable to the raw domain value you want to return (runtime wraps it in Outcome)
       - Do NOT use 'return' statements - just set 'result'
       - Capability boundaries:
@@ -71,6 +89,7 @@ class Agent
     action_desc = "Someone called '#{name}' with args #{args.inspect} and kwargs #{kwargs.inspect}"
     contract_guidance = _delegation_contract_prompt
     generality_guidance = _task_adjacent_generality_prompt
+    capability_guidance = _capability_constraints_user_prompt
 
     <<~PROMPT
       #{action_desc}
@@ -81,10 +100,9 @@ class Agent
       What Ruby code should be executed? Remember:
       - You're a #{@role}, so implement appropriate behavior
       - Store persistent data in context (a Hash with symbol keys, e.g. context[:value])
-      - Use 'result' variable for the raw domain value you want to return
-      - You may require any Ruby standard library (net/http, json, date, socket, etc.) but NOT external gems
-      - Delegation cannot add new runtime capabilities. Child specialists have the same limits.
-      - If the task needs unavailable capability, fail fast with typed non-retriable error outcome.
+      - Return a GeneratedProgram payload with `code` and optional `dependencies`
+      - Use 'result' variable for the raw domain value you want to return inside `code`
+      #{capability_guidance}
       #{generality_guidance}
 
       For method calls like 'sum', just do the operation:
@@ -124,6 +142,15 @@ class Agent
     PROMPT
   end
 
+  def _capability_constraints_user_prompt
+    <<~PROMPT.chomp
+      - You may require any Ruby standard library (net/http, json, date, socket, etc.) but NOT external gems
+      - If non-stdlib gems are required, declare them in `dependencies` (name + optional version constraint) and fail with unsupported_capability
+      - Delegation cannot add new runtime capabilities. Child specialists have the same limits.
+      - If the task needs unavailable capability, fail fast with typed non-retriable error outcome.
+    PROMPT
+  end
+
   def _task_adjacent_generality_prompt
     <<~PROMPT.chomp
       - When creating specialists/methods, prefer task-adjacent reusable interfaces:
@@ -146,10 +173,6 @@ class Agent
     {
       timestamp: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S.%3NZ"),
       runtime: Agent::RUNTIME_NAME,
-      trace_id: log_context[:call_context]&.fetch(:trace_id, nil),
-      call_id: log_context[:call_context]&.fetch(:call_id, nil),
-      parent_call_id: log_context[:call_context]&.fetch(:parent_call_id, nil),
-      depth: log_context[:call_context]&.fetch(:depth, nil),
       role: @role,
       model: @model_name,
       method: log_context[:method_name],
@@ -157,8 +180,29 @@ class Agent
       kwargs: log_context[:kwargs],
       contract_source: @delegation_contract_source,
       code: log_context[:code],
+      program_dependencies: log_context[:program_dependencies],
+      normalized_dependencies: log_context[:normalized_dependencies],
       duration_ms: log_context[:duration_ms].round(1),
       generation_attempt: log_context[:generation_attempt]
+    }.merge(_trace_log_fields(log_context)).merge(_environment_log_fields(log_context))
+  end
+
+  def _trace_log_fields(log_context)
+    {
+      trace_id: log_context[:call_context]&.fetch(:trace_id, nil),
+      call_id: log_context[:call_context]&.fetch(:call_id, nil),
+      parent_call_id: log_context[:call_context]&.fetch(:parent_call_id, nil),
+      depth: log_context[:call_context]&.fetch(:depth, nil)
+    }
+  end
+
+  def _environment_log_fields(log_context)
+    {
+      env_id: log_context[:env_id],
+      environment_cache_hit: log_context[:environment_cache_hit],
+      env_prepare_ms: log_context[:env_prepare_ms],
+      env_resolve_ms: log_context[:env_resolve_ms],
+      env_install_ms: log_context[:env_install_ms]
     }
   end
 

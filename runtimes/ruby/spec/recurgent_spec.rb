@@ -10,14 +10,26 @@ RSpec.describe Agent do
   before do
     allow(Agent::Providers::Anthropic).to receive(:new).and_return(mock_provider)
     allow(Agent).to receive(:default_log_path).and_return(false)
+    Agent.reset_runtime_config!
   end
 
-  def stub_llm_response(code)
-    allow(mock_provider).to receive(:generate_code).and_return(code)
+  def program_payload(code:, dependencies: nil)
+    payload = { code: code }
+    payload[:dependencies] = dependencies unless dependencies.nil?
+    payload
   end
 
-  def expect_llm_call_with(code:, **matchers)
-    expect(mock_provider).to receive(:generate_code).with(hash_including(**matchers)).and_return(code)
+  def stub_llm_response(code, dependencies: nil)
+    allow(mock_provider).to receive(:generate_program).and_return(
+      program_payload(code: code, dependencies: dependencies)
+    )
+  end
+
+  def expect_llm_call_with(code:, dependencies: nil, **matchers)
+    expect(mock_provider)
+      .to receive(:generate_program)
+      .with(hash_including(**matchers))
+      .and_return(program_payload(code: code, dependencies: dependencies))
   end
 
   def expect_ok_outcome(outcome, value:)
@@ -278,7 +290,7 @@ RSpec.describe Agent do
       stub_llm_response("result = nil")
       g.value = 5
       expect(g.instance_variable_get(:@context)[:value]).to eq(5)
-      expect(mock_provider).not_to have_received(:generate_code)
+      expect(mock_provider).not_to have_received(:generate_program)
     end
 
     it "handles complex values" do
@@ -322,7 +334,7 @@ RSpec.describe Agent do
 
     it "returns provider error outcome on provider failure" do
       g = described_class.new("calculator")
-      allow(mock_provider).to receive(:generate_code).and_raise(StandardError, "API error")
+      allow(mock_provider).to receive(:generate_program).and_raise(StandardError, "API error")
       expect_error_outcome(g.increment, type: "provider", retriable: true)
     end
 
@@ -338,54 +350,186 @@ RSpec.describe Agent do
       expect_error_outcome(g.increment, type: "invalid_code", retriable: true)
     end
 
+    it "returns invalid_dependency_manifest outcome when dependencies is not an array" do
+      g = described_class.new("calculator")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1", dependencies: "nokogiri")
+      )
+
+      expect_error_outcome(g.increment, type: "invalid_dependency_manifest", retriable: false)
+    end
+
+    it "returns invalid_dependency_manifest outcome on conflicting duplicate gems" do
+      g = described_class.new("calculator")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: "result = 1",
+          dependencies: [
+            { name: "nokogiri", version: "~> 1.16" },
+            { name: "Nokogiri", version: "~> 1.17" }
+          ]
+        )
+      )
+
+      expect_error_outcome(g.increment, type: "invalid_dependency_manifest", retriable: false)
+    end
+
     it "retries when provider returns nil code and succeeds on next attempt" do
       g = described_class.new("calculator")
-      allow(mock_provider).to receive(:generate_code).and_return(nil, "result = 42")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: nil),
+        program_payload(code: "result = 42")
+      )
 
       expect_ok_outcome(g.answer, value: 42)
-      expect(mock_provider).to have_received(:generate_code).twice
+      expect(mock_provider).to have_received(:generate_program).twice
     end
 
     it "adds corrective retry instructions after an invalid provider payload" do
       g = described_class.new("calculator", max_generation_attempts: 2)
       prompts = []
-      allow(mock_provider).to receive(:generate_code) do |payload|
+      allow(mock_provider).to receive(:generate_program) do |payload|
         prompts << payload.fetch(:user_prompt)
-        prompts.length == 1 ? nil : "result = 42"
+        prompts.length == 1 ? program_payload(code: nil) : program_payload(code: "result = 42")
       end
 
       expect_ok_outcome(g.answer, value: 42)
       expect(prompts.length).to eq(2)
       expect(prompts.first).not_to include("IMPORTANT: Previous generation failed")
       expect(prompts.last).to include("IMPORTANT: Previous generation failed")
-      expect(prompts.last).to include("You MUST return non-empty Ruby code")
+      expect(prompts.last).to include("payload MUST contain non-empty `code`")
       expect(prompts.last).to include("error_type \"unsupported_capability\"")
     end
 
     it "returns invalid_code outcome after retry budget is exhausted" do
       g = described_class.new("calculator", max_generation_attempts: 2)
-      allow(mock_provider).to receive(:generate_code).and_return(nil, nil)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: nil),
+        program_payload(code: nil)
+      )
 
       expect_error_outcome(g.answer, type: "invalid_code", retriable: true)
-      expect(mock_provider).to have_received(:generate_code).twice
+      expect(mock_provider).to have_received(:generate_program).twice
     end
 
     it "passes default provider timeout to provider calls" do
       g = described_class.new("calculator")
-      expect(mock_provider).to receive(:generate_code).with(hash_including(timeout_seconds: 120.0)).and_return("result = 1")
+      expect(mock_provider).to receive(:generate_program).with(hash_including(timeout_seconds: 120.0))
+                                                         .and_return(program_payload(code: "result = 1"))
       expect_ok_outcome(g.answer, value: 1)
     end
 
     it "passes custom provider timeout to provider calls" do
       g = described_class.new("calculator", provider_timeout_seconds: 15)
-      expect(mock_provider).to receive(:generate_code).with(hash_including(timeout_seconds: 15)).and_return("result = 1")
+      expect(mock_provider).to receive(:generate_program).with(hash_including(timeout_seconds: 15))
+                                                         .and_return(program_payload(code: "result = 1"))
       expect_ok_outcome(g.answer, value: 1)
     end
 
     it "classifies timeout failures as timeout outcomes" do
       g = described_class.new("calculator")
-      allow(mock_provider).to receive(:generate_code).and_raise(Timeout::Error, "execution expired")
+      allow(mock_provider).to receive(:generate_program).and_raise(Timeout::Error, "execution expired")
       expect_error_outcome(g.answer, type: "timeout", retriable: true)
+    end
+  end
+
+  describe "dependency environment behavior" do
+    let(:env_manager) { instance_double(Agent::EnvironmentManager) }
+
+    before do
+      allow(env_manager).to receive(:ensure_environment!) do |manifest|
+        {
+          env_id: "env-#{manifest.map { |dep| dep[:name] }.join("-")}",
+          env_dir: "/tmp/recurgent-env",
+          environment_cache_hit: false,
+          env_prepare_ms: 10.5,
+          env_resolve_ms: 5.0,
+          env_install_ms: 4.5
+        }
+      end
+    end
+
+    it "supports additive dependency manifest growth across calls" do
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_activate_environment!).and_return(nil)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }]),
+        program_payload(
+          code: "result = 2",
+          dependencies: [
+            { name: "nokogiri", version: "~> 1.16" },
+            { name: "httparty" }
+          ]
+        ),
+        program_payload(code: "result = 3", dependencies: [])
+      )
+
+      expect_ok_outcome(g.step_one, value: 1)
+      expect_ok_outcome(g.step_two, value: 2)
+      expect_ok_outcome(g.step_three, value: 3)
+      expect(env_manager).to have_received(:ensure_environment!).with(
+        [{ name: "nokogiri", version: "~> 1.16" }]
+      ).once
+      expect(env_manager).to have_received(:ensure_environment!).with(
+        [
+          { name: "httparty", version: ">= 0" },
+          { name: "nokogiri", version: "~> 1.16" }
+        ]
+      ).twice
+    end
+
+    it "returns dependency_manifest_incompatible for non-additive manifest changes" do
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_activate_environment!).and_return(nil)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }]),
+        program_payload(code: "result = 2", dependencies: [{ name: "nokogiri", version: "~> 1.17" }])
+      )
+
+      expect_ok_outcome(g.step_one, value: 1)
+      expect_error_outcome(g.step_two, type: "dependency_manifest_incompatible", retriable: false)
+      expect(env_manager).to have_received(:ensure_environment!).once
+    end
+
+    it "enforces allowed_gems policy before materialization" do
+      Agent.configure_runtime(allowed_gems: ["httparty"])
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_activate_environment!).and_return(nil)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }])
+      )
+
+      expect_error_outcome(g.step_one, type: "dependency_policy_violation", retriable: false)
+      expect(env_manager).not_to have_received(:ensure_environment!)
+    end
+
+    it "enforces blocked_gems policy before materialization" do
+      Agent.configure_runtime(blocked_gems: ["nokogiri"])
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_activate_environment!).and_return(nil)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }])
+      )
+
+      expect_error_outcome(g.step_one, type: "dependency_policy_violation", retriable: false)
+      expect(env_manager).not_to have_received(:ensure_environment!)
+    end
+
+    it "enforces internal_only source mode policy before materialization" do
+      Agent.configure_runtime(source_mode: "internal_only", gem_sources: ["https://rubygems.org"])
+      g = described_class.new("calculator")
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_activate_environment!).and_return(nil)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1", dependencies: [{ name: "nokogiri", version: "~> 1.16" }])
+      )
+
+      expect_error_outcome(g.step_one, type: "dependency_policy_violation", retriable: false)
+      expect(env_manager).not_to have_received(:ensure_environment!)
     end
   end
 
@@ -402,21 +546,21 @@ RSpec.describe Agent do
     end
 
     it "supports recursive calls where generated code uses Agent" do
-      allow(mock_provider).to receive(:generate_code).and_return(
-        "helper = Agent.for(\"calculator\"); result = helper.add(2, 3)",
-        "result = args[0] + args[1]"
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "helper = Agent.for(\"calculator\"); result = helper.add(2, 3)"),
+        program_payload(code: "result = args[0] + args[1]")
       )
 
       g = described_class.new("delegator")
       expect_ok_outcome(g.compute, value: 5)
-      expect(mock_provider).to have_received(:generate_code).twice
+      expect(mock_provider).to have_received(:generate_program).twice
     end
 
     it "propagates error outcomes from delegated child calls" do
-      allow(mock_provider).to receive(:generate_code).and_return(
-        "helper = Agent.for(\"child\"); result = helper.respond('x')",
-        nil,
-        nil
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "helper = Agent.for(\"child\"); result = helper.respond('x')"),
+        program_payload(code: nil),
+        program_payload(code: nil)
       )
 
       g = described_class.new("delegator")
@@ -478,7 +622,7 @@ RSpec.describe Agent do
 
     it "returns inspect fallback on API failure" do
       g = described_class.new("calculator")
-      allow(mock_provider).to receive(:generate_code).and_raise(StandardError, "API error")
+      allow(mock_provider).to receive(:generate_program).and_raise(StandardError, "API error")
       expect(g.to_s).to eq("<Agent(calculator) context=[]>")
     end
   end
@@ -654,7 +798,10 @@ RSpec.describe Agent do
 
     it "logs generation_attempt as retry count when provider succeeds on second attempt" do
       g = described_class.new("calculator", log: log_path, max_generation_attempts: 3)
-      allow(mock_provider).to receive(:generate_code).and_return(nil, "result = 7")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        nil,
+        program_payload(code: "result = 7")
+      )
 
       expect_ok_outcome(g.answer, value: 7)
 
@@ -724,9 +871,11 @@ RSpec.describe Agent do
 
     it "logs parent-child trace linkage for delegated calls" do
       g = described_class.new("delegator", log: log_path)
-      allow(mock_provider).to receive(:generate_code).and_return(
-        'specialist = delegate("calculator"); child = specialist.add(2, 3); result = child.ok? ? child.value : child.error_type',
-        "result = args[0] + args[1]"
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: 'specialist = delegate("calculator"); child = specialist.add(2, 3); result = child.ok? ? child.value : child.error_type'
+        ),
+        program_payload(code: "result = args[0] + args[1]")
       )
 
       expect_ok_outcome(g.compute, value: 5)
@@ -745,7 +894,7 @@ RSpec.describe Agent do
 
     it "logs generation_attempt when provider retries are exhausted" do
       g = described_class.new("calculator", log: log_path, max_generation_attempts: 2)
-      allow(mock_provider).to receive(:generate_code).and_return(nil, nil)
+      allow(mock_provider).to receive(:generate_program).and_return(nil, nil)
 
       expect_error_outcome(g.answer, type: "invalid_code", retriable: true)
 
@@ -753,6 +902,53 @@ RSpec.describe Agent do
       expect(entry["generation_attempt"]).to eq(2)
       expect(entry["error_class"]).to eq("Agent::InvalidCodeError")
       expect(entry["outcome_error_type"]).to eq("invalid_code")
+    end
+
+    it "logs program and normalized dependencies for generated programs" do
+      g = described_class.new("calculator", log: log_path)
+      env_manager = instance_double(Agent::EnvironmentManager)
+      allow(g).to receive(:_environment_manager).and_return(env_manager)
+      allow(g).to receive(:_activate_environment!).and_return(nil)
+      allow(env_manager).to receive(:ensure_environment!).and_return(
+        {
+          env_id: "env-httparty-nokogiri",
+          env_dir: "/tmp/recurgent-env",
+          environment_cache_hit: false,
+          env_prepare_ms: 12.1,
+          env_resolve_ms: 5.2,
+          env_install_ms: 6.9
+        }
+      )
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: "result = 1",
+          dependencies: [
+            { name: "Nokogiri", version: "~> 1.16" },
+            { name: "httparty" }
+          ]
+        )
+      )
+
+      expect_ok_outcome(g.answer, value: 1)
+
+      entry = JSON.parse(File.readlines(log_path).first)
+      expect(entry["program_dependencies"]).to eq(
+        [
+          { "name" => "Nokogiri", "version" => "~> 1.16" },
+          { "name" => "httparty" }
+        ]
+      )
+      expect(entry["normalized_dependencies"]).to eq(
+        [
+          { "name" => "httparty", "version" => ">= 0" },
+          { "name" => "nokogiri", "version" => "~> 1.16" }
+        ]
+      )
+      expect(entry["env_id"]).to eq("env-httparty-nokogiri")
+      expect(entry["environment_cache_hit"]).to eq(false)
+      expect(entry["env_prepare_ms"]).to eq(12.1)
+      expect(entry["env_resolve_ms"]).to eq(5.2)
+      expect(entry["env_install_ms"]).to eq(6.9)
     end
   end
 
@@ -778,13 +974,13 @@ RSpec.describe Agent do
       allow(mock_messages).to receive(:create).and_return(message)
 
       provider = described_class.new
-      code = provider.generate_code(
+      payload = provider.generate_program(
         model: "claude-sonnet-4-5-20250929",
         system_prompt: "test",
         user_prompt: "test",
         tool_schema: { name: "execute_code", description: "test", input_schema: {} }
       )
-      expect(code).to eq("result = 42")
+      expect(payload).to eq({ "code" => "result = 42" })
     end
 
     it "passes request timeout to Anthropic request options when configured" do
@@ -793,7 +989,7 @@ RSpec.describe Agent do
       expect(mock_messages).to receive(:create).with(hash_including(request_options: { timeout: 12.5 })).and_return(message)
 
       provider = described_class.new
-      provider.generate_code(
+      provider.generate_program(
         model: "claude-sonnet-4-5-20250929",
         system_prompt: "test",
         user_prompt: "test",
@@ -802,20 +998,19 @@ RSpec.describe Agent do
       )
     end
 
-    it "raises when tool response omits the code field" do
+    it "returns the tool payload when tool response omits the code field" do
       tool_block = double("ToolUseBlock", type: :tool_use, input: { "not_code" => "x" })
       message = double("Message", content: [tool_block])
       allow(mock_messages).to receive(:create).and_return(message)
 
       provider = described_class.new
-      expect do
-        provider.generate_code(
-          model: "claude-sonnet-4-5-20250929",
-          system_prompt: "test",
-          user_prompt: "test",
-          tool_schema: { name: "execute_code", description: "test", input_schema: {} }
-        )
-      end.to raise_error(/missing `code` field/)
+      payload = provider.generate_program(
+        model: "claude-sonnet-4-5-20250929",
+        system_prompt: "test",
+        user_prompt: "test",
+        tool_schema: { name: "execute_code", description: "test", input_schema: {} }
+      )
+      expect(payload).to eq({ "not_code" => "x" })
     end
 
     it "raises when no tool_use block in response" do
@@ -825,7 +1020,7 @@ RSpec.describe Agent do
 
       provider = described_class.new
       expect do
-        provider.generate_code(
+        provider.generate_program(
           model: "claude-sonnet-4-5-20250929",
           system_prompt: "test",
           user_prompt: "test",
@@ -858,13 +1053,13 @@ RSpec.describe Agent do
       allow(mock_responses).to receive(:create).and_return(response)
 
       provider = described_class.new
-      code = provider.generate_code(
+      payload = provider.generate_program(
         model: "gpt-4o",
         system_prompt: "test",
         user_prompt: "test",
         tool_schema: { name: "execute_code", description: "test", input_schema: {} }
       )
-      expect(code).to eq("result = 42")
+      expect(payload).to eq({ "code" => "result = 42" })
     end
 
     it "raises when no output in response" do
@@ -873,7 +1068,7 @@ RSpec.describe Agent do
 
       provider = described_class.new
       expect do
-        provider.generate_code(
+        provider.generate_program(
           model: "gpt-4o",
           system_prompt: "test",
           user_prompt: "test",
@@ -905,7 +1100,7 @@ RSpec.describe Agent do
       ).and_return(response)
 
       provider = described_class.new
-      provider.generate_code(
+      provider.generate_program(
         model: "gpt-4o",
         system_prompt: "test",
         user_prompt: "test",
