@@ -1,0 +1,231 @@
+version: 1
+scenarios:
+  - id: coordination.agent_for_constructs_live_instance
+    verifies:
+      - Agent.for returns a live Agent instance
+      - agent role is preserved
+    steps:
+      - op: construct
+        as: root
+        role: calculator
+      - op: assert_agent
+        target: root
+      - op: assert_role
+        target: root
+        equals: calculator
+
+  - id: coordination.remember_and_memory_roundtrip
+    verifies:
+      - remember writes memory entries
+      - memory exposes written values
+      - remember returns same instance
+    steps:
+      - op: construct
+        as: root
+        role: calculator
+      - op: remember
+        target: root
+        entries:
+          current_value: 10
+          mode: scientific
+      - op: assert_memory_includes
+        target: root
+        entries:
+          current_value: 10
+          mode: scientific
+      - op: assert_same_instance_returned
+        target: root
+        from_op: remember
+
+  - id: dynamic.setter_bypasses_provider
+    verifies:
+      - setter writes memory directly
+      - provider generation is not called for setter
+    steps:
+      - op: construct
+        as: root
+        role: calculator
+      - op: set
+        target: root
+        key: value
+        value: 5
+      - op: assert_memory_equals
+        target: root
+        key: value
+        value: 5
+      - op: assert_provider_calls
+        equals: 0
+
+  - id: dynamic.method_call_with_args_and_kwargs
+    verifies:
+      - positional args are available to generated program
+      - named args are available to generated program
+      - memory mutation persists across calls
+    provider_plan:
+      increment: increment_value_by_arg0
+      set: set_value_from_amount_kwarg
+    steps:
+      - op: construct
+        as: root
+        role: calculator
+      - op: call
+        target: root
+        method: set
+        kwargs:
+          amount: 10
+        expect_outcome:
+          status: ok
+          value: 10
+      - op: call
+        target: root
+        method: increment
+        args: [3]
+        expect_outcome:
+          status: ok
+          value: 13
+      - op: assert_memory_equals
+        target: root
+        key: value
+        value: 13
+
+  - id: provider.invalid_payload_retried_then_success
+    verifies:
+      - invalid provider payload triggers retry
+      - success after retry returns expected value
+      - generation_attempt reflects successful attempt index
+    config:
+      max_generation_attempts: 2
+      logging: enabled
+    provider_plan:
+      answer:
+        sequence: [invalid_nil, return_42]
+    steps:
+      - op: construct
+        as: root
+        role: calculator
+      - op: call
+        target: root
+        method: answer
+        expect_outcome:
+          status: ok
+          value: 42
+      - op: assert_provider_calls_for_method
+        method: answer
+        equals: 2
+      - op: assert_log_field_equals
+        field: generation_attempt
+        equals: 2
+
+  - id: provider.invalid_payload_exhausted_returns_invalid_code_outcome
+    verifies:
+      - retry budget exhaustion returns typed invalid_code outcome
+    config:
+      max_generation_attempts: 2
+    provider_plan:
+      answer:
+        sequence: [invalid_nil, invalid_blank]
+    steps:
+      - op: construct
+        as: root
+        role: calculator
+      - op: call
+        target: root
+        method: answer
+        expect_outcome:
+          status: error
+          error_type: invalid_code
+
+  - id: execution.generated_program_failure_returns_execution_outcome
+    verifies:
+      - execution-time failures are typed as execution outcomes
+    provider_plan:
+      explode: raise_boom
+    steps:
+      - op: construct
+        as: root
+        role: calculator
+      - op: call
+        target: root
+        method: explode
+        expect_outcome:
+          status: error
+          error_type: execution
+
+  - id: delegation.child_agent_call_roundtrip
+    verifies:
+      - generated program can create child agents
+      - child agent methods are live and callable
+    provider_plan:
+      compute: delegate_compute_add_2_3
+      add: add_args_0_1
+    steps:
+      - op: construct
+        as: root
+        role: delegator
+      - op: call
+        target: root
+        method: compute
+        expect_outcome:
+          status: ok
+          value: 5
+      - op: assert_provider_calls
+        equals: 2
+
+  - id: introspection.respond_to_contract
+    verifies:
+      - respond_to true for setter-like names
+      - respond_to true for memory-backed reader after assignment
+      - respond_to false for unknown dynamic methods
+    steps:
+      - op: construct
+        as: root
+        role: calculator
+      - op: assert_respond_to
+        target: root
+        method: value=
+        equals: true
+      - op: set
+        target: root
+        key: value
+        value: 7
+      - op: assert_respond_to
+        target: root
+        method: value
+        equals: true
+      - op: assert_respond_to
+        target: root
+        method: increment
+        equals: false
+
+  - id: logging.default_and_debug_fields
+    verifies:
+      - default log entry fields exist
+      - debug mode adds prompt and memory snapshot fields
+    provider_plan:
+      increment: increment_value_by_arg0
+    steps:
+      - op: construct
+        as: normal
+        role: counter
+        config:
+          logging: enabled
+      - op: call
+        target: normal
+        method: increment
+        args: [1]
+      - op: assert_log_fields_include
+        target: normal
+        fields: [timestamp, role, model, method, args, kwargs, code, duration_ms, generation_attempt, outcome_status]
+      - op: construct
+        as: debug
+        role: counter
+        config:
+          logging: enabled
+          debug: true
+      - op: call
+        target: debug
+        method: increment
+        args: [1]
+      - op: assert_log_fields_include
+        target: debug
+        fields: [system_prompt, user_prompt, context]

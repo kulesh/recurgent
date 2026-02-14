@@ -1,0 +1,26 @@
+version: 1
+programs:
+  - id: return_42
+    semantics: Return numeric value 42.
+
+  - id: increment_value_by_arg0
+    semantics: Increment memory key `value` by positional arg 0, defaulting to 0.
+
+  - id: set_value_from_amount_kwarg
+    semantics: Set memory key `value` from named arg `amount` and return it.
+
+  - id: raise_boom
+    semantics: Raise runtime execution error with message containing "boom".
+
+  - id: delegate_compute_add_2_3
+    semantics: Create child agent with role `calculator` and return child.add(2, 3).
+
+  - id: add_args_0_1
+    semantics: Return positional arg 0 plus positional arg 1.
+
+provider_payloads:
+  - id: invalid_nil
+    semantics: Provider returns null/nil generated program.
+
+  - id: invalid_blank
+    semantics: Provider returns empty or whitespace-only generated program.

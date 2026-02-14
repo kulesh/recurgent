@@ -1,0 +1,30 @@
+Date,Product,Category,Qty,Unit Price,Region,Sales Rep,Notes
+2024-01-15,Widget A,Hardware,10,29.99,North,Alice Chen,
+01/22/2024,Widget B,Hardware,5,49.99,South,Bob Martinez,rush order
+2024-02-03,Service Plan,Services,1,199.00,North,Alice Chen,annual
+Feb 14 2024,Widget A,Hardware,20,29.99,East,,valentine's promo
+2024-02-28,Gadget X,Electronics,3,149.50,West,Carol Davis,
+03/15/2024,Widget B,Hardware,,49.99,North,Alice Chen,qty missing - check warehouse
+2024-03-22,Gadget X,Electronics,7,149.50,South,Bob Martinez,
+2024-04-01,Service Plan,Services,3,199.00,East,Dana Wilson,quarterly plans
+4/18/2024,Widget A,Hardware,15,29.99,North,Alice Chen,
+2024-05-05,Gadget Y,Electronics,2,299.00,West,Carol Davis,new product launch
+2024-05-20,Widget B,Hardware,12,49.99,South,,rep left company
+May 30 2024,Service Plan,Services,2,199.00,North,Alice Chen,
+2024-06-12,Gadget X,Electronics,5,149.50,East,Dana Wilson,
+2024-06-28,Widget A,Hardware,8,29.99,West,Carol Davis,
+07/04/2024,Gadget Y,Electronics,1,299.00,North,Alice Chen,holiday order
+2024-07-19,Widget B,Hardware,6,49.99,South,Bob Martinez,
+2024-08-02,Service Plan,Services,4,199.00,East,Dana Wilson,
+2024-08-15,Gadget X,Electronics,N/A,149.50,West,Carol Davis,demo unit - not a real sale
+Aug 30 2024,Widget A,Hardware,25,29.99,North,Alice Chen,back to school
+2024-09-10,Gadget Y,Electronics,3,299.00,South,Bob Martinez,
+2024-09-25,Widget B,Hardware,9,49.99,East,Dana Wilson,
+2024-10-05,Widget A,Hardware,30,29.99,North,Alice Chen,bulk order
+10/20/2024,Service Plan,Services,5,199.00,West,Carol Davis,
+2024-11-01,Gadget X,Electronics,6, 149.50,South,Bob Martinez,
+11/15/2024,Widget B,Hardware,18,49.99,North,Alice Chen,black friday prep
+2024-11-29,Gadget Y,Electronics,8,299.00,East,Dana Wilson,black friday
+2024-12-10,Widget A,Hardware,12,29.99,West,Carol Davis,
+Dec 20 2024,Service Plan,Services,2,199.00,North,Alice Chen,year-end renewal
+2024-12-30,Gadget X,Electronics,4,149.50,South,Bob Martinez,

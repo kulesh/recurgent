@@ -1,0 +1,96 @@
+name: PR Compliance
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  compliance:
+    name: Enforce PR template and issue-first policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR body and issue linkage
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || "";
+            const errors = [];
+
+            const requiredHeadings = [
+              "## Linked Issue (Required)",
+              "## Problem and User Value (Required)",
+              "## Solution Summary (Required)",
+              "## Verification (Required)",
+              "## Scope Declaration (Required)",
+              "## Contributor Acknowledgements (Required)"
+            ];
+
+            for (const heading of requiredHeadings) {
+              if (!body.includes(heading)) {
+                errors.push(`Missing required section: ${heading}`);
+              }
+            }
+
+            const requiredChecks = [
+              "I linked an approved issue for this PR.",
+              "I ran relevant tests/lint and reported results above.",
+              "I reviewed every changed line and can explain it.",
+              "I read and agree to follow `CONTRIBUTING.md`.",
+              "I read and agree to follow `CODE_OF_CONDUCT.md`."
+            ];
+
+            for (const item of requiredChecks) {
+              const re = new RegExp(`- \\[[xX]\\] ${item.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}`);
+              if (!re.test(body)) {
+                errors.push(`Unchecked acknowledgement: "${item}"`);
+              }
+            }
+
+            const issueMatches = [...body.matchAll(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)|#(\d+)/gi)];
+            const issueNumbers = [...new Set(issueMatches.map((m) => Number(m[1] || m[2])).filter(Number.isInteger))];
+
+            if (issueNumbers.length === 0) {
+              errors.push("No linked issue found. Use 'Closes #<issue-number>' in the Linked Issue section.");
+            }
+
+            const maintainerAssociations = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
+            const isMaintainer = maintainerAssociations.has(pr.author_association);
+
+            if (!isMaintainer && issueNumbers.length > 0) {
+              let hasApprovedIssue = false;
+              for (const issue_number of issueNumbers) {
+                try {
+                  const issue = await github.rest.issues.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number
+                  });
+                  if (issue.data.pull_request) {
+                    continue;
+                  }
+                  const labels = issue.data.labels.map((l) => (typeof l === "string" ? l : l.name));
+                  if (labels.includes("ready-for-pr") || labels.includes("accepted")) {
+                    hasApprovedIssue = true;
+                    break;
+                  }
+                } catch (error) {
+                  errors.push(`Unable to validate linked issue #${issue_number}: ${error.message}`);
+                }
+              }
+
+              if (!hasApprovedIssue) {
+                errors.push("Linked issue must be maintainer-approved with label 'ready-for-pr' or 'accepted'.");
+              }
+            }
+
+            if (errors.length > 0) {
+              core.setFailed(["PR compliance check failed:", ...errors.map((e) => `- ${e}`)].join("\n"));
+            } else {
+              core.info("PR compliance check passed.");
+            }

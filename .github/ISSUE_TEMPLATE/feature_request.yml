@@ -1,0 +1,38 @@
+name: Feature request
+description: Propose a scoped feature tied to clear user value
+title: "[Feature]: "
+labels:
+  - feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests should be concrete, scoped, and aligned with Recurgent's runtime contract and ubiquitous language.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user/problem is currently blocked?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should change?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else was considered and why rejected?
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact and verification
+      description: How would this be verified and what could regress?
+    validations:
+      required: true

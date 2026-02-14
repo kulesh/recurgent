@@ -1,0 +1,62 @@
+# Documentation Index
+
+## Core Documents
+
+- `docs/onboarding.md` - setup, workflow, quality gates
+- `docs/idea-brief.md` - product vision and design intent
+- `docs/ubiquitous-language.md` - canonical Solver/Specialist vocabulary
+- `docs/tolerant-delegation-interfaces.md` - tolerant delegation design guidance and examples
+- `docs/delegate-vs-for.md` - concrete `delegate(...)` vs `Agent.for(...)` decision guide
+- `docs/delegation-contracts.md` - Phase 1 Solver-authored Specialist contract metadata for both `Agent.for(...)` and `delegate(...)`
+- `docs/observability.md` - mechanistic interpretability via shared log schema and live watcher
+- `docs/recurgent-implementation-plan.md` - phased plan for LLM-native coordination API and naming transition
+- `docs/roadmap.md` - near/mid/long-term roadmap
+- `docs/governance.md` - maintainer governance and decision model
+- `docs/support.md` - support policy and triage expectations
+- `docs/release-process.md` - release process and SemVer policy
+- `docs/open-source-release-checklist.md` - OSS launch readiness and manual GitHub settings checklist
+- `docs/adrs/README.md` - architecture decision index and status model
+- `docs/maintenance.md` - runtime and dependency maintenance policy
+- `CONTRIBUTING.md` - contribution policy and quality gates
+- `CODE_OF_CONDUCT.md` - collaboration and anti-spam behavior policy
+- `SECURITY.md` - vulnerability reporting policy
+- `CHANGELOG.md` - release notes history
+- `specs/contract/README.md` - runtime-agnostic contract package
+- `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
+- `specs/contract/v1/scenarios.yaml` - shared conformance scenarios (v1)
+- `specs/contract/v1/tolerant-delegation-profile.md` - tolerant delegation profile
+- `specs/contract/v1/tolerant-delegation-scenarios.yaml` - tolerant delegation scenarios (v1)
+- `runtimes/ruby/README.md` - Ruby runtime quick reference
+- `runtimes/lua/README.md` - Lua runtime placeholder
+
+## Architecture Overview
+
+The Ruby runtime (`runtimes/ruby`) keeps a narrow architecture:
+
+- `runtimes/ruby/lib/recurgent.rb` - dynamic dispatch, execution, retry, and outcome mapping
+- `runtimes/ruby/lib/recurgent/runtime_helpers.rb` - prompt and logging helpers
+- `runtimes/ruby/lib/recurgent/outcome.rb` - `Agent::Outcome` envelope model
+- `runtimes/ruby/lib/recurgent/providers.rb` - provider adapters (Anthropic/OpenAI)
+- `runtimes/ruby/spec/recurgent_spec.rb` - unit/contract tests
+- `runtimes/ruby/examples/` - executable behavior demonstrations
+
+## Data Flow
+
+```mermaid
+sequenceDiagram
+  participant C as Caller
+  participant A as Agent
+  participant L as LLM Provider
+
+  C->>A: missing_method(args, kwargs)
+  A->>L: generate_code(system_prompt, user_prompt, schema)
+  L-->>A: Ruby code
+  A->>A: eval(code, binding)
+  A-->>C: Outcome
+```
+
+## Documentation Rules
+
+- Put all long-form project docs under `docs/`.
+- Record architecture decisions in `docs/adrs/`.
+- Keep this index updated when adding docs.

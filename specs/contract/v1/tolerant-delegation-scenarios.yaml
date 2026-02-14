@@ -1,0 +1,105 @@
+version: 1
+profile: tolerant_delegation
+scenarios:
+  - id: tolerant.single_delegate_success_returns_ok_outcome
+    verifies:
+      - successful delegation returns ok outcome envelope
+    steps:
+      - op: construct
+        as: solver
+        role: solver
+      - op: tolerant_delegate
+        target: solver
+        specialist_role: calculator
+        method: add
+        args: [2, 3]
+        expect_outcome:
+          status: ok
+          value: 5
+
+  - id: tolerant.provider_failure_returns_error_outcome_and_delegation_continues
+    verifies:
+      - provider failure maps to error outcome
+      - second delegation still executes
+    steps:
+      - op: construct
+        as: solver
+        role: solver
+      - op: tolerant_delegate
+        target: solver
+        specialist_role: analyst_a
+        method: summarize
+        expect_outcome:
+          status: error
+          error_type: provider
+      - op: tolerant_delegate
+        target: solver
+        specialist_role: analyst_b
+        method: summarize
+        expect_outcome:
+          status: ok
+
+  - id: tolerant.invalid_code_maps_to_error_outcome
+    verifies:
+      - invalid provider payload becomes invalid_code outcome
+    steps:
+      - op: construct
+        as: solver
+        role: solver
+      - op: tolerant_delegate
+        target: solver
+        specialist_role: analyst
+        method: summarize
+        expect_outcome:
+          status: error
+          error_type: invalid_code
+
+  - id: tolerant.execution_error_maps_to_error_outcome
+    verifies:
+      - generated program execution failure maps to execution outcome
+    steps:
+      - op: construct
+        as: solver
+        role: solver
+      - op: tolerant_delegate
+        target: solver
+        specialist_role: calculator
+        method: explode
+        expect_outcome:
+          status: error
+          error_type: execution
+
+  - id: tolerant.timeout_maps_to_error_outcome
+    verifies:
+      - bounded provider timeout maps to timeout outcome
+    steps:
+      - op: construct
+        as: solver
+        role: solver
+        config:
+          provider_timeout_seconds: 1
+      - op: tolerant_delegate
+        target: solver
+        specialist_role: slow_specialist
+        method: respond
+        expect_outcome:
+          status: error
+          error_type: timeout
+
+  - id: tolerant.delegation_budget_exceeded_maps_to_error_outcome
+    verifies:
+      - delegation budget exhaustion maps to budget_exceeded outcome
+      - solver can continue synthesis after budget-limited delegate
+    steps:
+      - op: construct
+        as: solver
+        role: solver
+        config:
+          max_delegation_depth: 1
+      - op: tolerant_delegate
+        target: solver
+        specialist_role: recursive_specialist
+        method: respond
+        expect_outcome:
+          status: error
+          error_type: budget_exceeded

@@ -1,0 +1,215 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+
+class RecurgentWatch
+  def initialize(argv)
+    @options = {
+      file: default_log_path,
+      from_start: false,
+      status: nil,
+      role: nil,
+      method: nil,
+      trace_id: nil,
+      show_code: false,
+      stats_every: 25,
+      poll_ms: 300
+    }
+    @argv = argv
+    @position = 0
+    @buffer = +""
+    @stats = Hash.new(0)
+  end
+
+  def run
+    parse_options!
+    puts "Watching #{@options[:file]}"
+    puts "Filters: #{active_filters_summary}"
+
+    loop do
+      path = @options[:file]
+      unless File.exist?(path)
+        sleep_interval
+        next
+      end
+
+      file = File.open(path, "r")
+      begin
+        if @position.zero?
+          @position = @options[:from_start] ? 0 : file.size
+        elsif file.size < @position
+          @position = 0
+        end
+        file.seek(@position)
+        chunk = file.read
+        @position = file.pos
+      ensure
+        file.close
+      end
+
+      process_chunk(chunk) if chunk && !chunk.empty?
+      sleep_interval
+    end
+  rescue Interrupt
+    puts
+    print_stats if @stats[:total].positive?
+    puts "Stopped."
+  end
+
+  private
+
+  def parse_options!
+    OptionParser.new do |opts|
+      opts.banner = "Usage: bin/recurgent-watch [options]"
+
+      opts.on("--file PATH", "Path to JSONL log file") { |v| @options[:file] = v }
+      opts.on("--from-start", "Read existing log contents before following new events") { @options[:from_start] = true }
+      opts.on("--status STATUS", "Filter by outcome status (ok|error)") { |v| @options[:status] = v }
+      opts.on("--role REGEX", "Filter by role regex") { |v| @options[:role] = Regexp.new(v) }
+      opts.on("--method REGEX", "Filter by method regex") { |v| @options[:method] = Regexp.new(v) }
+      opts.on("--trace TRACE_ID", "Filter by trace id") { |v| @options[:trace_id] = v }
+      opts.on("--show-code", "Print generated code snippets") { @options[:show_code] = true }
+      opts.on("--stats-every N", Integer, "Print aggregate stats every N matched events (0 to disable)") { |v| @options[:stats_every] = v }
+      opts.on("--poll-ms N", Integer, "Polling interval in milliseconds (default: 300)") { |v| @options[:poll_ms] = v }
+      opts.on("-h", "--help", "Show this help") do
+        puts opts
+        exit 0
+      end
+    end.parse!(@argv)
+  end
+
+  def default_log_path
+    state_home = ENV.fetch("XDG_STATE_HOME", File.join(Dir.home, ".local", "state"))
+    File.join(state_home, "recurgent", "recurgent.jsonl")
+  end
+
+  def sleep_interval
+    sleep(@options[:poll_ms] / 1000.0)
+  end
+
+  def process_chunk(chunk)
+    @buffer << chunk
+    lines = @buffer.lines
+    if !@buffer.end_with?("\n")
+      @buffer = lines.pop || +""
+    else
+      @buffer.clear
+    end
+
+    lines.each do |line|
+      entry = parse_entry(line)
+      next unless entry
+      next unless include_entry?(entry)
+
+      print_entry(entry)
+      update_stats(entry)
+      maybe_print_stats
+    end
+  end
+
+  def parse_entry(line)
+    JSON.parse(line)
+  rescue JSON::ParserError
+    nil
+  end
+
+  def include_entry?(entry)
+    status = normalized_status(entry)
+    role = entry["role"].to_s
+    method = entry["method"].to_s
+    trace_id = entry["trace_id"].to_s
+
+    return false if @options[:status] && status != @options[:status]
+    return false if @options[:role] && !@options[:role].match?(role)
+    return false if @options[:method] && !@options[:method].match?(method)
+    return false if @options[:trace_id] && trace_id != @options[:trace_id]
+
+    true
+  end
+
+  def normalized_status(entry)
+    raw = entry["outcome_status"]
+    return raw if raw == "ok" || raw == "error"
+    return "error" if entry["error_class"]
+
+    "ok"
+  end
+
+  def print_entry(entry)
+    depth = (entry["depth"] || 0).to_i
+    indent = "  " * depth
+    timestamp = entry["timestamp"] || "-"
+    runtime = entry["runtime"] || "unknown"
+    role = entry["role"] || "unknown"
+    method = entry["method"] || "unknown"
+    status = normalized_status(entry)
+    duration = entry["duration_ms"] ? format("%.1fms", entry["duration_ms"].to_f) : "-"
+    attempt = entry["generation_attempt"] || "-"
+    trace_id = entry["trace_id"] || "-"
+    call_id = entry["call_id"] || "-"
+    parent_call_id = entry["parent_call_id"] || "-"
+
+    puts "#{timestamp} #{runtime} #{indent}#{role}.#{method} status=#{status} duration=#{duration} attempt=#{attempt} trace=#{trace_id} call=#{call_id} parent=#{parent_call_id}"
+
+    return unless status == "error"
+
+    error_type = entry["outcome_error_type"] || entry["error_class"] || "unknown"
+    retriable = entry["outcome_retriable"]
+    error_message = entry["outcome_error_message"] || entry["error_message"] || "-"
+    puts "#{indent}  error_type=#{error_type} retriable=#{retriable} message=#{error_message}"
+
+    print_code(entry, indent) if @options[:show_code]
+  end
+
+  def print_code(entry, indent)
+    code = entry["code"]
+    return if !code || code.empty?
+
+    puts "#{indent}  code:"
+    code.lines.first(12).each do |line|
+      puts "#{indent}    #{line.rstrip}"
+    end
+  end
+
+  def update_stats(entry)
+    status = normalized_status(entry)
+    @stats[:total] += 1
+    @stats[status.to_sym] += 1
+    role = entry["role"] || "unknown"
+    @stats[:"role:#{role}"] += 1
+    error_type = entry["outcome_error_type"] if status == "error"
+    @stats[:"error:#{error_type}"] += 1 if error_type
+  end
+
+  def maybe_print_stats
+    return if @options[:stats_every].to_i <= 0
+    return unless (@stats[:total] % @options[:stats_every]).zero?
+
+    print_stats
+  end
+
+  def print_stats
+    puts "---- STATS total=#{@stats[:total]} ok=#{@stats[:ok]} error=#{@stats[:error]} ----"
+    top_roles = @stats
+      .select { |k, _| k.to_s.start_with?("role:") }
+      .sort_by { |_, count| -count }
+      .first(5)
+    unless top_roles.empty?
+      roles_text = top_roles.map { |key, count| "#{key.to_s.sub('role:', '')}=#{count}" }.join(" ")
+      puts "roles: #{roles_text}"
+    end
+  end
+
+  def active_filters_summary
+    filters = []
+    filters << "status=#{@options[:status]}" if @options[:status]
+    filters << "role=#{@options[:role].inspect}" if @options[:role]
+    filters << "method=#{@options[:method].inspect}" if @options[:method]
+    filters << "trace=#{@options[:trace_id]}" if @options[:trace_id]
+    filters.empty? ? "(none)" : filters.join(", ")
+  end
+end
+
+RecurgentWatch.new(ARGV).run

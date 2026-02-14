@@ -1,0 +1,37 @@
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ruby
+*.gem
+Gemfile.lock
+vendor/
+.bundle/
+
+# Local tooling/state
+.beads/
+.ruby-lsp/
+tmp/
+log/
+coverage/
+
+# Runtime artifacts
+runtimes/ruby/.bundle/
+runtimes/ruby/coverage/
+runtimes/ruby/tmp/
+runtimes/ruby/log/
+runtimes/ruby/article_system_prompts*.pdf
+runtimes/ruby/article_system_prompts*.html
+runtimes/ruby/*-system-prompts-define-the-agent-as-much-as-the-model.md
+
+# Mac
+.DS_Store
