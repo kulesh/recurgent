@@ -196,7 +196,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-14T15:26:11Z
+Last Updated (UTC): 2026-02-14T16:30:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -214,6 +214,7 @@ Last Updated (UTC): 2026-02-14T15:26:11Z
 - `docs/delegate-vs-for.md` - concrete decision rules for delegate vs Agent.for usage
 - `docs/delegation-contracts.md` - Phase 1 Solver-authored Specialist contract fields and behavior
 - `docs/recurgent-implementation-plan.md` - phased implementation plan for LLM-native coordination API and naming transition
+- `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
 - `docs/support.md` - support scope and triage expectations

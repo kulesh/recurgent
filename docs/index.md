@@ -10,6 +10,7 @@
 - `docs/delegation-contracts.md` - Phase 1 Solver-authored Specialist contract metadata for both `Agent.for(...)` and `delegate(...)`
 - `docs/observability.md` - mechanistic interpretability via shared log schema and live watcher
 - `docs/recurgent-implementation-plan.md` - phased plan for LLM-native coordination API and naming transition
+- `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/governance.md` - maintainer governance and decision model
 - `docs/support.md` - support policy and triage expectations

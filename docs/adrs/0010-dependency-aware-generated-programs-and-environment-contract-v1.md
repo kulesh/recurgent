@@ -12,7 +12,7 @@ We want specialists to decide implementation dependencies while keeping Solver l
 Two hard constraints shape the design:
 
 1. Ruby cannot unload activated gems in-process.
-2. Recurgent `context` and `result` currently support arbitrary Ruby objects.
+2. Recurgent `context` and `result` currently support arbitrary Ruby objects in-process.
 
 ## Decision
 
@@ -77,30 +77,43 @@ Normalization algorithm:
 5. Sort by `[name, version]`.
 6. Freeze normalized manifest for deterministic hashing and logging.
 
-### 3. Environment Contract v1
+### 3. Specialist Environment Contract v1 (Monotonic Growth)
 
-Environment contract v1 is specialist-scoped and immutable after first successful execution.
+Environment contract v1 is specialist-scoped and monotonic.
 
 Definitions:
 
 1. `specialist_instance_id`: unique id for each `Agent` instance.
 2. `env_manifest`: normalized dependency manifest attached to specialist instance.
-3. `env_id`: `sha256("ruby:#{RUBY_VERSION}|deps:#{normalized_manifest_json}")`.
+3. `env_id`: deterministic hash identity for one concrete Ruby environment.
 
 Rules:
 
-1. On first successful dynamic call for a specialist:
-   - runtime sets `env_manifest` from `GeneratedProgram.dependencies`.
-   - runtime resolves and materializes environment for `env_id`.
-2. On subsequent calls for same specialist:
-   - if dependencies are empty, runtime reuses stored `env_manifest`.
-   - if dependencies normalize to exactly same `env_manifest`, runtime reuses environment.
-   - otherwise runtime returns `dependency_manifest_changed` error outcome (non-retriable for current specialist instance).
-3. To change dependencies, Solver MUST delegate a new specialist instance.
+1. On first successful call for a specialist:
+   - runtime sets `env_manifest = normalized(dependencies)`.
+2. On subsequent calls:
+   - if `dependencies` is empty, runtime reuses existing `env_manifest`.
+   - else runtime computes `incoming_manifest = normalized(dependencies)` and applies compatibility:
+     - each existing gem constraint in `env_manifest` MUST remain identical in `incoming_manifest`.
+     - gems MAY be added.
+     - existing gems MUST NOT be removed.
+3. If compatible, runtime sets `env_manifest = incoming_manifest` (monotonic growth), recomputes `env_id`, and migrates execution runtime to the new environment.
+4. If incompatible, runtime returns `dependency_manifest_incompatible` (`retriable: false`) with conflict metadata.
 
-This immutability avoids context migration and cross-call environment drift.
+This preserves deterministic replay while allowing specialists to discover dependencies incrementally.
 
-### 4. Environment Materialization
+### 4. Environment Identity (env_id)
+
+`env_id` MUST include platform and engine characteristics:
+
+`sha256("engine:#{RUBY_ENGINE}|ruby:#{RUBY_VERSION}|patchlevel:#{RUBY_PATCHLEVEL}|platform:#{RUBY_PLATFORM}|deps:#{normalized_manifest_json}")`
+
+Rationale:
+
+1. Native extension compatibility differs by platform.
+2. Same manifest on different Ruby engines/patchlevels may not be equivalent.
+
+### 5. Environment Materialization
 
 For each new `env_id`, runtime MUST create:
 
@@ -127,10 +140,55 @@ Materialization steps:
 2. Run `bundle lock` in env directory.
 3. Run `bundle install --path vendor/bundle --jobs 4 --retry 2`.
 4. Mark environment ready by writing `.ready` metadata file containing manifest and lock checksum.
+5. Cache hit rule: if `.ready` exists and lock checksum matches, skip lock/install.
 
 If any step fails, runtime returns typed dependency error outcome.
 
-### 5. Execution Model (Ruby v1): Dedicated Worker per Specialist Environment
+### 6. Execution Architecture by Phase
+
+#### Phase 1 (Schema + Validation + Logging)
+
+1. Parse and validate `GeneratedProgram`.
+2. Normalize dependency manifest.
+3. Log declarations and normalized manifest.
+4. Do not materialize environments yet.
+
+Purpose: validate LLM declaration reliability with minimal runtime risk.
+
+#### Phase 2 (Materialization + In-Process Activation, Temporary)
+
+1. Materialize env by `env_id`.
+2. Activate with Bundler in current process.
+3. Execute generated code in-process.
+4. Explicit limitation: gem activation pollution across calls/process lifetime is accepted temporarily.
+
+Purpose: validate bundler pipeline and failure mapping before process-isolation complexity.
+
+#### Phase 3 (Worker Isolation, Target Model)
+
+1. Execute specialist calls in dedicated worker process.
+2. Parent process performs supervision, timeout, and lifecycle management.
+3. Cross-process payloads use JSON boundary only.
+
+### 7. Agent API and First-Call Latency Semantics
+
+`Agent.for(...)` remains synchronous.
+
+To avoid constructor-level async complexity while supporting background environment prep, add:
+
+1. `Agent.prepare(role, **opts) -> PreparationTicket`
+2. `PreparationTicket#status` (`pending|ready|error`)
+3. `PreparationTicket#await(timeout: nil) -> Agent|Outcome`
+4. `PreparationTicket#agent -> Agent|nil`
+5. Optional callbacks:
+   - `PreparationTicket#on_ready { |agent| ... }`
+   - `PreparationTicket#on_error { |outcome| ... }`
+
+When a call arrives before environment readiness in async flow, runtime MAY return:
+
+`error_type: "environment_preparing", retriable: true`
+
+### 8. Worker Execution Model (Phase 3)
 
 Runtime MUST execute generated code in a dedicated Ruby worker process bound to specialist `env_id`.
 
@@ -147,34 +205,60 @@ Worker lifecycle:
    - `BUNDLE_GEMFILE=<env_dir>/Gemfile`
    - `BUNDLE_PATH=<env_dir>/vendor/bundle`
    - `require "bundler/setup"`
-3. Worker owns specialist `context` in-memory.
-4. Main process sends execution requests to worker; worker returns result/error envelopes.
+3. Worker owns specialist `context` state.
+4. On monotonic env growth (`env_id` change), parent restarts worker with expanded environment and restores context snapshot when serializable.
 
-Transport:
+Cross-process protocol:
 
-1. Internal length-prefixed Marshal frames over stdin/stdout.
-2. Request payload fields:
-   - `call_id`, `method_name`, `code`, `args`, `kwargs`
-3. Response payload fields:
-   - `status`, `value` OR `error_class`/`error_message`.
+1. newline-delimited JSON frames (`ipc_version: 1`).
+2. Request fields:
+   - `ipc_version`, `call_id`, `method_name`, `code`, `args`, `kwargs`, `context_snapshot` (optional).
+3. Response fields:
+   - `ipc_version`, `call_id`, `status`, `value` OR `error_class`/`error_message`, `context_snapshot`.
+4. JSON boundary rule:
+   - parent->worker args/kwargs MUST be JSON-serializable.
+   - worker->parent result/context MUST be JSON-serializable.
+   - non-serializable values return `non_serializable_result`.
 
-### 6. Outcome Mapping Extensions
+### 9. Worker Supervision Requirements (Phase 3)
+
+Parent runtime MUST provide:
+
+1. per-call timeout (kill and classify timeout if exceeded).
+2. idle timeout (terminate inactive workers).
+3. max concurrent workers.
+4. max restart count per specialist within one trace.
+5. crash handling:
+   - map to `worker_crash`, `retriable: true` (subject to restart budget).
+6. shutdown handling:
+   - SIGTERM then SIGKILL escalation.
+   - reap child processes on exit.
+
+### 10. Outcome Mapping Extensions
 
 Add error types:
 
 1. `invalid_dependency_manifest`
-2. `dependency_resolution_failed`
-3. `dependency_install_failed`
-4. `dependency_activation_failed`
-5. `dependency_manifest_changed`
+2. `dependency_manifest_incompatible`
+3. `dependency_policy_violation`
+4. `dependency_resolution_failed`
+5. `dependency_install_failed`
+6. `dependency_activation_failed`
+7. `environment_preparing`
+8. `worker_crash`
+9. `non_serializable_result`
 
 `retriable` rules:
 
-1. `dependency_resolution_failed` -> `false`
-2. `dependency_install_failed` -> `true`
-3. `dependency_activation_failed` -> `true`
-4. `dependency_manifest_changed` -> `false`
-5. `invalid_dependency_manifest` -> `false`
+1. `invalid_dependency_manifest` -> `false`
+2. `dependency_manifest_incompatible` -> `false`
+3. `dependency_policy_violation` -> `false`
+4. `dependency_resolution_failed` -> `false`
+5. `dependency_install_failed` -> `true`
+6. `dependency_activation_failed` -> `true`
+7. `environment_preparing` -> `true`
+8. `worker_crash` -> `true`
+9. `non_serializable_result` -> `false`
 
 Outcome error metadata MUST include:
 
@@ -182,8 +266,10 @@ Outcome error metadata MUST include:
 2. `method_name`
 3. `env_id` (if known)
 4. `dependency_name` (if applicable)
+5. `conflict` (for incompatible manifest cases)
+6. `policy` (for policy violations)
 
-### 7. Observability Requirements
+### 11. Observability Requirements
 
 Each call log entry MUST include:
 
@@ -192,45 +278,146 @@ Each call log entry MUST include:
 3. `env_id`
 4. `environment_cache_hit` (boolean)
 5. `env_prepare_ms`
-6. `worker_pid`
+6. `env_resolve_ms`
+7. `env_install_ms`
+8. `worker_pid` (phase 3)
+9. `worker_restart_count` (phase 3)
+10. `prep_ticket_id` (if `Agent.prepare` used)
 
-### 8. Implementation Plan (Ruby Runtime)
+### 12. Dependency Policy Controls (Supply-Chain Guardrails)
 
-#### 8.1 New Files
+Because specialists choose dependencies, runtime MUST provide policy controls to constrain installs.
+
+Configuration surface (runtime-level):
+
+1. `allowed_gems: [String] | nil`
+2. `blocked_gems: [String] | nil`
+
+Evaluation rules:
+
+1. Normalize policy gem names to lowercase.
+2. If `allowed_gems` is set, every dependency name MUST be in `allowed_gems`.
+3. If `blocked_gems` is set, no dependency name may appear in `blocked_gems`.
+4. If both are set, both checks apply.
+5. Policy check runs before resolve/install.
+
+Failure mapping:
+
+1. Return `dependency_policy_violation` (`retriable: false`).
+2. Include metadata: `dependency_name`, `policy` (`allowed_gems|blocked_gems`), `specialist_role`, `method_name`.
+
+Phase placement:
+
+1. Phase 1: policy fields MAY exist but no install path yet.
+2. Phase 2: policy enforcement becomes REQUIRED before materialization.
+3. Default policy MAY be permissive (`allowed_gems=nil`, `blocked_gems=nil`) during interface-ergonomics iteration.
+
+### 13. Runtime Dependency Source Configuration
+
+Dependency source configuration MUST be runtime-scoped (outside `Agent`/`delegate` contracts).
+
+Rationale:
+
+1. Source trust and repository routing are platform governance concerns.
+2. Solver/Specialist language should remain intent-focused.
+3. Per-specialist source selection introduces policy bypass ambiguity.
+
+Runtime configuration fields:
+
+1. `gem_sources: [String]`
+2. `source_mode: internal_only | internal_then_public | public_only`
+3. `allowed_gems: [String] | nil`
+4. `blocked_gems: [String] | nil`
+
+Precedence:
+
+1. Process/runtime defaults.
+2. Optional environment profile overrides.
+3. Optional runtime constructor overrides.
+4. Session-level overrides MAY narrow policy but MUST NOT broaden trust.
+
+Default (ergonomics-first) runtime policy:
+
+1. `gem_sources = ["https://rubygems.org"]`
+2. `source_mode = public_only`
+3. `allowed_gems = nil` (allow any gem)
+4. `blocked_gems = nil`
+
+Example (enterprise policy):
+
+1. `gem_sources = ["https://artifactory.example.org/api/gems/ruby"]`
+2. `source_mode = internal_only`
+3. `allowed_gems = [...]` (whitelist)
+
+### 14. Implementation Plan (Ruby Runtime)
+
+#### 14.1 New Files
 
 1. `runtimes/ruby/lib/recurgent/generated_program.rb`
 2. `runtimes/ruby/lib/recurgent/dependency_manifest.rb`
 3. `runtimes/ruby/lib/recurgent/environment_manager.rb`
 4. `runtimes/ruby/lib/recurgent/worker_executor.rb`
+5. `runtimes/ruby/lib/recurgent/preparation_ticket.rb`
+6. `runtimes/ruby/lib/recurgent/worker_supervisor.rb`
 
-#### 8.2 File Changes
+#### 14.2 File Changes
 
 1. `runtimes/ruby/lib/recurgent/providers.rb`
-   - Replace `generate_code` with `generate_program`.
+   - Introduce `generate_program`.
+   - Keep compatibility shim so older adapters returning String still function.
 2. `runtimes/ruby/lib/recurgent/runtime_helpers.rb`
    - Update provider tool schema to include `dependencies`.
    - Add prompt instructions requiring non-stdlib dependencies be declared in payload.
 3. `runtimes/ruby/lib/recurgent.rb`
    - Parse `GeneratedProgram`.
-   - Resolve/freeze specialist environment on first call.
-   - Route execution through `WorkerExecutor`.
+   - Implement monotonic manifest growth checks.
+   - Implement `Agent.prepare` API and ticket lifecycle.
+   - Add dependency policy validation before environment materialization.
+   - Resolve runtime-level source/policy configuration before dependency checks.
+   - Phase 2: route execution through `EnvironmentManager` + in-process activation.
+   - Phase 3: route execution through `WorkerSupervisor`/`WorkerExecutor`.
    - Extend `_error_outcome_for` and logging fields.
 4. `runtimes/ruby/lib/recurgent/outcome.rb`
    - No structural change required.
+5. `runtimes/ruby/lib/recurgent/environment_manager.rb`
+   - Generate Gemfile with configured `gem_sources` and source mode behavior.
 
-#### 8.3 Test Additions
+#### 14.3 Test Additions
 
 1. `spec/dependency_manifest_spec.rb`
    - validation/normalization/conflict cases.
 2. `spec/environment_manager_spec.rb`
-   - deterministic `env_id`, cache hit, install failure mapping.
+   - deterministic `env_id` including platform fields, cache hit, install failure mapping.
 3. `spec/worker_executor_spec.rb`
-   - context persistence across calls, execution error mapping.
-4. Extend `spec/recurgent_spec.rb`
+   - JSON protocol behavior, non-serializable result mapping.
+4. `spec/worker_supervisor_spec.rb`
+   - restart policy, timeout, cleanup, max-workers.
+5. `spec/preparation_ticket_spec.rb`
+   - status transitions, await, callbacks.
+6. Extend `spec/recurgent_spec.rb`
    - `GeneratedProgram` backward compatibility.
-   - `dependency_manifest_changed` behavior.
-5. Acceptance scenario:
-   - specialist declares dependency and succeeds on second call with cache hit.
+   - monotonic growth behavior.
+   - `environment_preparing` behavior.
+   - dependency policy violation mapping (`dependency_policy_violation`).
+7. Acceptance scenario:
+   - Phase 1: declaration and normalization logged.
+   - Phase 2: first install then cache hit with same env.
+   - Phase 3: worker restart on manifest growth with preserved JSON context.
+8. Runtime source policy scenario:
+   - default uses `rubygems.org` with permissive allowlist.
+   - internal-only profile routes install attempts exclusively to configured internal source.
+
+#### 14.4 Phase Exit Criteria
+
+1. Phase 1 exit:
+   - >=95% GeneratedProgram responses in acceptance runs produce valid manifest structures.
+   - no runtime behavior change for stdlib-only specialists.
+2. Phase 2 exit:
+   - dependency install/activation failures are consistently typed.
+   - warm env cache calls avoid install path.
+3. Phase 3 exit:
+   - no zombie worker processes after full acceptance suite.
+   - timeout/restart behavior passes deterministic supervision tests.
 
 ## Consequences
 
@@ -238,21 +425,26 @@ Each call log entry MUST include:
 
 1. Specialists can use the Ruby gem ecosystem without polluting Solver-level language.
 2. Environment behavior becomes deterministic and observable.
-3. Capability failures become explicit and machine-actionable.
+3. Specialists can discover dependencies incrementally without forced redelegation.
+4. Capability failures become explicit and machine-actionable.
+5. Runtime can constrain dependency selection policy without polluting Solver-facing API.
 
 ### Tradeoffs
 
-1. Runtime complexity increases (environment manager + workers).
-2. First-call latency increases for new dependency sets.
-3. Specialists cannot mutate dependency manifest after first success; they must re-delegate.
+1. Runtime complexity increases significantly (materialization + supervision + IPC).
+2. First-call latency for new envs remains high without prewarm/prepare flows.
+3. JSON boundary constrains arbitrary Ruby object exchange in worker-isolated mode.
 
 ## Rejected Alternatives
 
 1. Solver-provided gem lists in `delegate(...)`.
    - Rejected: leaks implementation details into Solver intent language.
 
-2. In-process dynamic gem activation without isolation.
-   - Rejected: global gem pollution and non-deterministic cross-specialist behavior.
+2. `Agent.for(...)` becoming async.
+   - Rejected: pollutes constructor semantics and introduces readiness race complexity in the primary API.
 
-3. Allowing dependency manifest to change mid-specialist-session.
-   - Rejected: requires unsafe context migration and breaks reproducibility.
+3. Marshal IPC as default parent/worker transport.
+   - Rejected: unsafe deserialization boundary for an LLM-generated execution system.
+
+4. Direct jump to worker isolation without staged rollout.
+   - Rejected: too large a change surface to debug if schema/materialization assumptions are wrong.
