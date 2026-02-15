@@ -6,11 +6,11 @@ scenarios:
       - successful delegation returns ok outcome envelope
     steps:
       - op: construct
-        as: solver
-        role: solver
+        as: tool_builder
+        role: tool_builder
       - op: tolerant_delegate
-        target: solver
-        specialist_role: calculator
+        target: tool_builder
+        tool_role: calculator
         method: add
         args: [2, 3]
         expect_outcome:
@@ -23,18 +23,18 @@ scenarios:
       - second delegation still executes
     steps:
       - op: construct
-        as: solver
-        role: solver
+        as: tool_builder
+        role: tool_builder
       - op: tolerant_delegate
-        target: solver
-        specialist_role: analyst_a
+        target: tool_builder
+        tool_role: analyst_a
         method: summarize
         expect_outcome:
           status: error
           error_type: provider
       - op: tolerant_delegate
-        target: solver
-        specialist_role: analyst_b
+        target: tool_builder
+        tool_role: analyst_b
         method: summarize
         expect_outcome:
           status: ok
@@ -44,11 +44,11 @@ scenarios:
       - invalid provider payload becomes invalid_code outcome
     steps:
       - op: construct
-        as: solver
-        role: solver
+        as: tool_builder
+        role: tool_builder
       - op: tolerant_delegate
-        target: solver
-        specialist_role: analyst
+        target: tool_builder
+        tool_role: analyst
         method: summarize
         expect_outcome:
           status: error
@@ -59,11 +59,11 @@ scenarios:
       - generated program execution failure maps to execution outcome
     steps:
       - op: construct
-        as: solver
-        role: solver
+        as: tool_builder
+        role: tool_builder
       - op: tolerant_delegate
-        target: solver
-        specialist_role: calculator
+        target: tool_builder
+        tool_role: calculator
         method: explode
         expect_outcome:
           status: error
@@ -74,13 +74,13 @@ scenarios:
       - bounded provider timeout maps to timeout outcome
     steps:
       - op: construct
-        as: solver
-        role: solver
+        as: tool_builder
+        role: tool_builder
         config:
           provider_timeout_seconds: 1
       - op: tolerant_delegate
-        target: solver
-        specialist_role: slow_specialist
+        target: tool_builder
+        tool_role: slow_tool
         method: respond
         expect_outcome:
           status: error
@@ -89,16 +89,16 @@ scenarios:
   - id: tolerant.delegation_budget_exceeded_maps_to_error_outcome
     verifies:
       - delegation budget exhaustion maps to budget_exceeded outcome
-      - solver can continue synthesis after budget-limited delegate
+      - tool_builder can continue synthesis after budget-limited delegate
     steps:
       - op: construct
-        as: solver
-        role: solver
+        as: tool_builder
+        role: tool_builder
         config:
           max_delegation_depth: 1
       - op: tolerant_delegate
-        target: solver
-        specialist_role: recursive_specialist
+        target: tool_builder
+        tool_role: recursive_tool
         method: respond
         expect_outcome:
           status: error

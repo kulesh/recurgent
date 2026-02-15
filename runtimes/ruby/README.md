@@ -31,7 +31,7 @@ Dynamic method calls return `Agent::Outcome`:
 
 ## Runtime Configuration
 
-Configure runtime dependency policy before creating Solvers:
+Configure runtime dependency policy before creating Tool Builders:
 
 ```ruby
 Agent.configure_runtime(
@@ -58,7 +58,7 @@ Warm up dependency environments before first call:
 
 ```ruby
 ticket = Agent.prepare(
-  "pdf specialist",
+  "pdf tool",
   dependencies: [{ name: "prawn", version: "~> 2.5" }]
 )
 
@@ -72,9 +72,9 @@ result = ticket.await(timeout: 30)
 ## Dependency Environment Invariants
 
 - Environment cache identity includes Ruby version/platform, normalized dependency manifest, `source_mode`, and normalized `gem_sources`.
-- Worker-vs-inline execution follows the specialist's effective manifest:
-  once a specialist has a non-empty manifest, later calls with `dependencies: []` still execute in the worker-backed environment.
-- Dependency manifests are monotonic per specialist instance: existing gems/versions must remain identical, while new gems may be added.
+- Worker-vs-inline execution follows the tool's effective manifest:
+  once a tool has a non-empty manifest, later calls with `dependencies: []` still execute in the worker-backed environment.
+- Dependency manifests are monotonic per tool instance: existing gems/versions must remain identical, while new gems may be added.
 
 ## Contract Parity
 

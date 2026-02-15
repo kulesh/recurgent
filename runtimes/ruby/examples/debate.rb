@@ -15,7 +15,7 @@ debate = Agent.for("debate_show_host", verbose: true)
 
 puts debate.moderate(
   topic: "Should programming languages have garbage collection?",
-  specialist_contract_guidance: {
+  tool_contract_guidance: {
     purpose: "Each panelist should provide a perspective tied to their role in this round",
     deliverable: {
       type: "object",

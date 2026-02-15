@@ -1,4 +1,4 @@
-# ADR 0008: Solver/Specialist Language and Tolerant Delegations
+# ADR 0008: Tool Builder/Tool Language and Tolerant Delegations
 
 - Status: accepted
 - Date: 2026-02-13
@@ -12,11 +12,11 @@ Recurgent is used by LLMs that are actively solving problems, not merely coordin
 Adopt a problem-solving language model and codify tolerant delegation interfaces.
 
 1. Ubiquitous language:
-- `Solver`: the main problem-owning LLM/Agent.
-- `Specialist`: delegated expert LLM/Agent.
-- `Delegate`: one Solver -> Specialist action.
+- `Tool Builder`: the main problem-owning LLM/Agent.
+- `Tool`: delegated expert LLM/Agent.
+- `Delegate`: one Tool Builder -> Tool action.
 - `Outcome`: normalized result of a delegation.
-- `Synthesis`: Solver integrates outcomes and decides next action.
+- `Synthesis`: Tool Builder integrates outcomes and decides next action.
 - `Delegation Budget`: runtime limit for delegation depth/volume.
 
 2. Interface model:
@@ -31,7 +31,7 @@ Adopt a problem-solving language model and codify tolerant delegation interfaces
 
 ### Positive
 
-- Better cognitive alignment for Solver-driven LLM reasoning.
+- Better cognitive alignment for Tool Builder-driven LLM reasoning.
 - More resilient long-running workflows (debates, panel synthesis, research sweeps).
 - Shared cross-runtime semantics for failure-tolerant delegation.
 

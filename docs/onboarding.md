@@ -15,9 +15,9 @@ export ANTHROPIC_API_KEY=...
 export OPENAI_API_KEY=...
 ```
 
-## Runtime Configuration Before Solver Invocation
+## Runtime Configuration Before Tool Builder Invocation
 
-Configure runtime policy before creating a Solver:
+Configure runtime policy before creating a Tool Builder:
 
 ```ruby
 Agent.configure_runtime(
@@ -27,14 +27,14 @@ Agent.configure_runtime(
   blocked_gems: nil                      # optional blocklist
 )
 
-solver = Agent.for("assistant solver")
+tool_builder = Agent.for("assistant tool builder")
 ```
 
-Optional async prewarm for a known dependency-backed specialist:
+Optional async prewarm for a known dependency-backed tool:
 
 ```ruby
 ticket = Agent.prepare(
-  "pdf specialist",
+  "pdf tool",
   dependencies: [{ name: "prawn", version: "~> 2.5" }]
 )
 

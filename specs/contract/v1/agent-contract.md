@@ -85,7 +85,7 @@ Logging failures MUST NOT break user-facing execution flow.
 
 For cross-runtime delegation observability, runtimes SHOULD include:
 
-- trace_id (stable across one Solver flow)
+- trace_id (stable across one Tool Builder flow)
 - call_id (unique per dynamic call)
 - parent_call_id (for call tree reconstruction)
 - depth (delegation/call depth)

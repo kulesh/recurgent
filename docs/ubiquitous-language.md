@@ -4,21 +4,21 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 
 ## Core Terms
 
-- `Solver`: the main LLM/Agent that owns the problem and final answer.
-- `Specialist`: a delegated LLM/Agent focused on a sub-problem.
-- `Delegate`: one Solver action that invokes a Specialist.
+- `Tool Builder`: the main LLM/Agent that owns the problem and final answer.
+- `Tool`: a delegated LLM/Agent focused on a sub-problem.
+- `Delegate`: one Tool Builder action that invokes a Tool.
 - `Outcome`: normalized result of a delegation (success or failure envelope).
-- `Synthesis`: Solver reasoning step that combines delegation outcomes and chooses next actions.
+- `Synthesis`: Tool Builder reasoning step that combines delegation outcomes and chooses next actions.
 - `Delegation Budget`: runtime limit on delegation depth/volume for one solving flow.
 
 ## Dependency and Environment Terms
 
-- `GeneratedProgram`: specialist-generated execution payload containing `code` and optional `dependencies`.
-- `Dependency Manifest`: normalized list of gem requirements declared by a specialist.
-- `Environment Manifest`: the dependency manifest frozen for one specialist runtime environment.
+- `GeneratedProgram`: tool-generated execution payload containing `code` and optional `dependencies`.
+- `Dependency Manifest`: normalized list of gem requirements declared by a tool.
+- `Environment Manifest`: the dependency manifest frozen for one tool runtime environment.
 - `Environment ID (env_id)`: deterministic hash identity for a resolved Ruby execution environment.
 - `Monotonic Manifest Growth`: environment manifest may add dependencies over time but MUST NOT remove or mutate existing constraints.
-- `Worker`: isolated Ruby execution process bound to one specialist environment.
+- `Worker`: isolated Ruby execution process bound to one tool environment.
 - `Worker Supervisor`: parent runtime component that starts, monitors, restarts, and terminates workers.
 - `JSON Boundary`: rule that cross-process request/response payloads are JSON-serializable values only.
 - `Environment Preparing`: transient runtime state when dependencies are being resolved/materialized.
@@ -31,7 +31,7 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 
 ## Language Rules
 
-- Prefer `Solver/Specialist` over `orchestrator/worker`.
+- Prefer `Tool Builder/Tool` over `orchestrator/worker`.
 - Use `delegate/delegation` consistently in product and API docs.
 - Prefer `outcome` over raw exception-only thinking in tolerant workflows.
 - Use `GeneratedProgram` for provider outputs; avoid saying "raw code response" when dependency metadata is present.
@@ -41,7 +41,7 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 
 ## Primitive Usage
 
-- `Agent.for(...)`: bootstrap a top-level Solver or an intentionally independent agent session.
-- `solver.delegate(...)`: summon Specialists during active solving while inheriting Solver runtime contract.
+- `Agent.for(...)`: bootstrap a top-level Tool Builder or an intentionally independent agent session.
+- `tool_builder.delegate(...)`: summon Tools during active solving while inheriting Tool Builder runtime contract.
 
 See `docs/delegate-vs-for.md` for scenario-level guidance.

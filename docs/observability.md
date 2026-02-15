@@ -19,7 +19,7 @@ bin/recurgent-watch --from-start
 # Focus only failures
 bin/recurgent-watch --status error
 
-# Trace one Solver flow
+# Trace one Tool Builder flow
 bin/recurgent-watch --trace <trace_id>
 
 # Scope to a role/method pattern

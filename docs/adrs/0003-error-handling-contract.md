@@ -19,6 +19,6 @@ Adopt a typed outcome contract for dynamic calls:
 
 ## Consequences
 
-- Positive: failures become explicit, typed, and composable for Solver synthesis.
+- Positive: failures become explicit, typed, and composable for Tool Builder synthesis.
 - Positive: callers handle one consistent return shape instead of exception branching.
 - Tradeoff: callers/tests must adopt `Outcome` handling semantics.

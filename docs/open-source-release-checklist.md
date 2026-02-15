@@ -5,10 +5,10 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 
 ## 1. Product Positioning and Scope
 
-- [x] README narrative is explicit on project intent (LLM-native Solver/Specialist delegation runtime).
+- [x] README narrative is explicit on project intent (LLM-native Tool Builder/Tool delegation runtime).
 - [x] Runtime scope is clear: Ruby is production path, Lua is planned parity path.
 - [x] Non-goals are explicit (for example: no hard runtime validation of delegation contracts in current phase).
-- [x] Naming language is consistent across docs (Solver, Specialist, Delegate, Outcome, Delegation Budget).
+- [x] Naming language is consistent across docs (Tool Builder, Tool, Delegate, Outcome, Delegation Budget).
 
 ## 2. Legal and Policy Baseline
 

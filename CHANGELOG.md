@@ -19,7 +19,7 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 ### Changed
 
 - Hard-cut naming transition from `Actuator` terminology to `Recurgent` project + `Agent` operational object.
-- Delegation language standardized to Solver/Specialist/Outcome vocabulary.
+- Delegation language standardized to Tool Builder/Tool/Outcome vocabulary.
 
 ### Notes
 

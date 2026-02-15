@@ -12,7 +12,7 @@ debate = Agent.for("philosophy_symposium_host", verbose: true)
 
 puts debate.host(
   question: "What is the good life?",
-  specialist_contract_guidance: {
+  tool_contract_guidance: {
     purpose: "Each philosopher should contribute one round-specific argument and engage prior responses",
     deliverable: {
       type: "object",

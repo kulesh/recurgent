@@ -1,6 +1,6 @@
 # Delegation Contracts (Phase 1)
 
-Phase 1 introduces Solver-authored Specialist contracts as expression-only metadata.
+Phase 1 introduces Tool Builder-authored Tool contracts as expression-only metadata.
 
 ## API
 
@@ -14,8 +14,8 @@ Both `Agent.for(...)` and `delegate(...)` accept optional contract fields:
 `delegate(...)` example:
 
 ```ruby
-pdf_specialist = solver.delegate(
-  "pdf specialist",
+pdf_tool = tool_builder.delegate(
+  "pdf tool",
   purpose: "produce a PDF artifact for downstream download",
   deliverable: { type: "object", required: %w[path mime bytes] },
   acceptance: [{ assert: "mime == 'application/pdf'" }, { assert: "bytes > 0" }],
@@ -26,8 +26,8 @@ pdf_specialist = solver.delegate(
 `Agent.for(...)` example:
 
 ```ruby
-pdf_specialist = Agent.for(
-  "pdf specialist",
+pdf_tool = Agent.for(
+  "pdf tool",
   purpose: "produce a PDF artifact for downstream download",
   deliverable: { type: "object", required: %w[path mime bytes] },
   acceptance: [{ assert: "mime == 'application/pdf'" }, { assert: "bytes > 0" }],
@@ -43,10 +43,10 @@ Merge rule:
 
 ## Behavior in Phase 1
 
-1. Contract fields are injected into Specialist prompts.
+1. Contract fields are injected into Tool prompts.
 2. Contract fields are logged for traceability (`contract_purpose`, etc.) with `contract_source` (`none`, `hash`, `fields`, `merged`).
 3. Runtime does not enforce validation yet.
-4. Solver remains responsible for evaluating Specialist output quality.
+4. Tool Builder remains responsible for evaluating Tool output quality.
 
 Validation design is intentionally deferred to a later phase.
 

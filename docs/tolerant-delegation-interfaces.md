@@ -13,21 +13,21 @@ Every dynamic method call returns `Agent::Outcome`.
   error_type: String,           # provider | invalid_code | execution | timeout | budget_exceeded
   error_message: String,        # present when status == :error
   retriable: true | false,
-  specialist_role: String,
+  tool_role: String,
   method_name: String
 }
 ```
 
 ## Design Intent
 
-- Keep Solver flows alive across Specialist failures.
+- Keep Tool Builder flows alive across Tool failures.
 - Make typed failures explicit without collapsing the full solve loop.
 - Preserve LLM-native reasoning continuity via one predictable return shape.
-- Keep delegation semantics coherent by preferring `delegate(...)` inside Solver flows.
+- Keep delegation semantics coherent by preferring `delegate(...)` inside Tool Builder flows.
 
 ## Reference Behavior
 
-1. Specialist success:
+1. Tool success:
 - `outcome.ok? == true`
 - `outcome.value` carries domain result.
 
@@ -42,4 +42,4 @@ Every dynamic method call returns `Agent::Outcome`.
 4. Delegation budget exhausted:
 - `outcome.error? == true`
 - `outcome.error_type == "budget_exceeded"`
-- Solver continues synthesis with partial outcomes.
+- Tool Builder continues synthesis with partial outcomes.

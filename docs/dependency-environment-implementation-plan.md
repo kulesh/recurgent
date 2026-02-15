@@ -4,7 +4,7 @@
 
 Implement ADR 0010 with a phased, low-regret rollout:
 
-1. Specialists can declare dependencies in `GeneratedProgram`.
+1. Tools can declare dependencies in `GeneratedProgram`.
 2. Runtime can validate, normalize, and log dependency manifests.
 3. Runtime can materialize Ruby gem environments with deterministic identity.
 4. Runtime can eventually execute in isolated workers with JSON-only IPC boundaries.
@@ -27,7 +27,7 @@ Out of scope:
 
 ## Guiding Constraints
 
-1. Preserve Solver/Specialist ubiquitous language and intent-first API.
+1. Preserve Tool Builder/Tool ubiquitous language and intent-first API.
 2. Keep `Agent.for(...)` synchronous.
 3. Remove backward-compatibility shims and migrate to `GeneratedProgram` as the only provider output shape.
 4. Introduce async preparation only when worker isolation exists (Phase 3).
@@ -123,7 +123,7 @@ Out of scope:
    - run `bundle lock`, `bundle install`.
    - write `.ready` metadata and checksum.
 2. Monotonic manifest growth:
-   - persist specialist `env_manifest`.
+   - persist tool `env_manifest`.
    - allow additive-only growth.
    - reject incompatible mutation with `dependency_manifest_incompatible`.
 3. Runtime policy enforcement:
@@ -163,7 +163,7 @@ Out of scope:
 
 ### Goals
 
-1. Remove gem-activation pollution by isolating specialist execution.
+1. Remove gem-activation pollution by isolating tool execution.
 2. Enforce JSON-only cross-process boundary.
 3. Add worker lifecycle reliability guarantees.
 4. Introduce async preparation semantics with `Agent.prepare(...)`.
@@ -174,7 +174,7 @@ Out of scope:
    - worker boot in env with `bundler/setup`.
    - newline-delimited JSON request/response protocol (`ipc_version`).
 2. `WorkerSupervisor`:
-   - worker pool/registry keyed by specialist/env.
+   - worker pool/registry keyed by tool/env.
    - per-call timeout and idle timeout.
    - restart policy and max restart count.
    - cleanup on shutdown (TERM -> KILL escalation, child reaping).
@@ -200,7 +200,7 @@ Out of scope:
    - max-worker cap.
    - shutdown cleanup.
 3. End-to-end tests:
-   - specialist survives multiple calls with preserved context.
+   - tool survives multiple calls with preserved context.
    - env growth triggers worker restart and continued execution.
 4. Preparation ticket tests:
    - lifecycle transitions.
@@ -231,7 +231,7 @@ Out of scope:
 3. Retry prompt additions:
    - if manifest parse fails, include structured corrective feedback (invalid field, conflict, forbidden gem).
    - if policy check fails, require alternative implementation using allowed dependencies or stdlib.
-   - if dependency activation fails, prompt specialist to narrow/change dependency set.
+   - if dependency activation fails, prompt tool to narrow/change dependency set.
 4. Prompt verification:
    - add deterministic prompt unit checks that required contract language appears in system/user/retry prompts.
 

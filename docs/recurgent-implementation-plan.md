@@ -10,7 +10,7 @@ Current internals are strong, but public language (`identity`, `context`, metapr
 
 - role selection
 - memory handoff
-- specialist delegation
+- tool delegation
 - answer synthesis
 
 The plan is to add a coordination-layer vocabulary that matches this mental model without sacrificing dynamic domain API emergence.
@@ -35,7 +35,7 @@ The plan is to add a coordination-layer vocabulary that matches this mental mode
 
 5. Codify tolerant delegation semantics.
 - Use tolerant interaction semantics as the canonical runtime path.
-- Use outcome envelopes for multi-specialist Solver workflows.
+- Use outcome envelopes for multi-tool Tool Builder workflows.
 
 ## Solution Options
 
@@ -73,12 +73,12 @@ The plan is to add a coordination-layer vocabulary that matches this mental mode
 ### Phase 2: Tests and acceptance workflows
 - Unit tests for coordination methods.
 - Acceptance tests for LLM-delegation flows:
-  - agent creates specialist delegate
+  - agent creates tool delegate
   - memory handoff and retrieval
   - domain method still emergent (`calculator.cosine(60)`)
 
 ### Phase 2.5: Tolerant delegation profile
-- Define Solver/Specialist vocabulary and outcome envelope model.
+- Define Tool Builder/Tool vocabulary and outcome envelope model.
 - Add contract profile and scenarios for tolerant delegations.
 - Remove strict/raise-only ambiguity from runtime-facing contracts.
 
@@ -137,5 +137,5 @@ The plan is to add a coordination-layer vocabulary that matches this mental mode
 2. Canonical constructor is `Agent.for(role, **opts)`.
 3. `ask(...)` is deferred until usage evidence warrants it.
 4. Rename is a hard cut: remove `Actuator` naming now.
-5. Solver/Specialist language is canonical for multi-agent problem-solving flows.
+5. Tool Builder/Tool language is canonical for multi-agent problem-solving flows.
 6. Tolerant delegation interfaces are a codified design value.

@@ -5,9 +5,9 @@
 
 ## Context
 
-Recurgent currently constrains generated code to Ruby stdlib. This keeps runtime behavior simple but blocks common specialist tasks (HTML -> PDF, advanced parsing, rich API clients) and causes avoidable delegation churn when specialists repeatedly hit capability limits.
+Recurgent currently constrains generated code to Ruby stdlib. This keeps runtime behavior simple but blocks common tool tasks (HTML -> PDF, advanced parsing, rich API clients) and causes avoidable delegation churn when tools repeatedly hit capability limits.
 
-We want specialists to decide implementation dependencies while keeping Solver language intent-first (`purpose`, `deliverable`, `acceptance`, `failure_policy`). The runtime must then materialize a deterministic execution environment from specialist-declared dependencies.
+We want tools to decide implementation dependencies while keeping Tool Builder language intent-first (`purpose`, `deliverable`, `acceptance`, `failure_policy`). The runtime must then materialize a deterministic execution environment from tool-declared dependencies.
 
 Two hard constraints shape the design:
 
@@ -77,19 +77,19 @@ Normalization algorithm:
 5. Sort by `[name, version]`.
 6. Freeze normalized manifest for deterministic hashing and logging.
 
-### 3. Specialist Environment Contract v1 (Monotonic Growth)
+### 3. Tool Environment Contract v1 (Monotonic Growth)
 
-Environment contract v1 is specialist-scoped and monotonic.
+Environment contract v1 is tool-scoped and monotonic.
 
 Definitions:
 
-1. `specialist_instance_id`: unique id for each `Agent` instance.
-2. `env_manifest`: normalized dependency manifest attached to specialist instance.
+1. `tool_instance_id`: unique id for each `Agent` instance.
+2. `env_manifest`: normalized dependency manifest attached to tool instance.
 3. `env_id`: deterministic hash identity for one concrete Ruby environment.
 
 Rules:
 
-1. On first successful call for a specialist:
+1. On first successful call for a tool:
    - runtime sets `env_manifest = normalized(dependencies)`.
 2. On subsequent calls:
    - if `dependencies` is empty, runtime reuses existing `env_manifest`.
@@ -100,7 +100,7 @@ Rules:
 3. If compatible, runtime sets `env_manifest = incoming_manifest` (monotonic growth), recomputes `env_id`, and migrates execution runtime to the new environment.
 4. If incompatible, runtime returns `dependency_manifest_incompatible` (`retriable: false`) with conflict metadata.
 
-This preserves deterministic replay while allowing specialists to discover dependencies incrementally.
+This preserves deterministic replay while allowing tools to discover dependencies incrementally.
 
 ### 4. Environment Identity (env_id)
 
@@ -166,7 +166,7 @@ Purpose: validate bundler pipeline and failure mapping before process-isolation 
 
 #### Phase 3 (Worker Isolation, Target Model)
 
-1. Execute specialist calls in dedicated worker process.
+1. Execute tool calls in dedicated worker process.
 2. Parent process performs supervision, timeout, and lifecycle management.
 3. Cross-process payloads use JSON boundary only.
 
@@ -190,22 +190,22 @@ When a call arrives before environment readiness in async flow, runtime MAY retu
 
 ### 8. Worker Execution Model (Phase 3)
 
-Runtime MUST execute generated code in a dedicated Ruby worker process bound to specialist `env_id`.
+Runtime MUST execute generated code in a dedicated Ruby worker process bound to tool `env_id`.
 
 Why:
 
 1. Gem activation isolation.
-2. No global gem pollution across specialists.
-3. Stable per-specialist context lifecycle.
+2. No global gem pollution across tools.
+3. Stable per-tool context lifecycle.
 
 Worker lifecycle:
 
-1. Spawn worker once specialist `env_id` is known.
+1. Spawn worker once tool `env_id` is known.
 2. Boot with:
    - `BUNDLE_GEMFILE=<env_dir>/Gemfile`
    - `BUNDLE_PATH=<env_dir>/vendor/bundle`
    - `require "bundler/setup"`
-3. Worker owns specialist `context` state.
+3. Worker owns tool `context` state.
 4. On monotonic env growth (`env_id` change), parent restarts worker with expanded environment and restores context snapshot when serializable.
 
 Cross-process protocol:
@@ -227,7 +227,7 @@ Parent runtime MUST provide:
 1. per-call timeout (kill and classify timeout if exceeded).
 2. idle timeout (terminate inactive workers).
 3. max concurrent workers.
-4. max restart count per specialist within one trace.
+4. max restart count per tool within one trace.
 5. crash handling:
    - map to `worker_crash`, `retriable: true` (subject to restart budget).
 6. shutdown handling:
@@ -262,7 +262,7 @@ Add error types:
 
 Outcome error metadata MUST include:
 
-1. `specialist_role`
+1. `tool_role`
 2. `method_name`
 3. `env_id` (if known)
 4. `dependency_name` (if applicable)
@@ -286,7 +286,7 @@ Each call log entry MUST include:
 
 ### 12. Dependency Policy Controls (Supply-Chain Guardrails)
 
-Because specialists choose dependencies, runtime MUST provide policy controls to constrain installs.
+Because tools choose dependencies, runtime MUST provide policy controls to constrain installs.
 
 Configuration surface (runtime-level):
 
@@ -304,7 +304,7 @@ Evaluation rules:
 Failure mapping:
 
 1. Return `dependency_policy_violation` (`retriable: false`).
-2. Include metadata: `dependency_name`, `policy` (`allowed_gems|blocked_gems`), `specialist_role`, `method_name`.
+2. Include metadata: `dependency_name`, `policy` (`allowed_gems|blocked_gems`), `tool_role`, `method_name`.
 
 Phase placement:
 
@@ -319,8 +319,8 @@ Dependency source configuration MUST be runtime-scoped (outside `Agent`/`delegat
 Rationale:
 
 1. Source trust and repository routing are platform governance concerns.
-2. Solver/Specialist language should remain intent-focused.
-3. Per-specialist source selection introduces policy bypass ambiguity.
+2. Tool Builder/Tool language should remain intent-focused.
+3. Per-tool source selection introduces policy bypass ambiguity.
 
 Runtime configuration fields:
 
@@ -411,7 +411,7 @@ Example (enterprise policy):
 
 1. Phase 1 exit:
    - >=95% GeneratedProgram responses in acceptance runs produce valid manifest structures.
-   - no runtime behavior change for stdlib-only specialists.
+   - no runtime behavior change for stdlib-only tools.
 2. Phase 2 exit:
    - dependency install/activation failures are consistently typed.
    - warm env cache calls avoid install path.
@@ -423,11 +423,11 @@ Example (enterprise policy):
 
 ### Positive
 
-1. Specialists can use the Ruby gem ecosystem without polluting Solver-level language.
+1. Tools can use the Ruby gem ecosystem without polluting Tool Builder-level language.
 2. Environment behavior becomes deterministic and observable.
-3. Specialists can discover dependencies incrementally without forced redelegation.
+3. Tools can discover dependencies incrementally without forced redelegation.
 4. Capability failures become explicit and machine-actionable.
-5. Runtime can constrain dependency selection policy without polluting Solver-facing API.
+5. Runtime can constrain dependency selection policy without polluting Tool Builder-facing API.
 
 ### Tradeoffs
 
@@ -437,8 +437,8 @@ Example (enterprise policy):
 
 ## Rejected Alternatives
 
-1. Solver-provided gem lists in `delegate(...)`.
-   - Rejected: leaks implementation details into Solver intent language.
+1. Tool Builder-provided gem lists in `delegate(...)`.
+   - Rejected: leaks implementation details into Tool Builder intent language.
 
 2. `Agent.for(...)` becoming async.
    - Rejected: pollutes constructor semantics and introduces readiness race complexity in the primary API.

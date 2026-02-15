@@ -63,9 +63,9 @@ cd runtimes/ruby
 ruby examples/calculator.rb
 ```
 
-### Configure Runtime Before Solver Calls
+### Configure Runtime Before Tool Builder Calls
 
-Configure dependency and source policy once before creating Solvers/Specialists:
+Configure dependency and source policy once before creating Tool Builders/Tools:
 
 ```ruby
 Agent.configure_runtime(
@@ -75,19 +75,19 @@ Agent.configure_runtime(
   blocked_gems: nil                      # optional blacklist
 )
 
-solver = Agent.for("research solver")
+tool_builder = Agent.for("research tool builder")
 ```
 
 Optional asynchronous environment warmup:
 
 ```ruby
 ticket = Agent.prepare(
-  "pdf specialist",
+  "pdf tool",
   dependencies: [{ name: "prawn", version: "~> 2.5" }]
 )
 
 prepared = ticket.await(timeout: 30)
-specialist = prepared.is_a?(Agent) ? prepared : nil
+tool = prepared.is_a?(Agent) ? prepared : nil
 ```
 
 ### Verify
@@ -104,10 +104,10 @@ bundle exec rake
 - `docs/index.md` - documentation map and architecture overview
 - `docs/onboarding.md` - collaborator onboarding and daily workflow
 - `docs/idea-brief.md` - product vision and concept framing
-- `docs/ubiquitous-language.md` - canonical Solver/Specialist vocabulary
+- `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary
 - `docs/tolerant-delegation-interfaces.md` - canonical tolerant delegation guidance
 - `docs/delegate-vs-for.md` - decision rules for `delegate(...)` vs `Agent.for(...)`
-- `docs/delegation-contracts.md` - Solver-authored Specialist contract fields (`purpose`, `deliverable`, `acceptance`, `failure_policy`)
+- `docs/delegation-contracts.md` - Tool Builder-authored Tool contract fields (`purpose`, `deliverable`, `acceptance`, `failure_policy`)
 - `docs/observability.md` - runtime log schema and live watcher usage
 - `docs/recurgent-implementation-plan.md` - implementation plan for LLM-native coordination surface and naming transition
 - `docs/roadmap.md` - project roadmap
@@ -158,16 +158,16 @@ Persistent runtime state lives in `@context` (a Hash) and is exposed to generate
 ### When should I use `delegate(...)` vs `Agent.for(...)`?
 
 Use `Agent.for(...)` to bootstrap top-level agents.  
-Use `delegate(...)` inside an active Solver flow when summoning Specialists so runtime contract stays aligned.
+Use `delegate(...)` inside an active Tool Builder flow when summoning Tools so runtime contract stays aligned.
 
 See `docs/delegate-vs-for.md` for concrete scenarios.
 
-### Can Solver shape Specialist expectations explicitly?
+### Can Tool Builder shape Tool expectations explicitly?
 
 Yes. Both `Agent.for(...)` and `delegate(...)` support contract fields:
 `purpose`, `deliverable`, `acceptance`, and `failure_policy`.
 If both a `delegation_contract` hash and field arguments are provided, field arguments win per key.
-In Phase 1 these fields guide Specialist prompting and are logged for observability; runtime enforcement is deferred.
+In Phase 1 these fields guide Tool prompting and are logged for observability; runtime enforcement is deferred.
 
 ### What do dynamic calls return?
 

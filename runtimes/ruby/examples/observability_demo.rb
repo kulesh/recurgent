@@ -12,17 +12,17 @@ class DemoProvider
   def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
     _ = [model, tool_schema, timeout_seconds]
     role = system_prompt[/called '([^']+)'/, 1]
-    method_name = user_prompt[/Someone called '([^']+)'/, 1]
+    method_name = user_prompt[%r{<method>([^<]+)</method>}, 1]
     @calls[[role, method_name]] += 1
 
     case [role, method_name]
-    when %w[observability_demo_solver run]
-      { code: solver_run_code }
-    when %w[stable_finance_specialist analyze]
-      { code: 'result = { specialist: "stable_finance_specialist", topic: args[0], signal: "ok" }' }
-    when %w[stable_reasoning_specialist analyze]
-      { code: 'result = { specialist: "stable_reasoning_specialist", topic: args[0], signal: "ok" }' }
-    when %w[flaky_places_specialist analyze]
+    when %w[observability_demo_tool_builder run]
+      { code: tool_builder_run_code }
+    when %w[stable_finance_tool analyze]
+      { code: 'result = { tool: "stable_finance_tool", topic: args[0], signal: "ok" }' }
+    when %w[stable_reasoning_tool analyze]
+      { code: 'result = { tool: "stable_reasoning_tool", topic: args[0], signal: "ok" }' }
+    when %w[flaky_places_tool analyze]
       { code: nil }
     else
       { code: "result = nil" }
@@ -31,39 +31,39 @@ class DemoProvider
 
   private
 
-  def solver_run_code
+  def tool_builder_run_code
     <<~RUBY
-      specialists = [
+      tools = [
         delegate(
-          "stable_finance_specialist",
+          "stable_finance_tool",
           purpose: "Assess business signal quality for the topic",
-          deliverable: {type: "object", required: ["specialist", "topic", "signal"]},
+          deliverable: {type: "object", required: ["tool", "topic", "signal"]},
           acceptance: [{assert: "signal is present"}],
           failure_policy: {on_error: "continue_with_partials"}
         ),
         delegate(
-          "flaky_places_specialist",
+          "flaky_places_tool",
           purpose: "Validate location-sensitive claims for the topic",
-          deliverable: {type: "object", required: ["specialist", "topic", "signal"]},
+          deliverable: {type: "object", required: ["tool", "topic", "signal"]},
           acceptance: [{assert: "signal is present"}],
-          failure_policy: {on_error: "continue_with_partials", retry_hint: "switch specialist if repeated failures"}
+          failure_policy: {on_error: "continue_with_partials", retry_hint: "switch tool if repeated failures"}
         ),
         delegate(
-          "stable_reasoning_specialist",
+          "stable_reasoning_tool",
           purpose: "Synthesize final reasoning signal for the topic",
-          deliverable: {type: "object", required: ["specialist", "topic", "signal"]},
+          deliverable: {type: "object", required: ["tool", "topic", "signal"]},
           acceptance: [{assert: "signal is present"}],
           failure_policy: {on_error: "continue_with_partials"}
         )
       ]
 
       initial_topics = ["margin analysis", "restaurant validation", "final synthesis"]
-      initial_outcomes = specialists.zip(initial_topics).map do |specialist, topic|
-        specialist.analyze(topic)
+      initial_outcomes = tools.zip(initial_topics).map do |tool, topic|
+        tool.analyze(topic)
       end
 
       follow_up_outcomes = 2.times.map do
-        specialists[1].analyze("restaurant validation retry")
+        tools[1].analyze("restaurant validation retry")
       end
 
       all_outcomes = initial_outcomes + follow_up_outcomes
@@ -72,7 +72,7 @@ class DemoProvider
       successful = all_outcomes.select(&:ok?).map(&:value)
       failures = all_outcomes.select(&:error?).map do |outcome|
         {
-          role: outcome.specialist_role,
+          role: outcome.tool_role,
           type: outcome.error_type,
           retriable: outcome.retriable,
           message: outcome.error_message
@@ -97,14 +97,14 @@ log_path = File.join(Dir.home, ".local", "state", "recurgent", "observability_de
 FileUtils.mkdir_p(File.dirname(log_path))
 FileUtils.rm_f(log_path)
 
-solver = Agent.for(
-  "observability_demo_solver",
+tool_builder = Agent.for(
+  "observability_demo_tool_builder",
   log: log_path,
   debug: true,
   max_generation_attempts: 2
 )
 
-outcome = solver.run
+outcome = tool_builder.run
 puts "Outcome status: #{outcome.status}"
 puts "Outcome value: #{outcome.value.inspect}"
 puts "Log path: #{log_path}"

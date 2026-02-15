@@ -8,7 +8,7 @@
 The dependency environment contract from ADR 0010 requires deterministic and policy-safe environment reuse. Two implementation gaps emerged:
 
 1. Environment identity and cache-hit checks did not include source policy (`source_mode`, `gem_sources`), allowing cache reuse across different policy configurations.
-2. Execution routing used per-call dependency declarations instead of the specialist's resolved effective manifest, so a call could run inline even after the specialist had already adopted a non-empty environment manifest.
+2. Execution routing used per-call dependency declarations instead of the tool's resolved effective manifest, so a call could run inline even after the tool had already adopted a non-empty environment manifest.
 
 In addition, the dynamic-call orchestration path in `lib/recurgent.rb` had grown large enough to reduce clarity for future maintenance.
 
@@ -28,5 +28,5 @@ In addition, the dynamic-call orchestration path in `lib/recurgent.rb` had grown
 ## Consequences
 
 1. Source-policy changes now force a distinct environment identity and prevent accidental cross-policy cache reuse.
-2. Specialist execution behavior is deterministic across calls and aligned with the persisted manifest contract.
+2. Tool execution behavior is deterministic across calls and aligned with the persisted manifest contract.
 3. Core runtime code is easier to reason about and maintain without changing public API behavior.

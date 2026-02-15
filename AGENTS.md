@@ -196,7 +196,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-14T21:36:02Z
+Last Updated (UTC): 2026-02-15T01:36:48Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -209,10 +209,10 @@ Last Updated (UTC): 2026-02-14T21:36:02Z
 - `docs/onboarding.md` - setup, developer workflow, quality gates
 - `docs/idea-brief.md` - concept vision, rationale, demos, future direction
 - `docs/observability.md` - mechanistic interpretability model, shared log schema, and live watcher usage
-- `docs/ubiquitous-language.md` - canonical Solver/Specialist vocabulary and naming rules
+- `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary and naming rules
 - `docs/tolerant-delegation-interfaces.md` - canonical tolerant delegation interface guidance and examples
 - `docs/delegate-vs-for.md` - concrete decision rules for delegate vs Agent.for usage
-- `docs/delegation-contracts.md` - Phase 1 Solver-authored Specialist contract fields and behavior
+- `docs/delegation-contracts.md` - Phase 1 Tool Builder-authored Tool contract fields and behavior
 - `docs/recurgent-implementation-plan.md` - phased implementation plan for LLM-native coordination API and naming transition
 - `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
@@ -229,9 +229,9 @@ Last Updated (UTC): 2026-02-14T21:36:02Z
 - `docs/adrs/0005-project-name-transition-to-recurgent.md` - proposed naming transition strategy
 - `docs/adrs/0006-monorepo-runtime-boundaries.md` - runtime boundary and repository layout decision
 - `docs/adrs/0007-runtime-agnostic-contract-spec.md` - versioned cross-runtime behavior contract decision
-- `docs/adrs/0008-solver-specialist-language-and-tolerant-delegations.md` - vocabulary and tolerant delegation design decision
+- `docs/adrs/0008-tool-builder-tool-language-and-tolerant-delegations.md` - vocabulary and tolerant delegation design decision
 - `docs/adrs/0009-issue-first-pr-compliance-gate.md` - issue-first PR quality gate decision for OSS maintenance
-- `docs/adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md` - proposed specialist-declared dependency manifest and environment contract v1
+- `docs/adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md` - proposed tool-declared dependency manifest and environment contract v1
 - `docs/adrs/0011-env-cache-policy-and-effective-manifest-execution.md` - source-policy-aware env caching and effective-manifest execution invariant
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
@@ -249,7 +249,7 @@ Last Updated (UTC): 2026-02-14T21:36:02Z
 - `runtimes/ruby/spec/recurgent_spec.rb` - core behavior, provider, and logging tests
 - `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb` - deterministic end-to-end acceptance scenarios
 - `runtimes/ruby/examples/` - executable domain demos for manual verification
-- `runtimes/ruby/examples/observability_demo.rb` - deterministic tolerant-flow demo with flaky specialist for watcher testing
+- `runtimes/ruby/examples/observability_demo.rb` - deterministic tolerant-flow demo with flaky tool for watcher testing
 - `runtimes/ruby/README.md` - Ruby runtime-specific commands and structure
 - `runtimes/lua/README.md` - Lua runtime placeholder contract
 - `bin/recurgent-watch` - runtime-agnostic live JSONL log watcher for delegation trace analysis
