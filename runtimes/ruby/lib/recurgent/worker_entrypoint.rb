@@ -55,15 +55,26 @@ while (line = $stdin.gets)
     request = JSON.parse(line)
     call_id = request["call_id"]
     method_name = request["method_name"]
+    role = request["role"]
     code = request["code"]
     args = _deep_symbolize(request["args"] || [])
     kwargs = _deep_symbolize(request["kwargs"] || {})
     context = _deep_symbolize(request["context_snapshot"] || {})
     result = nil
 
-    # rubocop:disable Security/Eval
-    eval(code, binding, "(recurgent-worker:#{method_name})")
-    # rubocop:enable Security/Eval
+    previous_outcome_context = Thread.current[Agent::OUTCOME_CONTEXT_KEY]
+    Thread.current[Agent::OUTCOME_CONTEXT_KEY] = {
+      tool_role: role || "worker_tool",
+      method_name: method_name || "unknown_method"
+    }
+
+    begin
+      # rubocop:disable Security/Eval
+      eval(code, binding, "(recurgent-worker:#{method_name})")
+      # rubocop:enable Security/Eval
+    ensure
+      Thread.current[Agent::OUTCOME_CONTEXT_KEY] = previous_outcome_context
+    end
 
     encoded_value = _encode_value(result)
     serialized_value = _json_compatible?(encoded_value) ? _json_roundtrip(encoded_value) : nil

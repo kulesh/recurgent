@@ -20,7 +20,7 @@ RSpec.describe Agent::PreparationTicket do
       error_type: "environment_preparing",
       error_message: "failed",
       retriable: true,
-      specialist_role: "solver",
+      tool_role: "tool_builder",
       method_name: "prepare"
     )
 
@@ -47,7 +47,7 @@ RSpec.describe Agent::PreparationTicket do
       error_type: "environment_preparing",
       error_message: "failed",
       retriable: true,
-      specialist_role: "solver",
+      tool_role: "tool_builder",
       method_name: "prepare"
     )
     received = nil

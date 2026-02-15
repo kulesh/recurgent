@@ -114,25 +114,25 @@ RSpec.describe Agent do
     end
 
     it "accepts contract fields via Agent.for" do
-      specialist = described_class.for(
-        "pdf specialist",
+      tool = described_class.for(
+        "pdf tool",
         purpose: "produce a PDF artifact",
         deliverable: { type: "object", required: %w[path mime bytes] },
         acceptance: [{ assert: "bytes > 0" }],
         failure_policy: { on_error: "fallback", fallback_role: "archiver" }
       )
-      expect(specialist.instance_variable_get(:@delegation_contract)).to eq(
+      expect(tool.instance_variable_get(:@delegation_contract)).to eq(
         purpose: "produce a PDF artifact",
         deliverable: { type: "object", required: %w[path mime bytes] },
         acceptance: [{ assert: "bytes > 0" }],
         failure_policy: { on_error: "fallback", fallback_role: "archiver" }
       )
-      expect(specialist.instance_variable_get(:@delegation_contract_source)).to eq("fields")
+      expect(tool.instance_variable_get(:@delegation_contract_source)).to eq("fields")
     end
 
     it "merges Agent.for delegation_contract with contract fields (fields win)" do
-      specialist = described_class.for(
-        "pdf specialist",
+      tool = described_class.for(
+        "pdf tool",
         delegation_contract: {
           purpose: "legacy purpose",
           deliverable: { type: "object", required: ["path"] },
@@ -142,13 +142,13 @@ RSpec.describe Agent do
         acceptance: [{ assert: "bytes > 0" }],
         failure_policy: { on_error: "fallback" }
       )
-      expect(specialist.instance_variable_get(:@delegation_contract)).to eq(
+      expect(tool.instance_variable_get(:@delegation_contract)).to eq(
         purpose: "produce a PDF artifact",
         deliverable: { type: "object", required: ["path"] },
         acceptance: [{ assert: "bytes > 0" }],
         failure_policy: { on_error: "fallback" }
       )
-      expect(specialist.instance_variable_get(:@delegation_contract_source)).to eq("merged")
+      expect(tool.instance_variable_get(:@delegation_contract_source)).to eq("merged")
     end
 
     it "writes and returns memory via remember and memory" do
@@ -169,10 +169,43 @@ RSpec.describe Agent do
       expect(child.instance_variable_get(:@trace_id)).to eq(parent.instance_variable_get(:@trace_id))
     end
 
-    it "propagates Solver-authored contract fields to delegated specialists" do
-      parent = described_class.for("solver")
+    it "registers delegated tools in memory for reuse hints" do
+      parent = described_class.for("planner")
+      parent.delegate("web_fetcher", purpose: "fetch and extract content from urls")
+
+      expect(parent.memory).to include(:tools)
+      expect(parent.memory.dig(:tools, "web_fetcher", :purpose)).to eq("fetch and extract content from urls")
+    end
+
+    it "materializes a registered tool via tool(name) using stored contract metadata" do
+      parent = described_class.for("planner")
+      parent.delegate(
+        "web_fetcher",
+        purpose: "fetch and parse web content from urls",
+        deliverable: { type: "object", required: %w[status content] },
+        acceptance: [{ assert: "status indicates success or failure" }],
+        failure_policy: { on_error: "return_error" }
+      )
+
+      fetched_tool = parent.tool("web_fetcher")
+      expect(fetched_tool).to be_a(described_class)
+      expect(fetched_tool.instance_variable_get(:@delegation_contract)).to eq(
+        purpose: "fetch and parse web content from urls",
+        deliverable: { type: "object", required: %w[status content] },
+        acceptance: [{ assert: "status indicates success or failure" }],
+        failure_policy: { on_error: "return_error" }
+      )
+    end
+
+    it "raises when tool(name) is called for an unknown registered tool" do
+      parent = described_class.for("planner")
+      expect { parent.tool("missing_tool") }.to raise_error(ArgumentError, /Unknown tool 'missing_tool'/)
+    end
+
+    it "propagates Tool Builder-authored contract fields to delegated tools" do
+      parent = described_class.for("tool_builder")
       child = parent.delegate(
-        "pdf specialist",
+        "pdf tool",
         purpose: "produce a PDF artifact",
         deliverable: { type: "object", required: %w[path mime bytes] },
         acceptance: [{ assert: "mime == 'application/pdf'" }, { assert: "bytes > 0" }],
@@ -188,9 +221,9 @@ RSpec.describe Agent do
     end
 
     it "merges delegate delegation_contract with contract fields (fields win)" do
-      parent = described_class.for("solver")
+      parent = described_class.for("tool_builder")
       child = parent.delegate(
-        "pdf specialist",
+        "pdf tool",
         delegation_contract: {
           purpose: "legacy purpose",
           deliverable: { type: "object", required: ["path"] },
@@ -210,13 +243,13 @@ RSpec.describe Agent do
     end
 
     it "raises when Agent.for delegation_contract type is invalid" do
-      expect { described_class.for("pdf specialist", delegation_contract: "invalid") }
+      expect { described_class.for("pdf tool", delegation_contract: "invalid") }
         .to raise_error(ArgumentError, /delegation_contract must be a Hash or nil/)
     end
 
     it "raises when delegate delegation_contract type is invalid" do
-      parent = described_class.for("solver")
-      expect { parent.delegate("pdf specialist", delegation_contract: "invalid") }
+      parent = described_class.for("tool_builder")
+      expect { parent.delegate("pdf tool", delegation_contract: "invalid") }
         .to raise_error(ArgumentError, /delegation_contract must be a Hash or nil/)
     end
 
@@ -332,6 +365,12 @@ RSpec.describe Agent do
       expect_error_outcome(g.something, type: "execution", retriable: false)
     end
 
+    it "returns execution error outcome on LoadError" do
+      g = described_class.new("calculator")
+      stub_llm_response("raise LoadError, 'cannot load such file -- rexml/document'")
+      expect_error_outcome(g.something, type: "execution", retriable: false)
+    end
+
     it "returns provider error outcome on provider failure" do
       g = described_class.new("calculator")
       allow(mock_provider).to receive(:generate_program).and_raise(StandardError, "API error")
@@ -348,6 +387,87 @@ RSpec.describe Agent do
       g = described_class.new("calculator")
       stub_llm_response("  \n\t")
       expect_error_outcome(g.increment, type: "invalid_code", retriable: true)
+    end
+
+    it "returns invalid_code outcome when generated code has invalid syntax" do
+      g = described_class.new("calculator")
+      stub_llm_response("def broken(")
+      expect_error_outcome(g.increment, type: "invalid_code", retriable: true)
+    end
+
+    it "allows return in generated code" do
+      g = described_class.new("calculator")
+      stub_llm_response("return 42")
+      expect_ok_outcome(g.answer, value: 42)
+    end
+
+    it "allows next in generated code via lambda execution context" do
+      g = described_class.new("calculator")
+      stub_llm_response("next 7")
+      expect_ok_outcome(g.answer, value: 7)
+    end
+
+    it "supports Agent::Outcome.call as a tolerant success constructor" do
+      g = described_class.new("assistant")
+      stub_llm_response("result = Agent::Outcome.call(42)")
+
+      outcome = g.answer
+      expect_ok_outcome(outcome, value: 42)
+      expect(outcome.tool_role).to eq("assistant")
+      expect(outcome.method_name).to eq("answer")
+    end
+
+    it "accepts hash-like kwargs in Agent::Outcome.call" do
+      g = described_class.new("assistant")
+      stub_llm_response('result = Agent::Outcome.call(status: 200, content: "ok")')
+
+      expect_ok_outcome(g.fetch, value: { status: 200, content: "ok" })
+    end
+
+    it "accepts positional value in Agent::Outcome.ok" do
+      g = described_class.new("assistant")
+      stub_llm_response('result = Agent::Outcome.ok({status: 200, content: "ok"})')
+
+      expect_ok_outcome(g.fetch, value: { status: 200, content: "ok" })
+    end
+
+    it "fills tool context for Agent::Outcome.error when tool_role/method_name are omitted" do
+      g = described_class.new("assistant")
+      stub_llm_response(<<~RUBY)
+        result = Agent::Outcome.error(
+          error_type: "unsupported_capability",
+          error_message: "Timers are unavailable in this runtime",
+          retriable: false
+        )
+      RUBY
+
+      outcome = g.set_timer
+      expect_error_outcome(outcome, type: "unsupported_capability", retriable: false)
+      expect(outcome.tool_role).to eq("assistant")
+      expect(outcome.method_name).to eq("set_timer")
+    end
+
+    it "accepts positional error_type and error_message in Agent::Outcome.error" do
+      g = described_class.new("assistant")
+      stub_llm_response('result = Agent::Outcome.error("unsupported_capability", "Timers unavailable")')
+
+      outcome = g.set_timer
+      expect_error_outcome(outcome, type: "unsupported_capability", retriable: false)
+      expect(outcome.error_message).to eq("Timers unavailable")
+    end
+
+    it "coerces outcome-shaped hashes into canonical error outcomes" do
+      g = described_class.new("assistant")
+      stub_llm_response(<<~RUBY)
+        result = {
+          status: :error,
+          error_type: "unsupported_capability",
+          error_message: "Timers are unavailable in this runtime",
+          retriable: false
+        }
+      RUBY
+
+      expect_error_outcome(g.set_timer, type: "unsupported_capability", retriable: false)
     end
 
     it "returns invalid_dependency_manifest outcome when dependencies is not an array" do
@@ -378,6 +498,17 @@ RSpec.describe Agent do
       g = described_class.new("calculator")
       allow(mock_provider).to receive(:generate_program).and_return(
         program_payload(code: nil),
+        program_payload(code: "result = 42")
+      )
+
+      expect_ok_outcome(g.answer, value: 42)
+      expect(mock_provider).to have_received(:generate_program).twice
+    end
+
+    it "retries when provider returns syntactically invalid code and succeeds on next attempt" do
+      g = described_class.new("calculator")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "def broken("),
         program_payload(code: "result = 42")
       )
 
@@ -673,7 +804,7 @@ RSpec.describe Agent do
     it "returns a preparation ticket that resolves with an agent" do
       prepared_agent = described_class.for("calculator", log: false)
       allow(described_class).to receive(:for).and_return(prepared_agent)
-      allow(prepared_agent).to receive(:_prepare_specialist_environment!).and_return(nil)
+      allow(prepared_agent).to receive(:_prepare_tool_environment!).and_return(nil)
 
       ticket = described_class.prepare("calculator", dependencies: [{ name: "nokogiri" }], log: false)
       prepared = ticket.await(timeout: 1)
@@ -803,6 +934,16 @@ RSpec.describe Agent do
       g.read("README.md")
     end
 
+    it "includes top-level control-flow guardrails in system prompt" do
+      g = described_class.new("file_inspector")
+      expect_llm_call_with(
+        code: "result = nil",
+        system_prompt: a_string_including("Set `result` or use `return`")
+                       .and(including("Avoid `redo` unless in a clearly bounded loop"))
+      )
+      g.read("README.md")
+    end
+
     it "includes context state in user prompt" do
       g = described_class.new("calculator")
       g.value = 5
@@ -811,6 +952,21 @@ RSpec.describe Agent do
         user_prompt: a_string_including("value")
       )
       g.value
+    end
+
+    it "includes known tools in system prompt after delegation" do
+      g = described_class.new("planner")
+      g.delegate("web_fetcher", purpose: "fetch and extract content from urls")
+
+      expect_llm_call_with(
+        code: "result = nil",
+        system_prompt: a_string_including("Tool Registry Snapshot")
+                       .and(including("<known_tools>"))
+                       .and(including("- web_fetcher: fetch and extract content from urls"))
+                       .and(including("Do NOT call values from `context[:tools]`"))
+                       .and(including('tool("tool_name")'))
+      )
+      g.plan
     end
 
     it "sends tool schema via provider" do
@@ -824,7 +980,7 @@ RSpec.describe Agent do
 
     it "injects delegated contract guidance into prompts" do
       g = described_class.new(
-        "pdf specialist",
+        "pdf tool",
         delegation_contract: {
           purpose: "generate a PDF file",
           deliverable: { required: %w[path mime bytes] },
@@ -834,10 +990,46 @@ RSpec.describe Agent do
       )
       expect_llm_call_with(
         code: "result = nil",
-        system_prompt: a_string_including("Solver Delegation Contract").and(including("generate a PDF file")),
-        user_prompt: a_string_including("Solver Delegation Contract").and(including("application/pdf"))
+        system_prompt: a_string_including("Tool Builder Delegation Contract").and(including("generate a PDF file")),
+        user_prompt: a_string_including("<invocation>")
+                     .and(including("<active_contract>"))
+                     .and(including("application/pdf"))
+                     .and(including("<response_contract>"))
       )
       g.convert
+    end
+
+    it "renders contracted operating mode for depth-1 system prompts" do
+      g = described_class.new(
+        "web_fetcher",
+        delegation_contract: {
+          purpose: "fetch and extract content from urls",
+          deliverable: { type: "object", required: %w[status body] },
+          acceptance: [{ assert: "status and body are present" }],
+          failure_policy: { on_error: "return_error" }
+        }
+      )
+
+      prompt = g.send(:_build_system_prompt, call_context: { depth: 1 })
+      expect(prompt).to include("Tool Builder Delegation Contract:")
+      expect(prompt).to include("fetch and extract content from urls")
+      expect(prompt).not_to include("No delegation contract is active")
+    end
+
+    it "includes bootstrap examples only on first user prompt" do
+      g = described_class.new("calculator")
+      prompts = []
+      allow(mock_provider).to receive(:generate_program) do |payload|
+        prompts << payload.fetch(:user_prompt)
+        program_payload(code: "result = nil")
+      end
+
+      g.first_call
+      g.second_call
+
+      expect(prompts.length).to eq(2)
+      expect(prompts.first).to include("<examples>")
+      expect(prompts.last).not_to include("<examples>")
     end
   end
 
@@ -881,7 +1073,7 @@ RSpec.describe Agent do
 
     it "logs delegated contract metadata when present" do
       g = described_class.new(
-        "pdf specialist",
+        "pdf tool",
         log: log_path,
         delegation_contract: {
           purpose: "produce PDF",
@@ -999,11 +1191,15 @@ RSpec.describe Agent do
       g.discuss
     end
 
-    it "includes tolerant delegation guidance in user prompt" do
+    it "includes situational structure and bootstrap examples in user prompt" do
       g = described_class.new("debate", log: log_path)
       expect_llm_call_with(
         code: "result = nil",
-        user_prompt: a_string_including("delegate(")
+        user_prompt: a_string_including("<invocation>")
+                     .and(including("<response_contract>"))
+                     .and(including("<self_check>"))
+                     .and(including("<examples>"))
+                     .and(including("delegate("))
                      .and(including("purpose:"))
                      .and(including("analysis.ok?"))
                      .and(including("unsupported_capability"))
@@ -1038,7 +1234,7 @@ RSpec.describe Agent do
       g = described_class.new("delegator", log: log_path)
       allow(mock_provider).to receive(:generate_program).and_return(
         program_payload(
-          code: 'specialist = delegate("calculator"); child = specialist.add(2, 3); result = child.ok? ? child.value : child.error_type'
+          code: 'tool = delegate("calculator"); child = tool.add(2, 3); result = child.ok? ? child.value : child.error_type'
         ),
         program_payload(code: "result = args[0] + args[1]")
       )

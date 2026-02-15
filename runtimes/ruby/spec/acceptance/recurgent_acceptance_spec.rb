@@ -14,7 +14,7 @@ RSpec.describe "Agent acceptance" do
 
       def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
         _ = [model, system_prompt, tool_schema, timeout_seconds]
-        method_name = user_prompt[/Someone called '([^']+)'/, 1]
+        method_name = user_prompt[%r{<method>([^<]+)</method>}, 1]
         raise "Unable to parse method name from user prompt" unless method_name
 
         error = @errors[method_name]

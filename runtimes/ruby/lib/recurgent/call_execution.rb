@@ -8,9 +8,9 @@ class Agent
     # The main dispatch: build prompts, ask LLM for code, execute it.
     # Only handles method calls — setters are handled directly in method_missing.
     def _dispatch_method_call(name, *args, **kwargs)
-      system_prompt = _build_system_prompt
-      user_prompt = _build_user_prompt(name, args, kwargs)
       _with_call_frame do |call_context|
+        system_prompt = _build_system_prompt(call_context: call_context)
+        user_prompt = _build_user_prompt(name, args, kwargs, call_context: call_context)
         _execute_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
       end
     end
@@ -92,7 +92,7 @@ class Agent
       end
 
       result = _execute_code(code, name, *args, **kwargs)
-      result.is_a?(Outcome) ? result : Outcome.ok(value: result, specialist_role: @role, method_name: name)
+      Outcome.coerce(result, tool_role: @role, method_name: name)
     end
 
     def _print_generated_code(name, code)

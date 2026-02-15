@@ -27,6 +27,7 @@ class Agent
 
     def _worker_payload(method_name:, code:, args:, kwargs:)
       {
+        role: @role,
         method_name: method_name,
         code: code,
         args: _json_serializable!(args, "args"),
@@ -45,9 +46,7 @@ class Agent
       when "ok"
         @context = _deep_symbolize(response.fetch(:context_snapshot, {}))
         value = _decode_worker_value(response[:value], method_name)
-        return value if value.is_a?(Outcome)
-
-        Outcome.ok(value: value, specialist_role: @role, method_name: method_name)
+        Outcome.coerce(value, tool_role: @role, method_name: method_name)
       when "error"
         _raise_worker_error!(response)
       else
@@ -70,7 +69,7 @@ class Agent
     def _decode_ok_outcome(encoded, method_name)
       Outcome.ok(
         value: encoded["value"],
-        specialist_role: encoded["specialist_role"] || @role,
+        tool_role: encoded["tool_role"] || @role,
         method_name: encoded["method_name"] || method_name
       )
     end
@@ -80,7 +79,7 @@ class Agent
         error_type: encoded["error_type"] || "execution",
         error_message: encoded["error_message"] || "Worker returned error outcome",
         retriable: !encoded["retriable"].nil? && encoded["retriable"],
-        specialist_role: encoded["specialist_role"] || @role,
+        tool_role: encoded["tool_role"] || @role,
         method_name: encoded["method_name"] || method_name
       )
     end

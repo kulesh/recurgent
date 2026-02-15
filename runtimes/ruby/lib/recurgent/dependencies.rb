@@ -18,7 +18,7 @@ class Agent
       env_info.merge(effective_manifest: manifest)
     end
 
-    def _prepare_specialist_environment!(dependencies:, prep_ticket_id:)
+    def _prepare_tool_environment!(dependencies:, prep_ticket_id:)
       normalized_dependencies = DependencyManifest.normalize!(dependencies)
       @prep_ticket_id = prep_ticket_id
       _prepare_dependency_environment!(method_name: "prepare", normalized_dependencies: normalized_dependencies)

@@ -22,7 +22,7 @@ require_relative "recurgent/worker_execution"
 # An Agent object intercepts all method calls, asks an LLM what Ruby code
 # to run, then eval's that code in its own context. The agent's "role"
 # (e.g. "calculator", "assistant") is passed to the LLM so it knows what
-# kind of specialist it's supposed to be.
+# kind of tool it's supposed to be.
 #
 # The magic is in Ruby's method_missing. When you call calculator.sum,
 # Ruby can't find a `sum` method, so it calls method_missing instead.
@@ -56,6 +56,7 @@ class Agent
   DEFAULT_GEM_SOURCES = ["https://rubygems.org"].freeze
   DEFAULT_SOURCE_MODE = "public_only"
   CALL_STACK_KEY = :__recurgent_call_stack
+  OUTCOME_CONTEXT_KEY = :__recurgent_outcome_context
   RUNTIME_NAME = "ruby"
   DELEGATION_CONTRACT_FIELDS = %i[purpose deliverable acceptance failure_policy].freeze
   class Error < StandardError; end
@@ -128,14 +129,14 @@ class Agent
     ticket = PreparationTicket.new
     Thread.new do
       agent = self.for(role, **options)
-      agent.send(:_prepare_specialist_environment!, dependencies: dependencies, prep_ticket_id: ticket.id)
+      agent.send(:_prepare_tool_environment!, dependencies: dependencies, prep_ticket_id: ticket.id)
       ticket._resolve(agent: agent)
     rescue StandardError => e
       outcome = Outcome.error(
         error_type: "environment_preparing",
         error_message: "Environment preparation failed for #{role}: #{e.message}",
         retriable: true,
-        specialist_role: role,
+        tool_role: role,
         method_name: "prepare"
       )
       ticket._reject(outcome: outcome)
@@ -158,6 +159,10 @@ class Agent
     return if value.nil? || value.is_a?(Hash)
 
     raise ArgumentError, "delegation_contract must be a Hash or nil"
+  end
+
+  def self.current_outcome_context
+    Thread.current[OUTCOME_CONTEXT_KEY] || {}
   end
 
   def initialize(role, **options)
@@ -241,6 +246,31 @@ class Agent
     @context
   end
 
+  def tool(role, **options)
+    role_name = role.to_s
+    metadata = _registered_tool_metadata(role_name)
+    raise ArgumentError, "Unknown tool '#{role_name}' in #{@role}.tool" unless metadata
+
+    purpose = options.key?(:purpose) ? options.delete(:purpose) : _tool_metadata_field(metadata, :purpose)
+    deliverable = options.key?(:deliverable) ? options.delete(:deliverable) : _tool_metadata_field(metadata, :deliverable)
+    acceptance = options.key?(:acceptance) ? options.delete(:acceptance) : _tool_metadata_field(metadata, :acceptance)
+    failure_policy =
+      if options.key?(:failure_policy)
+        options.delete(:failure_policy)
+      else
+        _tool_metadata_field(metadata, :failure_policy)
+      end
+
+    delegate(
+      role_name,
+      purpose: purpose,
+      deliverable: deliverable,
+      acceptance: acceptance,
+      failure_policy: failure_policy,
+      **options
+    )
+  end
+
   def delegate(role, purpose: nil, deliverable: nil, acceptance: nil, failure_policy: nil, **options)
     raise BudgetExceededError, "Delegation budget exceeded in #{@role}.delegate (remaining: 0)" if @delegation_budget&.zero?
 
@@ -260,7 +290,7 @@ class Agent
       trace_id: @trace_id
     }
     delegate_options = inherited.merge(options)
-    Agent.for(
+    tool = Agent.for(
       role,
       purpose: purpose,
       deliverable: deliverable,
@@ -269,6 +299,8 @@ class Agent
       delegation_contract: explicit_contract,
       **delegate_options
     )
+    _register_delegated_tool(role: role, tool: tool, explicit_purpose: purpose)
+    tool
   end
 end
 
@@ -331,13 +363,16 @@ class Agent
   def _execute_code(code, method_name, *args, **kwargs)
     context = @context
     result = nil
+    wrapped_code = _wrap_generated_code(code)
 
-    eval(code, binding, "(agent:#{@role}.#{method_name})")
+    _with_outcome_call_context(method_name) do
+      eval(wrapped_code, binding, "(agent:#{@role}.#{method_name})")
+    end
 
     result
   rescue Agent::Error
     raise
-  rescue StandardError => e
+  rescue StandardError, ScriptError => e
     raise ExecutionError, "Execution error in #{@role}.#{method_name}: #{e.message}", cause: e
   end
 
@@ -371,6 +406,7 @@ class Agent
           timeout_seconds: @provider_timeout_seconds
         )
         program = GeneratedProgram.from_provider_payload!(method_name: method_name, payload: payload)
+        _validate_generated_code_syntax!(method_name, program.code)
         return [program, attempt_number]
       rescue ProviderError => e
         last_error = e
@@ -389,6 +425,33 @@ class Agent
     raise last_error || ProviderError.new("Provider failed to generate program for #{@role}.#{method_name}")
   end
 
+  def _validate_generated_code_syntax!(method_name, code)
+    RubyVM::InstructionSequence.compile(_wrap_generated_code(code), "(agent:#{@role}.#{method_name})")
+  rescue SyntaxError => e
+    raise InvalidCodeError, "Generated code has invalid Ruby syntax in #{@role}.#{method_name}: #{e.message}"
+  end
+
+  def _wrap_generated_code(code)
+    indented_code = code.lines.map { |line| "  #{line}" }.join
+    [
+      "__recurgent_result_sentinel = Object.new",
+      "result = __recurgent_result_sentinel",
+      "__recurgent_exec = lambda do",
+      indented_code,
+      "end",
+      "__recurgent_return_value = __recurgent_exec.call",
+      "result = __recurgent_return_value if result.equal?(__recurgent_result_sentinel)"
+    ].join("\n")
+  end
+
+  def _with_outcome_call_context(method_name)
+    previous = Thread.current[OUTCOME_CONTEXT_KEY]
+    Thread.current[OUTCOME_CONTEXT_KEY] = { tool_role: @role, method_name: method_name }
+    yield
+  ensure
+    Thread.current[OUTCOME_CONTEXT_KEY] = previous
+  end
+
   def _retry_user_prompt(base_user_prompt, attempt_number, last_error)
     return base_user_prompt if attempt_number == 1
 
@@ -399,7 +462,7 @@ class Agent
       Retry #{attempt_number}/#{@max_generation_attempts}.
       You MUST return a valid GeneratedProgram payload in the execute_code tool.
       The payload MUST contain non-empty `code` and optional `dependencies` array.
-      The `code` MUST assign `result` and MUST NOT be blank.
+      The `code` MUST either assign `result` or use `return` to produce a value, and MUST NOT be blank.
       If unavailable capability is the blocker, do NOT recurse via delegation.
       Return a typed non-retriable error outcome with error_type "unsupported_capability".
     PROMPT
@@ -464,7 +527,7 @@ class Agent
       error_type: error_type,
       error_message: error.message,
       retriable: retriable,
-      specialist_role: @role,
+      tool_role: @role,
       method_name: method_name
     )
   end
@@ -508,6 +571,38 @@ class Agent
     return key if key.is_a?(Symbol)
 
     key
+  end
+
+  def _register_delegated_tool(role:, tool:, explicit_purpose:)
+    role_name = role.to_s
+    registry = @context[:tools]
+    registry = @context[:tools] = {} unless registry.is_a?(Hash)
+
+    contract = tool.instance_variable_get(:@delegation_contract)
+    purpose = explicit_purpose || contract&.fetch(:purpose, nil) || "purpose unavailable"
+    metadata = { purpose: purpose }
+    metadata.merge!(_delegated_tool_contract_summary(contract))
+
+    registry[role_name] = metadata
+  end
+
+  def _registered_tool_metadata(role_name)
+    registry = @context[:tools]
+    return nil unless registry.is_a?(Hash)
+
+    registry[role_name] || registry[role_name.to_sym]
+  end
+
+  def _tool_metadata_field(metadata, key)
+    return nil unless metadata.is_a?(Hash)
+
+    metadata[key] || metadata[key.to_s]
+  end
+
+  def _delegated_tool_contract_summary(contract)
+    return {} unless contract.is_a?(Hash)
+
+    contract.slice(:deliverable, :acceptance, :failure_policy)
   end
 
   def _validate_delegation_contract_type!(value)

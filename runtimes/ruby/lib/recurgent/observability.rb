@@ -81,7 +81,7 @@ class Agent
     def _add_outcome_to_entry(entry, outcome)
       entry[:outcome_status] = outcome.status
       entry[:outcome_retriable] = outcome.retriable
-      entry[:outcome_specialist_role] = outcome.specialist_role
+      entry[:outcome_tool_role] = outcome.tool_role
       entry[:outcome_method_name] = outcome.method_name
       if outcome.ok?
         entry[:outcome_value_class] = outcome.value.class.name unless outcome.value.nil?
