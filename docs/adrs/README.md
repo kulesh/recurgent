@@ -16,6 +16,8 @@ This directory captures architecture decisions that shape Recurgent's runtime be
 - `0010-dependency-aware-generated-programs-and-environment-contract-v1.md`
 - `0011-env-cache-policy-and-effective-manifest-execution.md`
 - `0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md`
+- `0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md`
+- `0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md`
 
 ## Status Values
 

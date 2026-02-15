@@ -65,7 +65,7 @@ Goals:
 
 1. Define on-disk schema contracts.
 2. Introduce prompt/runtime version constants.
-3. Add feature flags and kill switches.
+3. Keep the runtime surface minimal and always-on for persistence.
 
 Implementation:
 
@@ -74,18 +74,15 @@ Implementation:
    - `PROMPT_VERSION`
    - `MAX_REPAIRS_BEFORE_REGEN`
    - `KNOWN_TOOLS_PROMPT_LIMIT`
-2. Add runtime flags (env/config):
-   - `toolstore_enabled`
-   - `toolstore_artifact_read_enabled`
-   - `toolstore_repair_enabled`
-   - `toolstore_pruning_enabled`
+2. Add runtime configuration:
+   - `toolstore_root` (storage location override)
 3. Define JSON schema docs for:
    - `tools/registry.json`
    - `tools/<role>/<method>.json`
 
 Exit criteria:
 
-1. Constants and flags wired and documented.
+1. Constants and runtime configuration wired and documented.
 2. Schema docs and validation stubs committed.
 
 ### Phase 1: Registry Persistence (Contracts Across Sessions)

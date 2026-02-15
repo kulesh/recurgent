@@ -12,6 +12,8 @@
 - `docs/recurgent-implementation-plan.md` - phased plan for LLM-native coordination API and naming transition
 - `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
 - `docs/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
+- `docs/cacheability-pattern-memory-implementation-plan.md` - phased implementation plan for ADR 0013 cacheability-gated artifact reuse and pattern-memory promotion
+- `docs/outcome-boundary-contract-validation-implementation-plan.md` - phased implementation plan for ADR 0014 delegated outcome validation and tolerant interface canonicalization
 - `docs/baselines/2026-02-15/README.md` - pre-persistence baseline traces for assistant and philosophy debate scenarios
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/governance.md` - maintainer governance and decision model
@@ -19,6 +21,8 @@
 - `docs/release-process.md` - release process and SemVer policy
 - `docs/open-source-release-checklist.md` - OSS launch readiness and manual GitHub settings checklist
 - `docs/adrs/README.md` - architecture decision index and status model
+- `docs/adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md` - cacheability-gated artifact execution and pattern-memory-assisted promotion policy
+- `docs/adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md` - delegated outcome-shape enforcement and tolerant interface canonicalization policy
 - `docs/maintenance.md` - runtime and dependency maintenance policy
 - `CONTRIBUTING.md` - contribution policy and quality gates
 - `CODE_OF_CONDUCT.md` - collaboration and anti-spam behavior policy

@@ -196,7 +196,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-15T04:57:13Z
+Last Updated (UTC): 2026-02-15T07:50:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -216,6 +216,8 @@ Last Updated (UTC): 2026-02-15T04:57:13Z
 - `docs/recurgent-implementation-plan.md` - phased implementation plan for LLM-native coordination API and naming transition
 - `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
 - `docs/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
+- `docs/cacheability-pattern-memory-implementation-plan.md` - phased implementation plan for ADR 0013 cacheability-gated artifact reuse and pattern-memory promotion
+- `docs/outcome-boundary-contract-validation-implementation-plan.md` - phased implementation plan for ADR 0014 delegated outcome validation and tolerant interface canonicalization
 - `docs/baselines/2026-02-15/README.md` - baseline trace capture instructions and fixtures before artifact persistence rollout
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
@@ -236,6 +238,8 @@ Last Updated (UTC): 2026-02-15T04:57:13Z
 - `docs/adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md` - proposed tool-declared dependency manifest and environment contract v1
 - `docs/adrs/0011-env-cache-policy-and-effective-manifest-execution.md` - source-policy-aware env caching and effective-manifest execution invariant
 - `docs/adrs/0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md` - proposed cross-session tool persistence and fitness-based artifact selection policy
+- `docs/adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md` - cacheability-gated artifact execution and runtime pattern-memory injection for emergent tool promotion
+- `docs/adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md` - delegated outcome contract enforcement with tolerant key semantics and canonical method metadata
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog
