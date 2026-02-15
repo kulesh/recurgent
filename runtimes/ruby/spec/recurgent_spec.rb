@@ -920,8 +920,22 @@ RSpec.describe Agent do
       expect(entry).to have_key("user_prompt")
       expect(entry).to have_key("context")
       expect(entry["context"]).to eq("value" => 6)
+      expect(entry["outcome_value"]).to eq(6)
       expect(entry["system_prompt"]).to include("calculator")
       expect(entry["user_prompt"]).to include("increment")
+    end
+
+    it "logs inspect fallback for non-JSON outcome values in debug mode" do
+      g = described_class.new("calculator", log: log_path, debug: true)
+      stub_llm_response("result = Object.new")
+
+      outcome = g.answer
+      expect(outcome).to be_ok
+      expect(outcome.value).to be_a(Object)
+
+      entry = JSON.parse(File.readlines(log_path).first)
+      expect(entry["outcome_value"]).to be_a(String)
+      expect(entry["outcome_value"]).to include("#<Object")
     end
 
     it "normalizes binary-encoded UTF-8 strings in logged context" do

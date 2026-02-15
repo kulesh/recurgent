@@ -85,6 +85,7 @@ class Agent
       entry[:outcome_method_name] = outcome.method_name
       if outcome.ok?
         entry[:outcome_value_class] = outcome.value.class.name unless outcome.value.nil?
+        entry[:outcome_value] = _debug_serializable_value(outcome.value) if @debug
       else
         entry[:outcome_error_type] = outcome.error_type
         entry[:outcome_error_message] = outcome.error_message
@@ -96,6 +97,13 @@ class Agent
       entry[:user_prompt] = user_prompt
       entry[:context] = @context.dup
       entry[:error_backtrace] = error.backtrace&.first(10) if error
+    end
+
+    # Keep debug logs robust when runtime values are not JSON-friendly.
+    def _debug_serializable_value(value)
+      JSON.parse(JSON.generate(value))
+    rescue JSON::GeneratorError, TypeError
+      value.inspect
     end
   end
 end
