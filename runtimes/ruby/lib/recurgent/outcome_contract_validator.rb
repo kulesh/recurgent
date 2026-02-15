@@ -5,15 +5,6 @@ class Agent
   module OutcomeContractValidator
     include OutcomeContractShapes
 
-    LOW_UTILITY_SUCCESS_STATUSES = %w[
-      success_no_parse
-      success_but_unusable
-      partial_success_unusable
-      empty_result
-      no_useful_result
-      low_utility
-    ].freeze
-
     private
 
     def _validate_delegated_outcome_contract(outcome:, method_name:, args:, kwargs:, state:)
@@ -28,12 +19,7 @@ class Agent
         kwargs: kwargs
       )
       _capture_contract_validation_state!(state, validation)
-      if validation[:valid]
-        return _coerce_low_utility_success_outcome(
-          _validated_success_outcome(outcome, validation),
-          method_name: method_name
-        )
-      end
+      return _validated_success_outcome(outcome, validation) if validation[:valid]
 
       _contract_violation_outcome(method_name: method_name, validation: validation)
     end
@@ -55,7 +41,7 @@ class Agent
       expected_type = _contract_type(deliverable)
       return _valid_contract_validation(value) if expected_type.nil?
       return _validate_object_deliverable(deliverable: deliverable, value: value) if expected_type == "object"
-      return _validate_array_deliverable(value: value) if expected_type == "array"
+      return _validate_array_deliverable(deliverable: deliverable, value: value) if expected_type == "array"
 
       _valid_contract_validation(value)
     end
@@ -105,40 +91,6 @@ class Agent
         method_name: method_name,
         metadata: metadata
       )
-    end
-
-    def _coerce_low_utility_success_outcome(outcome, method_name:)
-      return outcome unless outcome.ok?
-
-      low_utility_metadata = _low_utility_success_signal_metadata(outcome.value)
-      return outcome if low_utility_metadata.nil?
-
-      Outcome.error(
-        error_type: "low_utility",
-        error_message: "Tool reported successful execution but signaled low utility output",
-        retriable: false,
-        tool_role: @role,
-        method_name: method_name,
-        metadata: low_utility_metadata
-      )
-    end
-
-    def _low_utility_success_signal_metadata(value)
-      return nil unless value.is_a?(Hash)
-
-      status = value[:status] || value["status"]
-      return nil unless status.is_a?(String)
-
-      normalized_status = status.strip.downcase
-      return nil unless LOW_UTILITY_SUCCESS_STATUSES.include?(normalized_status)
-
-      message = value[:message] || value["message"]
-      metadata = {
-        mismatch: "low_utility_success_signal",
-        signaled_status: normalized_status
-      }
-      metadata[:signaled_message] = message.to_s unless message.to_s.strip.empty?
-      metadata
     end
 
     def _reset_contract_validation_state!(state)

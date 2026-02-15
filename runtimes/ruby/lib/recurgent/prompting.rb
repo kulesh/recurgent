@@ -284,6 +284,7 @@ class Agent
         - If blocked by unavailable capability, return a typed non-retriable error outcome instead of fake success.
         - If output is structurally valid but not useful for caller intent, return `Agent::Outcome.error(error_type: "low_utility", ...)` instead of `Outcome.ok` with placeholder status.
         - If request crosses this Tool's boundary, return `Agent::Outcome.error(error_type: "wrong_tool_boundary", ...)` with metadata such as `boundary_axes`, `observed_task_shape`, and optional `suggested_split`.
+        - If usefulness must be enforced inline, encode it as machine-checkable `deliverable` constraints (for example `min_items`) rather than relying on status strings.
         - For dependency-backed execution, results and context must stay JSON-serializable.
         - Be context-capacity aware: if memory grows large, prefer summarizing/pruning stale data over unbounded accumulation.
       RULES

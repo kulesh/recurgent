@@ -665,11 +665,19 @@ RSpec.describe Agent do
       end
     end
 
-    it "converts success_no_parse status into low_utility and repairs on next persisted execution" do
+    it "enforces deliverable min_items constraints and repairs on next persisted execution" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
         contract = {
           purpose: "fetch and parse movie listings",
-          deliverable: { type: "object", required: %w[status movies] }
+          deliverable: {
+            type: "object",
+            required: %w[status movies],
+            constraints: {
+              properties: {
+                movies: { type: "array", min_items: 1 }
+              }
+            }
+          }
         }
 
         Agent.configure_runtime(toolstore_root: tmpdir)
@@ -686,10 +694,11 @@ RSpec.describe Agent do
           )
         )
         seeded = seeder.fetch_listings("https://www.fandango.com")
-        expect_error_outcome(seeded, type: "low_utility", retriable: false)
+        expect_error_outcome(seeded, type: "contract_violation", retriable: false)
         expect(seeded.metadata).to include(
-          mismatch: "low_utility_success_signal",
-          signaled_status: "success_no_parse"
+          mismatch: "min_items_violation",
+          expected_min_items: 1,
+          actual_items: 0
         )
 
         Agent.configure_runtime(toolstore_root: tmpdir)
@@ -775,7 +784,7 @@ RSpec.describe Agent do
       )
     end
 
-    it "coerces success_no_parse ok outcomes into low_utility typed errors" do
+    it "does not rewrite tool-authored success status when contract constraints are not violated" do
       finder = described_class.new(
         "movie_finder",
         delegation_contract: {
@@ -794,12 +803,60 @@ RSpec.describe Agent do
       )
 
       outcome = finder.fetch_listings("https://www.fandango.com")
-      expect_error_outcome(outcome, type: "low_utility", retriable: false)
-      expect(outcome.metadata).to include(
-        mismatch: "low_utility_success_signal",
-        signaled_status: "success_no_parse",
-        signaled_message: "fetched page but found no listings"
+      expect(outcome).to be_ok
+      expect(outcome.value[:status]).to eq("success_no_parse")
+      expect(outcome.value[:movies]).to eq([])
+    end
+
+    it "returns contract_violation when top-level array min_items constraint fails" do
+      parser = described_class.new(
+        "rss_parser",
+        delegation_contract: {
+          purpose: "parse rss feeds",
+          deliverable: { type: "array", min_items: 1 }
+        }
       )
+      stub_llm_response("result = []")
+
+      outcome = parser.parse("<rss></rss>")
+      expect_error_outcome(outcome, type: "contract_violation", retriable: false)
+      expect(outcome.metadata).to include(
+        mismatch: "min_items_violation",
+        expected_shape: "array",
+        actual_shape: "array",
+        expected_min_items: 1,
+        actual_items: 0
+      )
+      expect(outcome.metadata[:constraint_path]).to eq("deliverable.min_items")
+    end
+
+    it "returns contract_violation when constrained object property min_items fails" do
+      finder = described_class.new(
+        "movie_finder",
+        delegation_contract: {
+          purpose: "fetch and parse movie listings",
+          deliverable: {
+            type: "object",
+            required: %w[status movies],
+            constraints: {
+              properties: {
+                movies: { type: "array", min_items: 1 }
+              }
+            }
+          }
+        }
+      )
+      stub_llm_response('result = { status: "success_no_parse", movies: [] }')
+
+      outcome = finder.fetch_listings("https://www.fandango.com")
+      expect_error_outcome(outcome, type: "contract_violation", retriable: false)
+      expect(outcome.metadata).to include(
+        mismatch: "min_items_violation",
+        expected_shape: "array",
+        expected_min_items: 1,
+        actual_items: 0
+      )
+      expect(outcome.metadata[:constraint_path]).to eq("deliverable.constraints.properties.movies.min_items")
     end
   end
 

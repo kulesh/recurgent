@@ -3,6 +3,8 @@
 class Agent
   # Agent::OutcomeContractShapes — deliverable type/shape validation helpers.
   module OutcomeContractShapes
+    include OutcomeContractConstraints
+
     private
 
     def _contract_type(deliverable)
@@ -35,10 +37,14 @@ class Agent
         )
       end
 
-      _valid_contract_validation(_with_tolerant_key_aliases(value))
+      normalized = _with_tolerant_key_aliases(value)
+      constraints_validation = _validate_object_constraints(deliverable: deliverable, value: normalized)
+      return constraints_validation unless constraints_validation[:valid]
+
+      _valid_contract_validation(normalized)
     end
 
-    def _validate_array_deliverable(value:)
+    def _validate_array_deliverable(deliverable:, value:)
       unless value.is_a?(Array)
         return _invalid_contract_validation(
           mismatch: "type_mismatch",
@@ -46,6 +52,22 @@ class Agent
           actual_shape: _value_shape(value),
           expected_keys: [],
           actual_keys: _actual_key_descriptors(value)
+        )
+      end
+
+      min_items = _deliverable_min_items(deliverable)
+      if min_items && value.length < min_items
+        return _invalid_contract_validation(
+          mismatch: "min_items_violation",
+          expected_shape: "array",
+          actual_shape: "array",
+          expected_keys: [],
+          actual_keys: [],
+          details: {
+            constraint_path: "deliverable.min_items",
+            expected_min_items: min_items,
+            actual_items: value.length
+          }
         )
       end
 
@@ -96,7 +118,7 @@ class Agent
       }
     end
 
-    def _invalid_contract_validation(mismatch:, expected_shape:, actual_shape:, expected_keys:, actual_keys:)
+    def _invalid_contract_validation(mismatch:, expected_shape:, actual_shape:, expected_keys:, actual_keys:, details: {})
       metadata = {
         expected_shape: expected_shape,
         actual_shape: actual_shape,
@@ -104,6 +126,7 @@ class Agent
         actual_keys: actual_keys,
         mismatch: mismatch
       }
+      metadata.merge!(details) if details.is_a?(Hash) && !details.empty?
 
       {
         valid: false,
