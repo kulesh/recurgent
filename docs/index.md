@@ -14,6 +14,7 @@
 - `docs/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
 - `docs/cacheability-pattern-memory-implementation-plan.md` - phased implementation plan for ADR 0013 cacheability-gated artifact reuse and pattern-memory promotion
 - `docs/outcome-boundary-contract-validation-implementation-plan.md` - phased implementation plan for ADR 0014 delegated outcome validation and tolerant interface canonicalization
+- `docs/tool-self-awareness-boundary-referral-implementation-plan.md` - phased implementation plan for ADR 0015 dual-lane evolution with `wrong_tool_boundary`, `low_utility`, cohesion telemetry, and user-correction signals
 - `docs/baselines/2026-02-15/README.md` - pre-persistence baseline traces for assistant and philosophy debate scenarios
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/governance.md` - maintainer governance and decision model
@@ -45,6 +46,7 @@ The Ruby runtime (`runtimes/ruby`) keeps a narrow architecture:
 - `runtimes/ruby/lib/recurgent/prompting.rb` - system/user prompt construction and tool schema
 - `runtimes/ruby/lib/recurgent/observability.rb` - JSONL log entry construction and debug metadata
 - `runtimes/ruby/lib/recurgent/call_execution.rb` - dynamic call orchestration and execution path selection
+- `runtimes/ruby/lib/recurgent/user_correction_signals.rb` - deterministic temporal re-ask `user_correction` detection and normalization
 - `runtimes/ruby/lib/recurgent/outcome.rb` - `Agent::Outcome` envelope model
 - `runtimes/ruby/lib/recurgent/providers.rb` - provider adapters (Anthropic/OpenAI)
 - `runtimes/ruby/lib/recurgent/dependency_manifest.rb` - dependency declaration normalization

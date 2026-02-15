@@ -115,13 +115,17 @@ Out-of-band lane goal: evolve durable tool architecture from evidence without ov
 
 ### 8. Ground-Truth Signal: User Corrections
 
-Capture explicit user-correction events as first-class telemetry, for example:
+Capture `user_correction` as first-class telemetry with deterministic temporal/task-shape detection as the primary v1 signal:
 
-1. "that doesn't look like a movie list"
-2. "this is a menu, not titles"
-3. "try again, this output is not useful"
+1. same-session repeated ask in a short recency window;
+2. near-identical capability/task-shape pattern as the immediately prior ask;
+3. no intervening task-shape shift.
 
-These are high-signal utility labels from real interaction and should be treated as stronger than model self-assessment when scoring `low_utility`.
+This provides NLP-independent evidence that the previous answer was not useful for the intended task.
+
+Secondary phrase heuristics (for example "this is wrong", "looks like a menu", "try again") can enrich detection, but do not replace deterministic re-ask signaling.
+
+`user_correction` should be weighted stronger than model self-assessment when scoring `low_utility`.
 
 ### 9. Evolution Policy: Observation, Not Prescription
 
@@ -173,7 +177,7 @@ Out of scope:
 2. potential overuse of `wrong_tool_boundary` if nudge is too aggressive;
 3. cohesion scoring thresholds require tuning to avoid false positives;
 4. requires an asynchronous evaluation loop and operational visibility for out-of-band evolution;
-5. user-correction extraction must avoid overfitting to ambiguous language.
+5. re-ask detection thresholds require tuning to avoid misclassifying topical follow-ups as corrections.
 
 ## Alternatives Considered
 
@@ -200,8 +204,9 @@ Out of scope:
 
 1. Persist boundary/usefulness signals in artifacts and registry metadata.
 2. Track axis clustering and rolling cohesion warning.
-3. Capture explicit `user_correction` events in trace metadata.
-4. Add tests for persistence and backward compatibility.
+3. Capture deterministic `user_correction` events from short-window same-topic re-asks.
+4. Optionally enrich with bounded phrase heuristics for calibration.
+5. Add tests for persistence and backward compatibility.
 
 ### Phase 3: Inline Correction Lane
 
@@ -229,6 +234,7 @@ Out of scope:
 4. Runtime surface should remain minimal and explainable.
 5. Inline lane must prefer fast correction/referral over deep architectural rewrites.
 6. User-correction signals should influence evolution policy, not force immediate hardcoded behavior changes.
+7. Correction detection should default to deterministic temporal/task-shape matching before language heuristics.
 
 ## Open Questions
 

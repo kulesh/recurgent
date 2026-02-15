@@ -196,7 +196,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-15T15:05:00Z
+Last Updated (UTC): 2026-02-15T15:20:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -218,6 +218,7 @@ Last Updated (UTC): 2026-02-15T15:05:00Z
 - `docs/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
 - `docs/cacheability-pattern-memory-implementation-plan.md` - phased implementation plan for ADR 0013 cacheability-gated artifact reuse and pattern-memory promotion
 - `docs/outcome-boundary-contract-validation-implementation-plan.md` - phased implementation plan for ADR 0014 delegated outcome validation and tolerant interface canonicalization
+- `docs/tool-self-awareness-boundary-referral-implementation-plan.md` - phased implementation plan for ADR 0015 dual-lane evolution model (inline correction + out-of-band evolution) with boundary referral and user-correction telemetry
 - `docs/baselines/2026-02-15/README.md` - baseline trace capture instructions and fixtures before artifact persistence rollout
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
