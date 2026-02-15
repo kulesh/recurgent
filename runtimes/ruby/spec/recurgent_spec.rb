@@ -1863,6 +1863,139 @@ RSpec.describe Agent do
       end
     end
 
+    it "marks repeated top-level ask calls with near-identical capabilities as user_correction" do
+      Dir.mktmpdir("recurgent-user-correction-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        correction_log = File.join(tmpdir, "correction-log.jsonl")
+        g = described_class.new("assistant", log: correction_log, debug: true)
+        ask_code = <<~RUBY
+          # Net::HTTP
+          items = [{ "title" => "Story", "link" => "https://example.com/story" }]
+          result = items.map { |item| { title: item["title"], link: item["link"] } }
+        RUBY
+
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: ask_code),
+          program_payload(code: ask_code)
+        )
+
+        expected_headlines = [{ title: "Story", link: "https://example.com/story" }]
+        expect_ok_outcome(g.ask("what movies are playing?"), value: expected_headlines)
+        expect_ok_outcome(g.ask("try again, what movies are playing?"), value: expected_headlines)
+
+        entries = File.readlines(correction_log).map { |line| JSON.parse(line) }
+        expect(entries.length).to eq(2)
+        expect(entries.last["user_correction_detected"]).to eq(true)
+        expect(entries.last["user_correction_signal"]).to eq("temporal_reask")
+        expect(entries.last["user_correction_reference_call_id"]).to eq(entries.first["call_id"])
+
+        pattern_store = JSON.parse(File.read(File.join(tmpdir, "patterns.json")))
+        events = pattern_store.dig("roles", "assistant", "events")
+        expect(events.length).to eq(2)
+        expect(events.last.dig("user_correction", "detected")).to eq(true)
+        expect(events.last.dig("user_correction", "signal")).to eq("temporal_reask")
+        expect(events.last.dig("user_correction", "correction_of_call_id")).to eq(events.first["call_id"])
+      end
+    end
+
+    it "applies temporal re-ask user_correction detection to any repeated top-level method" do
+      Dir.mktmpdir("recurgent-user-correction-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        correction_log = File.join(tmpdir, "correction-generic-log.jsonl")
+        g = described_class.new("assistant", log: correction_log, debug: true)
+        lookup_code = <<~RUBY
+          # Net::HTTP
+          seed_query = "seed-query"
+          items = [{ "title" => "Story", "link" => "https://example.com/story" }]
+          result = items.map { |item| { title: item["title"], link: item["link"] } }
+        RUBY
+
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: lookup_code),
+          program_payload(code: lookup_code)
+        )
+
+        expected_headlines = [{ title: "Story", link: "https://example.com/story" }]
+        expect_ok_outcome(g.lookup("seed-query"), value: expected_headlines)
+        expect_ok_outcome(g.lookup("followup-query"), value: expected_headlines)
+
+        entries = File.readlines(correction_log).map { |line| JSON.parse(line) }
+        expect(entries.length).to eq(2)
+        expect(entries.last["method"]).to eq("lookup")
+        expect(entries.last["user_correction_detected"]).to eq(true)
+        expect(entries.last["user_correction_signal"]).to eq("temporal_reask")
+        expect(entries.last["user_correction_reference_call_id"]).to eq(entries.first["call_id"])
+      end
+    end
+
+    it "does not mark user_correction when repeated ask calls shift capability patterns" do
+      Dir.mktmpdir("recurgent-user-correction-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        correction_log = File.join(tmpdir, "correction-shift-log.jsonl")
+        g = described_class.new("assistant", log: correction_log, debug: true)
+        first_code = <<~RUBY
+          # Net::HTTP
+          items = [{ "title" => "Story", "link" => "https://example.com/story" }]
+          result = items.map { |item| { title: item["title"], link: item["link"] } }
+        RUBY
+        shifted_code = <<~RUBY
+          # REXML::Document
+          records = [{ "name" => "Story" }]
+          result = records.map { |record| record["name"] }
+        RUBY
+
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: first_code),
+          program_payload(code: shifted_code)
+        )
+
+        expect_ok_outcome(g.ask("what movies are playing?"), value: [{ title: "Story", link: "https://example.com/story" }])
+        expect_ok_outcome(g.ask("what movies are in theaters now?"), value: ["Story"])
+
+        entries = File.readlines(correction_log).map { |line| JSON.parse(line) }
+        expect(entries.last["user_correction_detected"]).to eq(false)
+        expect(entries.last["user_correction_signal"]).to be_nil
+        expect(entries.last["user_correction_reference_call_id"]).to be_nil
+
+        pattern_store = JSON.parse(File.read(File.join(tmpdir, "patterns.json")))
+        events = pattern_store.dig("roles", "assistant", "events")
+        expect(events.last["user_correction"]).to be_nil
+      end
+    end
+
+    it "marks repeated top-level calls without delegation or capability patterns as temporal_reask_no_tooling" do
+      Dir.mktmpdir("recurgent-user-correction-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        correction_log = File.join(tmpdir, "correction-no-tooling-log.jsonl")
+        g = described_class.new("assistant", log: correction_log, debug: true)
+        conversational_code = <<~RUBY
+          context[:conversation_history] ||= []
+          context[:conversation_history] << { role: "user", message: args.first.to_s }
+          result = "I don't have enough data yet."
+        RUBY
+
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: conversational_code),
+          program_payload(code: conversational_code)
+        )
+
+        expect_ok_outcome(g.ask("what movies are playing?"), value: "I don't have enough data yet.")
+        expect_ok_outcome(g.ask("try again, what movies are playing?"), value: "I don't have enough data yet.")
+
+        entries = File.readlines(correction_log).map { |line| JSON.parse(line) }
+        expect(entries.length).to eq(2)
+        expect(entries.last["user_correction_detected"]).to eq(true)
+        expect(entries.last["user_correction_signal"]).to eq("temporal_reask_no_tooling")
+        expect(entries.last["user_correction_reference_call_id"]).to eq(entries.first["call_id"])
+
+        pattern_store = JSON.parse(File.read(File.join(tmpdir, "patterns.json")))
+        events = pattern_store.dig("roles", "assistant", "events")
+        expect(events.length).to eq(2)
+        expect(events.last["had_delegated_calls"]).to eq(false)
+        expect(events.last.dig("user_correction", "signal")).to eq("temporal_reask_no_tooling")
+      end
+    end
+
     it "logs inspect fallback for non-JSON outcome values in debug mode" do
       g = described_class.new("calculator", log: log_path, debug: true)
       stub_llm_response("result = Object.new")

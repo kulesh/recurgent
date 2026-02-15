@@ -18,6 +18,7 @@ require_relative "recurgent/known_tool_ranker"
 require_relative "recurgent/tool_store_paths"
 require_relative "recurgent/tool_store"
 require_relative "recurgent/capability_pattern_extractor"
+require_relative "recurgent/user_correction_signals"
 require_relative "recurgent/pattern_memory_store"
 require_relative "recurgent/pattern_prompting"
 require_relative "recurgent/artifact_metrics"
@@ -129,6 +130,7 @@ class Agent
   include ToolStorePaths
   include ToolStore
   include CapabilityPatternExtractor
+  include UserCorrectionSignals
   include PatternMemoryStore
   include PatternPrompting
   include ArtifactMetrics

@@ -8,20 +8,48 @@ class Agent
 
     private
 
-    def _record_pattern_memory_event(method_name:, state:)
+    def _record_pattern_memory_event(method_name:, state:, call_context:)
       return unless _record_pattern_memory_for_source?(state.program_source)
 
+      timestamp = Time.now.utc
+      user_correction = _detect_temporal_reask_user_correction(
+        method_name: method_name,
+        state: state,
+        call_context: call_context,
+        timestamp: timestamp
+      )
+      _capture_user_correction_state!(state, user_correction)
+      _pattern_memory_append_event(
+        role: @role,
+        event: _build_pattern_memory_event(
+          method_name: method_name,
+          state: state,
+          call_context: call_context,
+          timestamp: timestamp,
+          user_correction: user_correction
+        )
+      )
+    rescue StandardError => e
+      warn "[AGENT PATTERNS #{@role}.#{method_name}] failed to persist pattern memory: #{e.class}: #{e.message}" if @debug
+    end
+
+    def _build_pattern_memory_event(method_name:, state:, call_context:, timestamp:, user_correction:)
       event = {
-        "timestamp" => Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S.%3NZ"),
+        "timestamp" => timestamp.strftime("%Y-%m-%dT%H:%M:%S.%3NZ"),
+        "recorded_at_ms" => (timestamp.to_f * 1000).to_i,
         "role" => @role,
         "method_name" => method_name.to_s,
+        "trace_id" => call_context&.fetch(:trace_id, nil),
+        "call_id" => call_context&.fetch(:call_id, nil),
+        "parent_call_id" => call_context&.fetch(:parent_call_id, nil),
+        "depth" => call_context&.fetch(:depth, nil),
+        "had_delegated_calls" => call_context&.fetch(:had_child_calls, false) == true,
         "capability_patterns" => Array(state.capability_patterns).map(&:to_s).uniq,
         "outcome_status" => state.outcome&.status,
         "error_type" => state.outcome&.error_type
       }
-      _pattern_memory_append_event(role: @role, event: event)
-    rescue StandardError => e
-      warn "[AGENT PATTERNS #{@role}.#{method_name}] failed to persist pattern memory: #{e.class}: #{e.message}" if @debug
+      event["user_correction"] = user_correction if user_correction&.fetch("detected", false)
+      event
     end
 
     def _record_pattern_memory_for_source?(program_source)
@@ -114,13 +142,36 @@ class Agent
     def _pattern_memory_normalize_event(event)
       return nil unless event.is_a?(Hash)
 
+      _pattern_memory_normalize_event_base(event)
+        .merge(_pattern_memory_normalize_event_trace(event))
+        .merge(_pattern_memory_normalize_event_outcome(event))
+    end
+
+    def _pattern_memory_normalize_event_base(event)
       {
         "timestamp" => event["timestamp"].to_s,
+        "recorded_at_ms" => event["recorded_at_ms"].to_i,
         "role" => event["role"].to_s,
         "method_name" => event["method_name"].to_s,
-        "capability_patterns" => Array(event["capability_patterns"]).map(&:to_s).uniq,
+        "capability_patterns" => Array(event["capability_patterns"]).map(&:to_s).uniq
+      }
+    end
+
+    def _pattern_memory_normalize_event_trace(event)
+      {
+        "trace_id" => event["trace_id"]&.to_s,
+        "call_id" => event["call_id"]&.to_s,
+        "parent_call_id" => event["parent_call_id"]&.to_s,
+        "depth" => event["depth"],
+        "had_delegated_calls" => event["had_delegated_calls"] == true
+      }
+    end
+
+    def _pattern_memory_normalize_event_outcome(event)
+      {
         "outcome_status" => event["outcome_status"],
-        "error_type" => event["error_type"]
+        "error_type" => event["error_type"],
+        "user_correction" => _pattern_memory_normalize_user_correction(event["user_correction"])
       }
     end
 

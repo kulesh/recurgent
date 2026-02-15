@@ -41,6 +41,9 @@ class Agent
         repair_succeeded: log_context[:repair_succeeded],
         failure_class: log_context[:failure_class],
         capability_patterns: log_context[:capability_patterns],
+        user_correction_detected: log_context[:user_correction_detected],
+        user_correction_signal: log_context[:user_correction_signal],
+        user_correction_reference_call_id: log_context[:user_correction_reference_call_id],
         duration_ms: log_context[:duration_ms].round(1),
         generation_attempt: log_context[:generation_attempt]
       }

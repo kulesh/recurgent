@@ -20,11 +20,15 @@ class Agent
     end
 
     def _with_call_frame
+      parent_frame = _call_stack.last
+      parent_frame[:had_child_calls] = true if parent_frame
+
       frame = {
         trace_id: @trace_id,
         call_id: SecureRandom.hex(8),
-        parent_call_id: _call_stack.last&.fetch(:call_id, nil),
-        depth: _call_stack.length
+        parent_call_id: parent_frame&.fetch(:call_id, nil),
+        depth: _call_stack.length,
+        had_child_calls: false
       }
       _call_stack.push(frame)
       yield frame
@@ -44,7 +48,7 @@ class Agent
       state.outcome
     ensure
       duration_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
-      _record_pattern_memory_event(method_name: name, state: state)
+      _record_pattern_memory_event(method_name: name, state: state, call_context: call_context)
       _persist_method_artifact_for_call(method_name: name, state: state, duration_ms: duration_ms)
       _log_dynamic_call(
         method_name: name,
