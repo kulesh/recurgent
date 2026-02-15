@@ -103,6 +103,7 @@ class Agent
       examples = _user_prompt_examples(name: name, depth: depth)
       active_contract = _active_contract_user_prompt
       known_tools = _known_tools_prompt
+      recent_patterns = _recent_patterns_prompt(method_name: name, depth: depth)
 
       <<~PROMPT
         <invocation>
@@ -117,6 +118,7 @@ class Agent
 
         #{known_tools}
         #{_known_tools_usage_hint}
+        #{recent_patterns}
 
         #{active_contract}
 

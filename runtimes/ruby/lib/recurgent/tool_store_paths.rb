@@ -3,25 +3,9 @@
 require "digest"
 
 class Agent
-  # Agent::ToolStorePaths — feature flags and filesystem paths for tool persistence.
+  # Agent::ToolStorePaths — filesystem paths for persisted tool registry and artifacts.
   module ToolStorePaths
     private
-
-    def _toolstore_enabled?
-      @runtime_config[:toolstore_enabled] == true
-    end
-
-    def _toolstore_artifact_read_enabled?
-      @runtime_config[:toolstore_artifact_read_enabled] == true
-    end
-
-    def _toolstore_repair_enabled?
-      @runtime_config[:toolstore_repair_enabled] == true
-    end
-
-    def _toolstore_pruning_enabled?
-      @runtime_config[:toolstore_pruning_enabled] == true
-    end
 
     def _toolstore_root
       root = @runtime_config[:toolstore_root]
@@ -31,6 +15,10 @@ class Agent
 
     def _toolstore_registry_path
       File.join(_toolstore_root, "registry.json")
+    end
+
+    def _toolstore_patterns_path
+      File.join(_toolstore_root, "patterns.json")
     end
 
     def _toolstore_artifacts_root

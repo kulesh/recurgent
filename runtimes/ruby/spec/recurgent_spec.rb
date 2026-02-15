@@ -6,10 +6,17 @@ require "timeout"
 
 RSpec.describe Agent do
   let(:mock_provider) { instance_double(Agent::Providers::Anthropic) }
+  let(:runtime_toolstore_root) { Dir.mktmpdir("recurgent-spec-toolstore-") }
 
   before do
     allow(Agent::Providers::Anthropic).to receive(:new).and_return(mock_provider)
     allow(Agent).to receive(:default_log_path).and_return(false)
+    Agent.reset_runtime_config!
+    Agent.configure_runtime(toolstore_root: runtime_toolstore_root)
+  end
+
+  after do
+    FileUtils.rm_rf(runtime_toolstore_root)
     Agent.reset_runtime_config!
   end
 
@@ -260,9 +267,9 @@ RSpec.describe Agent do
   end
 
   describe "tool registry persistence" do
-    it "persists delegated tool metadata to disk when toolstore is enabled" do
+    it "persists delegated tool metadata to disk with toolstore persistence" do
       Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
-        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        Agent.configure_runtime(toolstore_root: tmpdir)
 
         parent = described_class.for("planner")
         parent.delegate(
@@ -283,7 +290,7 @@ RSpec.describe Agent do
 
     it "hydrates tools from persisted registry on startup" do
       Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
-        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        Agent.configure_runtime(toolstore_root: tmpdir)
         registry_path = File.join(tmpdir, "registry.json")
         FileUtils.mkdir_p(File.dirname(registry_path))
         File.write(
@@ -306,7 +313,7 @@ RSpec.describe Agent do
 
     it "quarantines corrupt registry and continues with empty tool registry" do
       Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
-        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        Agent.configure_runtime(toolstore_root: tmpdir)
         registry_path = File.join(tmpdir, "registry.json")
         FileUtils.mkdir_p(File.dirname(registry_path))
         File.write(registry_path, "{this-is-invalid-json")
@@ -319,11 +326,7 @@ RSpec.describe Agent do
 
     it "updates registry usage/reliability counters when persisted tool executes" do
       Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: false
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         parent = described_class.for("planner")
         child = parent.delegate("web_fetcher", purpose: "fetch content")
 
@@ -341,6 +344,10 @@ RSpec.describe Agent do
         )
 
         expect_ok_outcome(child.fetch("a"), value: 1)
+        artifact_path = child.send(:_toolstore_artifact_path, role_name: "web_fetcher", method_name: "fetch")
+        artifact = JSON.parse(File.read(artifact_path))
+        artifact["runtime_version"] = "force-regenerate"
+        File.write(artifact_path, JSON.generate(artifact))
         expect_error_outcome(child.fetch("b"), type: "timeout", retriable: true)
 
         registry = JSON.parse(File.read(File.join(tmpdir, "registry.json")))
@@ -354,9 +361,9 @@ RSpec.describe Agent do
   end
 
   describe "artifact persistence" do
-    it "writes method artifact with generated code and success metrics when toolstore is enabled" do
+    it "writes method artifact with generated code and success metrics with toolstore persistence" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
-        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        Agent.configure_runtime(toolstore_root: tmpdir)
         g = described_class.new("calculator")
         stub_llm_response("result = 42")
 
@@ -371,6 +378,9 @@ RSpec.describe Agent do
         expect(artifact["code"]).to eq("result = 42")
         expect(artifact["prompt_version"]).to eq(Agent::PROMPT_VERSION)
         expect(artifact["runtime_version"]).to eq(Agent::VERSION)
+        expect(artifact["cacheable"]).to eq(true)
+        expect(artifact["cacheability_reason"]).to eq("stable_method_default")
+        expect(artifact["input_sensitive"]).to eq(false)
         expect(artifact["success_count"]).to eq(1)
         expect(artifact["failure_count"]).to eq(0)
         expect(artifact["history"].size).to eq(1)
@@ -378,9 +388,30 @@ RSpec.describe Agent do
       end
     end
 
+    it "persists dynamic methods for observability but does not reuse them from artifacts" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        assistant = described_class.new("assistant")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: 'result = "google run"'),
+          program_payload(code: 'result = "yahoo run"')
+        )
+
+        expect_ok_outcome(assistant.ask("What's the latest on Google News?"), value: "google run")
+        expect_ok_outcome(assistant.ask("What's the latest on Yahoo! News?"), value: "yahoo run")
+        expect(mock_provider).to have_received(:generate_program).twice
+
+        artifact_path = assistant.send(:_toolstore_artifact_path, role_name: "assistant", method_name: "ask")
+        artifact = JSON.parse(File.read(artifact_path))
+        expect(artifact["cacheable"]).to eq(false)
+        expect(artifact["cacheability_reason"]).to eq("dynamic_dispatch_method")
+        expect(artifact["input_sensitive"]).to eq(true)
+      end
+    end
+
     it "tracks adaptive and extrinsic failure classes in artifact metrics" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
-        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        Agent.configure_runtime(toolstore_root: tmpdir)
         g = described_class.new("rss_parser")
         allow(mock_provider).to receive(:generate_program).and_return(
           program_payload(
@@ -423,7 +454,7 @@ RSpec.describe Agent do
 
     it "caps artifact history to latest three generations with lineage links" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
-        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        Agent.configure_runtime(toolstore_root: tmpdir)
         g = described_class.new("calculator")
         allow(mock_provider).to receive(:generate_program).and_return(
           program_payload(code: "result = 1"),
@@ -432,9 +463,16 @@ RSpec.describe Agent do
           program_payload(code: "result = 4")
         )
 
-        4.times { g.answer }
-
         artifact_path = g.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "answer")
+        4.times do |i|
+          g.answer
+          next unless i < 3
+
+          artifact = JSON.parse(File.read(artifact_path))
+          artifact["runtime_version"] = "force-regen-#{i}"
+          File.write(artifact_path, JSON.generate(artifact))
+        end
+
         artifact = JSON.parse(File.read(artifact_path))
         history = artifact["history"]
         expect(history.size).to eq(3)
@@ -443,22 +481,14 @@ RSpec.describe Agent do
       end
     end
 
-    it "executes from persisted artifact without calling provider when read path is enabled" do
+    it "executes from persisted artifact without calling provider" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: false
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         seeder = described_class.new("calculator")
         stub_llm_response("result = 42")
         expect_ok_outcome(seeder.answer, value: 42)
 
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: true
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         warm = described_class.new("calculator")
         expect(mock_provider).not_to receive(:generate_program)
 
@@ -468,11 +498,7 @@ RSpec.describe Agent do
 
     it "falls back to generation when persisted artifact fails checksum validation" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: false
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         seeder = described_class.new("calculator")
         stub_llm_response("result = 42")
         expect_ok_outcome(seeder.answer, value: 42)
@@ -482,11 +508,7 @@ RSpec.describe Agent do
         artifact["code"] = "result = 12345"
         File.write(artifact_path, JSON.generate(artifact))
 
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: true
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         fallback = described_class.new("calculator")
         expect(mock_provider).to receive(:generate_program).and_return(program_payload(code: "result = 99"))
 
@@ -494,13 +516,9 @@ RSpec.describe Agent do
       end
     end
 
-    it "repairs persisted adaptive failures when repair is enabled and budget is available" do
+    it "repairs persisted adaptive failures when budget is available" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: false
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         seeder = described_class.new("rss_parser")
         allow(mock_provider).to receive(:generate_program).and_return(
           program_payload(
@@ -515,12 +533,7 @@ RSpec.describe Agent do
         )
         expect_error_outcome(seeder.parse("feed"), type: "parse_failed", retriable: false)
 
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: true,
-          toolstore_repair_enabled: true
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         repair_agent = described_class.new("rss_parser")
         expect(mock_provider).to receive(:generate_program).and_return(program_payload(code: 'result = "repaired"'))
         expect_ok_outcome(repair_agent.parse("feed"), value: "repaired")
@@ -535,11 +548,7 @@ RSpec.describe Agent do
 
     it "skips repair and regenerates when repair budget is exhausted" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: false
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         seeder = described_class.new("rss_parser")
         allow(mock_provider).to receive(:generate_program).and_return(
           program_payload(
@@ -559,12 +568,7 @@ RSpec.describe Agent do
         artifact["repair_count_since_regen"] = Agent::MAX_REPAIRS_BEFORE_REGEN
         File.write(artifact_path, JSON.generate(artifact))
 
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: true,
-          toolstore_repair_enabled: true
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         fallback = described_class.new("rss_parser")
         expect(mock_provider).to receive(:generate_program).and_return(program_payload(code: 'result = "generated"'))
         expect_ok_outcome(fallback.parse("feed"), value: "generated")
@@ -576,11 +580,7 @@ RSpec.describe Agent do
 
     it "returns persisted extrinsic failures without repair/regeneration" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: false
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         seeder = described_class.new("http_fetcher")
         allow(mock_provider).to receive(:generate_program).and_return(
           program_payload(
@@ -595,12 +595,7 @@ RSpec.describe Agent do
         )
         expect_error_outcome(seeder.fetch("https://example.com"), type: "timeout", retriable: true)
 
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: true,
-          toolstore_repair_enabled: true
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         warm = described_class.new("http_fetcher")
         expect(mock_provider).not_to receive(:generate_program)
         expect_error_outcome(warm.fetch("https://example.com"), type: "timeout", retriable: true)
@@ -1276,6 +1271,49 @@ RSpec.describe Agent do
     end
   end
 
+  describe "capability pattern extraction and memory" do
+    it "extracts deterministic capability tags from generated code" do
+      g = described_class.new("assistant")
+      extraction = g.send(
+        :_extract_capability_patterns,
+        method_name: "ask",
+        role: "assistant",
+        code: <<~RUBY,
+          require "rss"
+          require "rexml/document"
+          require "net/http"
+          _http = Net::HTTP
+          items = [{ "title" => "Story", "link" => "https://example.com/story" }]
+          result = items.map { |item| { title: item["title"], link: item["link"] } }
+        RUBY
+        args: [],
+        kwargs: {},
+        outcome: nil,
+        program_source: "generated"
+      )
+
+      expect(extraction[:patterns]).to include(
+        "rss_parse",
+        "xml_parse",
+        "http_fetch",
+        "news_headline_extract"
+      )
+      expect(extraction[:evidence].fetch("rss_parse")).to include("require_rss")
+      expect(extraction[:evidence].fetch("http_fetch")).to include("net_http_constant")
+    end
+
+    it "quarantines corrupt pattern memory files and recovers with an empty store" do
+      g = described_class.new("assistant")
+      path = g.send(:_toolstore_patterns_path)
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, "{not-json")
+
+      summaries = g.send(:_recent_pattern_summaries, role: "assistant", method_name: "ask")
+      expect(summaries).to eq([])
+      expect(Dir.glob("#{path}.corrupt-*")).not_to be_empty
+    end
+  end
+
   describe "prompt construction" do
     it "includes identity in system prompt" do
       g = described_class.new("file_inspector")
@@ -1432,6 +1470,60 @@ RSpec.describe Agent do
       expect(prompts.first).to include("<examples>")
       expect(prompts.last).not_to include("<examples>")
     end
+
+    it "injects recent pattern memory for depth-0 dynamic calls" do
+      g = described_class.new("assistant")
+      g.remember(
+        tools: {
+          "web_fetcher" => { purpose: "fetch and extract content from urls" }
+        }
+      )
+
+      3.times do |index|
+        g.send(
+          :_pattern_memory_append_event,
+          role: "assistant",
+          event: {
+            "timestamp" => "2026-02-15T07:00:0#{index}.000Z",
+            "role" => "assistant",
+            "method_name" => "ask",
+            "capability_patterns" => %w[http_fetch rss_parse],
+            "outcome_status" => "ok",
+            "error_type" => nil
+          }
+        )
+      end
+
+      prompt = g.send(:_build_user_prompt, "ask", [], {}, call_context: { depth: 0 })
+      expect(prompt).to include("<recent_patterns>")
+      expect(prompt).to include("http_fetch: seen 3 of last 3 ask calls, tool_present=true(web_fetcher)")
+      expect(prompt).to include("rss_parse: seen 3 of last 3 ask calls, tool_present=false")
+      expect(prompt).to include("<promotion_nudge>")
+    end
+
+    it "does not inject recent pattern memory for non-depth-0 or non-dynamic calls" do
+      g = described_class.new("assistant")
+
+      2.times do |index|
+        g.send(
+          :_pattern_memory_append_event,
+          role: "assistant",
+          event: {
+            "timestamp" => "2026-02-15T07:00:0#{index}.000Z",
+            "role" => "assistant",
+            "method_name" => "ask",
+            "capability_patterns" => ["http_fetch"],
+            "outcome_status" => "ok",
+            "error_type" => nil
+          }
+        )
+      end
+
+      depth_one_prompt = g.send(:_build_user_prompt, "ask", [], {}, call_context: { depth: 1 })
+      static_prompt = g.send(:_build_user_prompt, "parse", [], {}, call_context: { depth: 0 })
+      expect(depth_one_prompt).not_to include("<recent_patterns>")
+      expect(static_prompt).not_to include("<recent_patterns>")
+    end
   end
 
   describe "logging" do
@@ -1467,6 +1559,7 @@ RSpec.describe Agent do
       expect(entry["depth"]).to eq(0)
       expect(entry["timestamp"]).to match(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\z/)
       expect(entry["duration_ms"]).to be_a(Numeric)
+      expect(entry["capability_patterns"]).to eq([])
       expect(entry).not_to have_key("system_prompt")
       expect(entry).not_to have_key("user_prompt")
       expect(entry).not_to have_key("context")
@@ -1474,20 +1567,12 @@ RSpec.describe Agent do
 
     it "records persisted artifact execution source fields" do
       Dir.mktmpdir("recurgent-log-artifact-") do |tmpdir|
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: false
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         seeder = described_class.new("calculator")
         stub_llm_response("result = 7")
         expect_ok_outcome(seeder.answer, value: 7)
 
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: true
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         artifact_log = File.join(tmpdir, "artifact-log.jsonl")
         warm = described_class.new("calculator", log: artifact_log)
         expect(mock_provider).not_to receive(:generate_program)
@@ -1503,11 +1588,7 @@ RSpec.describe Agent do
 
     it "records repair attempt and success fields when persisted artifact is repaired" do
       Dir.mktmpdir("recurgent-log-artifact-") do |tmpdir|
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: false
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         seeder = described_class.new("rss_parser")
         allow(mock_provider).to receive(:generate_program).and_return(
           program_payload(
@@ -1522,12 +1603,7 @@ RSpec.describe Agent do
         )
         expect_error_outcome(seeder.parse("feed"), type: "parse_failed", retriable: false)
 
-        Agent.configure_runtime(
-          toolstore_enabled: true,
-          toolstore_root: tmpdir,
-          toolstore_artifact_read_enabled: true,
-          toolstore_repair_enabled: true
-        )
+        Agent.configure_runtime(toolstore_root: tmpdir)
         artifact_log = File.join(tmpdir, "repair-log.jsonl")
         repair_agent = described_class.new("rss_parser", log: artifact_log)
         expect(mock_provider).to receive(:generate_program).and_return(program_payload(code: 'result = "repaired"'))
@@ -1581,10 +1657,50 @@ RSpec.describe Agent do
       expect(entry).to have_key("system_prompt")
       expect(entry).to have_key("user_prompt")
       expect(entry).to have_key("context")
+      expect(entry).to have_key("capability_pattern_evidence")
       expect(entry["context"]).to eq("value" => 6)
       expect(entry["outcome_value"]).to eq(6)
       expect(entry["system_prompt"]).to include("calculator")
       expect(entry["user_prompt"]).to include("increment")
+    end
+
+    it "records capability patterns in logs and persists them for future sessions" do
+      Dir.mktmpdir("recurgent-patterns-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        pattern_log = File.join(tmpdir, "patterns-log.jsonl")
+        g = described_class.new("assistant", log: pattern_log, debug: true)
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              # require "rss"
+              # Net::HTTP
+              items = [{ "title" => "Story", "link" => "https://example.com/story" }]
+              result = items.map { |item| { title: item["title"], link: item["link"] } }
+            RUBY
+          )
+        )
+
+        expect_ok_outcome(g.ask("latest headlines"), value: [{ title: "Story", link: "https://example.com/story" }])
+        expect_ok_outcome(g.ask("latest headlines"), value: [{ title: "Story", link: "https://example.com/story" }])
+        entry = JSON.parse(File.readlines(pattern_log).last)
+        expect(entry["capability_patterns"]).to include("rss_parse", "http_fetch", "news_headline_extract")
+        expect(entry.fetch("capability_pattern_evidence", {})).to have_key("rss_parse")
+
+        pattern_path = File.join(tmpdir, "patterns.json")
+        expect(File).to exist(pattern_path)
+        patterns_store = JSON.parse(File.read(pattern_path))
+        events = patterns_store.dig("roles", "assistant", "events")
+        expect(events).not_to be_nil
+        expect(events.last["method_name"]).to eq("ask")
+        expect(events.last["capability_patterns"]).to include("rss_parse", "http_fetch", "news_headline_extract")
+
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        warm = described_class.new("assistant")
+        warm_prompt = warm.send(:_build_user_prompt, "ask", [], {}, call_context: { depth: 0 })
+        expect(warm_prompt).to include("<recent_patterns>")
+        expect(warm_prompt).to include("seen 2 of last 2 ask calls")
+        expect(warm_prompt).to include("ask calls")
+      end
     end
 
     it "logs inspect fallback for non-JSON outcome values in debug mode" do

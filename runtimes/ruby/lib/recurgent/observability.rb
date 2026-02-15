@@ -29,15 +29,26 @@ class Agent
         program_dependencies: log_context[:program_dependencies],
         normalized_dependencies: log_context[:normalized_dependencies],
         program_source: log_context[:program_source],
-        artifact_hit: log_context[:artifact_hit],
-        artifact_prompt_version: log_context[:artifact_prompt_version],
-        artifact_contract_fingerprint: log_context[:artifact_contract_fingerprint],
         repair_attempted: log_context[:repair_attempted],
         repair_succeeded: log_context[:repair_succeeded],
         failure_class: log_context[:failure_class],
+        capability_patterns: log_context[:capability_patterns],
         duration_ms: log_context[:duration_ms].round(1),
         generation_attempt: log_context[:generation_attempt]
-      }.merge(_trace_log_fields(log_context)).merge(_environment_log_fields(log_context))
+      }.merge(_artifact_cache_log_fields(log_context))
+        .merge(_trace_log_fields(log_context))
+        .merge(_environment_log_fields(log_context))
+    end
+
+    def _artifact_cache_log_fields(log_context)
+      {
+        artifact_hit: log_context[:artifact_hit],
+        artifact_prompt_version: log_context[:artifact_prompt_version],
+        artifact_contract_fingerprint: log_context[:artifact_contract_fingerprint],
+        cacheable: log_context[:cacheable],
+        cacheability_reason: log_context[:cacheability_reason],
+        input_sensitive: log_context[:input_sensitive]
+      }
     end
 
     def _trace_log_fields(log_context)
@@ -67,7 +78,8 @@ class Agent
         entry,
         log_context[:system_prompt],
         log_context[:user_prompt],
-        log_context[:error]
+        log_context[:error],
+        log_context[:capability_pattern_evidence]
       )
     end
 
@@ -99,10 +111,11 @@ class Agent
       end
     end
 
-    def _add_debug_to_entry(entry, system_prompt, user_prompt, error)
+    def _add_debug_to_entry(entry, system_prompt, user_prompt, error, capability_pattern_evidence)
       entry[:system_prompt] = system_prompt
       entry[:user_prompt] = user_prompt
       entry[:context] = @context.dup
+      entry[:capability_pattern_evidence] = capability_pattern_evidence
       entry[:error_backtrace] = error.backtrace&.first(10) if error
     end
 

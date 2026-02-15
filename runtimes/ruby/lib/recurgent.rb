@@ -15,6 +15,9 @@ require_relative "recurgent/runtime_config"
 require_relative "recurgent/known_tool_ranker"
 require_relative "recurgent/tool_store_paths"
 require_relative "recurgent/tool_store"
+require_relative "recurgent/capability_pattern_extractor"
+require_relative "recurgent/pattern_memory_store"
+require_relative "recurgent/pattern_prompting"
 require_relative "recurgent/artifact_metrics"
 require_relative "recurgent/artifact_store"
 require_relative "recurgent/artifact_selector"
@@ -68,6 +71,7 @@ class Agent
   PROMPT_VERSION = "2026-02-15.depth-aware.v3"
   MAX_REPAIRS_BEFORE_REGEN = 3
   KNOWN_TOOLS_PROMPT_LIMIT = 12
+  DYNAMIC_DISPATCH_METHODS = %w[ask chat discuss host].freeze
   CALL_STACK_KEY = :__recurgent_call_stack
   OUTCOME_CONTEXT_KEY = :__recurgent_outcome_context
   RUNTIME_NAME = "ruby"
@@ -121,6 +125,9 @@ class Agent
   include KnownToolRanker
   include ToolStorePaths
   include ToolStore
+  include CapabilityPatternExtractor
+  include PatternMemoryStore
+  include PatternPrompting
   include ArtifactMetrics
   include ArtifactStore
   include ArtifactSelector

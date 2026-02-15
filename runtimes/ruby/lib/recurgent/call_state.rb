@@ -6,6 +6,8 @@ class Agent
     :env_id, :environment_cache_hit, :env_prepare_ms, :env_resolve_ms, :env_install_ms,
     :worker_pid, :worker_restart_count,
     :program_source, :artifact_hit, :artifact_prompt_version, :artifact_contract_fingerprint,
+    :cacheable, :cacheability_reason, :input_sensitive,
+    :capability_patterns, :capability_pattern_evidence,
     :artifact_generation_trigger,
     :repair_attempted, :repair_succeeded, :failure_class,
     :generation_attempt, :error, :outcome,
@@ -19,17 +21,24 @@ class Agent
       generation_attempt: 0,
       program_source: "generated",
       artifact_hit: false,
+      cacheable: false,
+      cacheability_reason: "unknown",
+      input_sensitive: false,
+      capability_patterns: [],
+      capability_pattern_evidence: {},
       repair_attempted: false,
       repair_succeeded: false
     )
   end
 
-  def _capture_generated_program_state!(state, generated_program)
+  def _capture_generated_program_state!(state, generated_program, method_name:, args:, kwargs:)
     state.code = generated_program.code
     state.program_dependencies = generated_program.program_dependencies
     state.normalized_dependencies = generated_program.normalized_dependencies
     state.program_source = "generated"
     state.artifact_hit = false
+    _capture_cacheability_state!(state, method_name: method_name, args: args, kwargs: kwargs)
+    _capture_capability_pattern_state!(state, method_name: method_name, args: args, kwargs: kwargs)
     state.artifact_generation_trigger = nil
   end
 
@@ -39,9 +48,18 @@ class Agent
     state.normalized_dependencies = DependencyManifest.normalize!(state.program_dependencies)
     state.program_source = "persisted"
     state.artifact_hit = true
+    _capture_persisted_artifact_metadata!(state, artifact)
+    state.capability_patterns = []
+    state.capability_pattern_evidence = {}
+    state.artifact_generation_trigger = nil
+  end
+
+  def _capture_persisted_artifact_metadata!(state, artifact)
     state.artifact_prompt_version = artifact["prompt_version"]
     state.artifact_contract_fingerprint = artifact["contract_fingerprint"]
-    state.artifact_generation_trigger = nil
+    state.cacheable = artifact["cacheable"] == true
+    state.cacheability_reason = artifact["cacheability_reason"]
+    state.input_sensitive = artifact["input_sensitive"] == true
   end
 
   def _mark_repaired_program_state!(state, trigger:)
@@ -58,6 +76,69 @@ class Agent
     state.env_prepare_ms = environment_info[:env_prepare_ms]
     state.env_resolve_ms = environment_info[:env_resolve_ms]
     state.env_install_ms = environment_info[:env_install_ms]
+  end
+
+  def _capture_cacheability_state!(state, method_name:, args:, kwargs:)
+    classification = _classify_cacheability(method_name: method_name, args: args, kwargs: kwargs, code: state.code.to_s)
+    state.cacheable = classification[:cacheable]
+    state.cacheability_reason = classification[:reason]
+    state.input_sensitive = classification[:input_sensitive]
+  end
+
+  def _capture_capability_pattern_state!(state, method_name:, args:, kwargs:)
+    extraction = _extract_capability_patterns(
+      method_name: method_name,
+      role: @role,
+      code: state.code.to_s,
+      args: args,
+      kwargs: kwargs,
+      outcome: state.outcome,
+      program_source: state.program_source
+    )
+    state.capability_patterns = extraction[:patterns]
+    state.capability_pattern_evidence = extraction[:evidence]
+  end
+
+  def _classify_cacheability(method_name:, args:, kwargs:, code:)
+    return _cacheability(false, "dynamic_dispatch_method", input_sensitive: true) if _dynamic_dispatch_method?(method_name)
+
+    input_sensitive = _input_baked_into_code?(code, args: args, kwargs: kwargs)
+    return _cacheability(false, "input_baked_code", input_sensitive: true) if input_sensitive
+
+    return _cacheability(true, "delegated_contract_tool", input_sensitive: false) unless @delegation_contract.nil?
+
+    _cacheability(true, "stable_method_default", input_sensitive: false)
+  end
+
+  def _dynamic_dispatch_method?(method_name)
+    Agent::DYNAMIC_DISPATCH_METHODS.include?(method_name.to_s.downcase)
+  end
+
+  def _input_baked_into_code?(code, args:, kwargs:)
+    return false if Array(args).empty? && kwargs.empty?
+    return false if code.match?(/\bargs\b|\bkwargs\b/)
+
+    _input_literals(args: args, kwargs: kwargs).any? { |literal| !literal.empty? && code.include?(literal) }
+  end
+
+  def _input_literals(args:, kwargs:)
+    values = Array(args) + kwargs.values
+    values.filter_map do |value|
+      case value
+      when String
+        value.strip
+      when Symbol, Integer, Float, TrueClass, FalseClass
+        value.to_s
+      end
+    end.reject(&:empty?).uniq
+  end
+
+  def _cacheability(cacheable, reason, input_sensitive:)
+    {
+      cacheable: cacheable,
+      reason: reason,
+      input_sensitive: input_sensitive
+    }
   end
 
   def _log_dynamic_call(method_name:, args:, kwargs:, duration_ms:, system_prompt:, user_prompt:, call_context:, state:)

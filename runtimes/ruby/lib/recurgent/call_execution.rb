@@ -44,6 +44,7 @@ class Agent
       state.outcome
     ensure
       duration_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
+      _record_pattern_memory_event(method_name: name, state: state)
       _persist_method_artifact_for_call(method_name: name, state: state, duration_ms: duration_ms)
       _log_dynamic_call(
         method_name: name,
@@ -68,7 +69,13 @@ class Agent
       generated_program, state.generation_attempt = _generate_program_with_retry(name, system_prompt, user_prompt) do |attempt_number|
         state.generation_attempt = attempt_number
       end
-      _capture_generated_program_state!(state, generated_program)
+      _capture_generated_program_state!(
+        state,
+        generated_program,
+        method_name: name,
+        args: args,
+        kwargs: kwargs
+      )
       environment_info = _prepare_dependency_environment!(
         method_name: name,
         normalized_dependencies: state.normalized_dependencies
