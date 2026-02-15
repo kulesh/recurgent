@@ -44,6 +44,7 @@ class Agent
       state.outcome
     ensure
       duration_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
+      _persist_method_artifact_for_call(method_name: name, state: state, duration_ms: duration_ms)
       _log_dynamic_call(
         method_name: name,
         args: args,
@@ -57,6 +58,13 @@ class Agent
     end
 
     def _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
+      persisted_outcome = _try_persisted_artifact_execution(name, args, kwargs, state)
+      return persisted_outcome unless persisted_outcome.nil?
+
+      _generate_and_execute_fresh(name, args, kwargs, system_prompt, user_prompt, state)
+    end
+
+    def _generate_and_execute_fresh(name, args, kwargs, system_prompt, user_prompt, state)
       generated_program, state.generation_attempt = _generate_program_with_retry(name, system_prompt, user_prompt) do |attempt_number|
         state.generation_attempt = attempt_number
       end

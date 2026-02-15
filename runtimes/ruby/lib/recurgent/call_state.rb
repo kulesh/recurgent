@@ -5,6 +5,9 @@ class Agent
     :code, :program_dependencies, :normalized_dependencies,
     :env_id, :environment_cache_hit, :env_prepare_ms, :env_resolve_ms, :env_install_ms,
     :worker_pid, :worker_restart_count,
+    :program_source, :artifact_hit, :artifact_prompt_version, :artifact_contract_fingerprint,
+    :artifact_generation_trigger,
+    :repair_attempted, :repair_succeeded, :failure_class,
     :generation_attempt, :error, :outcome,
     keyword_init: true
   )
@@ -12,13 +15,39 @@ class Agent
   private
 
   def _initial_call_state
-    CallState.new(generation_attempt: 0)
+    CallState.new(
+      generation_attempt: 0,
+      program_source: "generated",
+      artifact_hit: false,
+      repair_attempted: false,
+      repair_succeeded: false
+    )
   end
 
   def _capture_generated_program_state!(state, generated_program)
     state.code = generated_program.code
     state.program_dependencies = generated_program.program_dependencies
     state.normalized_dependencies = generated_program.normalized_dependencies
+    state.program_source = "generated"
+    state.artifact_hit = false
+    state.artifact_generation_trigger = nil
+  end
+
+  def _capture_persisted_artifact_state!(state, artifact)
+    state.code = artifact.fetch("code")
+    state.program_dependencies = artifact.fetch("dependencies", [])
+    state.normalized_dependencies = DependencyManifest.normalize!(state.program_dependencies)
+    state.program_source = "persisted"
+    state.artifact_hit = true
+    state.artifact_prompt_version = artifact["prompt_version"]
+    state.artifact_contract_fingerprint = artifact["contract_fingerprint"]
+    state.artifact_generation_trigger = nil
+  end
+
+  def _mark_repaired_program_state!(state, trigger:)
+    state.program_source = "repaired"
+    state.repair_succeeded = true
+    state.artifact_generation_trigger = trigger
   end
 
   def _capture_environment_state!(state, environment_info)

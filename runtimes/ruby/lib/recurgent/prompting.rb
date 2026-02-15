@@ -378,7 +378,8 @@ class Agent
       tools = @context[:tools]
       return "<known_tools></known_tools>\n" unless tools.is_a?(Hash) && !tools.empty?
 
-      lines = tools.first(12).map do |name, metadata|
+      ranked_tools = _rank_known_tools_for_prompt(tools)
+      lines = ranked_tools.first(Agent::KNOWN_TOOLS_PROMPT_LIMIT).map do |name, metadata|
         purpose = _extract_tool_purpose(metadata)
         "- #{name}: #{purpose}"
       end

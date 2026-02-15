@@ -28,6 +28,13 @@ class Agent
         code: log_context[:code],
         program_dependencies: log_context[:program_dependencies],
         normalized_dependencies: log_context[:normalized_dependencies],
+        program_source: log_context[:program_source],
+        artifact_hit: log_context[:artifact_hit],
+        artifact_prompt_version: log_context[:artifact_prompt_version],
+        artifact_contract_fingerprint: log_context[:artifact_contract_fingerprint],
+        repair_attempted: log_context[:repair_attempted],
+        repair_succeeded: log_context[:repair_succeeded],
+        failure_class: log_context[:failure_class],
         duration_ms: log_context[:duration_ms].round(1),
         generation_attempt: log_context[:generation_attempt]
       }.merge(_trace_log_fields(log_context)).merge(_environment_log_fields(log_context))

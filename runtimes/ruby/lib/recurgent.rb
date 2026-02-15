@@ -12,6 +12,15 @@ require_relative "recurgent/prompting"
 require_relative "recurgent/observability"
 require_relative "recurgent/dependencies"
 require_relative "recurgent/runtime_config"
+require_relative "recurgent/known_tool_ranker"
+require_relative "recurgent/tool_store_paths"
+require_relative "recurgent/tool_store"
+require_relative "recurgent/artifact_metrics"
+require_relative "recurgent/artifact_store"
+require_relative "recurgent/artifact_selector"
+require_relative "recurgent/artifact_repair"
+require_relative "recurgent/persisted_execution"
+require_relative "recurgent/tool_maintenance"
 require_relative "recurgent/call_state"
 require_relative "recurgent/call_execution"
 require_relative "recurgent/worker_executor"
@@ -55,6 +64,10 @@ class Agent
   DEFAULT_DELEGATION_BUDGET = 8
   DEFAULT_GEM_SOURCES = ["https://rubygems.org"].freeze
   DEFAULT_SOURCE_MODE = "public_only"
+  TOOLSTORE_SCHEMA_VERSION = 1
+  PROMPT_VERSION = "2026-02-15.depth-aware.v3"
+  MAX_REPAIRS_BEFORE_REGEN = 3
+  KNOWN_TOOLS_PROMPT_LIMIT = 12
   CALL_STACK_KEY = :__recurgent_call_stack
   OUTCOME_CONTEXT_KEY = :__recurgent_outcome_context
   RUNTIME_NAME = "ruby"
@@ -105,6 +118,14 @@ class Agent
   include Prompting
   include Observability
   include Dependencies
+  include KnownToolRanker
+  include ToolStorePaths
+  include ToolStore
+  include ArtifactMetrics
+  include ArtifactStore
+  include ArtifactSelector
+  include ArtifactRepair
+  include PersistedExecution
   include CallExecution
   include WorkerExecution
 
@@ -112,6 +133,11 @@ class Agent
   def self.default_log_path
     state_home = ENV.fetch("XDG_STATE_HOME", File.join(Dir.home, ".local", "state"))
     File.join(state_home, "recurgent", "recurgent.jsonl")
+  end
+
+  def self.default_toolstore_root
+    state_home = ENV.fetch("XDG_STATE_HOME", File.join(Dir.home, ".local", "state"))
+    File.join(state_home, "recurgent", "tools")
   end
 
   def self.for(role, purpose: nil, deliverable: nil, acceptance: nil, failure_policy: nil, delegation_contract: nil, **)
@@ -183,6 +209,8 @@ class Agent
     @prep_ticket_id = nil
     @trace_id = _validate_trace_id(config[:trace_id] || _new_trace_id)
     @log_dir_exists = false
+
+    _hydrate_tool_registry!
   end
 
   # -- The metaprogramming core -----------------------------------------------
@@ -584,6 +612,7 @@ class Agent
     metadata.merge!(_delegated_tool_contract_summary(contract))
 
     registry[role_name] = metadata
+    _persist_tool_registry_entry(role_name, metadata)
   end
 
   def _registered_tool_metadata(role_name)

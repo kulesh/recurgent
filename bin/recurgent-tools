@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require "json"
+require_relative "../runtimes/ruby/lib/recurgent"
+
+def usage!
+  warn <<~USAGE
+    Usage:
+      bin/recurgent-tools list-stale [--days N] [--limit N] [--root PATH]
+      bin/recurgent-tools prune [--days N] [--mode archive|delete] [--dry-run|--apply] [--root PATH]
+  USAGE
+  exit 1
+end
+
+command = ARGV.shift
+usage! if command.nil?
+
+options = {
+  days: 30,
+  limit: nil,
+  root: Agent.default_toolstore_root,
+  mode: "archive",
+  dry_run: true
+}
+
+parser = OptionParser.new do |opts|
+  opts.on("--days N", Integer, "stale threshold in days (default: 30)") { |value| options[:days] = value }
+  opts.on("--limit N", Integer, "max rows for list-stale") { |value| options[:limit] = value }
+  opts.on("--root PATH", String, "toolstore root path") { |value| options[:root] = value }
+  opts.on("--mode MODE", String, "prune mode: archive|delete (default: archive)") { |value| options[:mode] = value }
+  opts.on("--dry-run", "preview prune changes (default)") { options[:dry_run] = true }
+  opts.on("--apply", "apply prune changes") { options[:dry_run] = false }
+end
+parser.parse!(ARGV)
+
+maintenance = Agent::ToolMaintenance.new(toolstore_root: options[:root])
+
+case command
+when "list-stale"
+  result = maintenance.list_stale_tools(stale_days: options[:days], limit: options[:limit])
+  puts JSON.pretty_generate(result)
+when "prune"
+  result = maintenance.prune_stale_tools(
+    stale_days: options[:days],
+    dry_run: options[:dry_run],
+    mode: options[:mode]
+  )
+  puts JSON.pretty_generate(result)
+else
+  usage!
+end

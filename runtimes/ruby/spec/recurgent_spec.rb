@@ -259,6 +259,355 @@ RSpec.describe Agent do
     end
   end
 
+  describe "tool registry persistence" do
+    it "persists delegated tool metadata to disk when toolstore is enabled" do
+      Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
+        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+
+        parent = described_class.for("planner")
+        parent.delegate(
+          "web_fetcher",
+          purpose: "fetch and parse web content from urls",
+          deliverable: { type: "object", required: %w[status body] },
+          acceptance: [{ assert: "status and body are present" }],
+          failure_policy: { on_error: "return_error" }
+        )
+
+        registry_path = File.join(tmpdir, "registry.json")
+        expect(File).to exist(registry_path)
+        persisted = JSON.parse(File.read(registry_path))
+        expect(persisted["schema_version"]).to eq(Agent::TOOLSTORE_SCHEMA_VERSION)
+        expect(persisted.dig("tools", "web_fetcher", "purpose")).to eq("fetch and parse web content from urls")
+      end
+    end
+
+    it "hydrates tools from persisted registry on startup" do
+      Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
+        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        registry_path = File.join(tmpdir, "registry.json")
+        FileUtils.mkdir_p(File.dirname(registry_path))
+        File.write(
+          registry_path,
+          JSON.generate(
+            schema_version: Agent::TOOLSTORE_SCHEMA_VERSION,
+            tools: {
+              "rss_parser" => {
+                purpose: "parse RSS/XML feed strings into structured article data",
+                deliverable: { type: "object", required: ["items"] }
+              }
+            }
+          )
+        )
+
+        agent = described_class.for("planner")
+        expect(agent.memory.dig(:tools, "rss_parser", :purpose)).to eq("parse RSS/XML feed strings into structured article data")
+      end
+    end
+
+    it "quarantines corrupt registry and continues with empty tool registry" do
+      Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
+        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        registry_path = File.join(tmpdir, "registry.json")
+        FileUtils.mkdir_p(File.dirname(registry_path))
+        File.write(registry_path, "{this-is-invalid-json")
+
+        agent = described_class.for("planner")
+        expect(agent.memory[:tools]).to be_nil
+        expect(Dir.glob("#{registry_path}.corrupt-*")).not_to be_empty
+      end
+    end
+
+    it "updates registry usage/reliability counters when persisted tool executes" do
+      Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: false
+        )
+        parent = described_class.for("planner")
+        child = parent.delegate("web_fetcher", purpose: "fetch content")
+
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: "result = 1"),
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "timeout",
+                error_message: "upstream timeout",
+                retriable: true
+              )
+            RUBY
+          )
+        )
+
+        expect_ok_outcome(child.fetch("a"), value: 1)
+        expect_error_outcome(child.fetch("b"), type: "timeout", retriable: true)
+
+        registry = JSON.parse(File.read(File.join(tmpdir, "registry.json")))
+        metadata = registry.dig("tools", "web_fetcher")
+        expect(metadata["usage_count"]).to be >= 3
+        expect(metadata["success_count"]).to be >= 1
+        expect(metadata["failure_count"]).to be >= 1
+        expect(metadata["last_used_at"]).not_to be_nil
+      end
+    end
+  end
+
+  describe "artifact persistence" do
+    it "writes method artifact with generated code and success metrics when toolstore is enabled" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        g = described_class.new("calculator")
+        stub_llm_response("result = 42")
+
+        outcome = g.answer
+        expect_ok_outcome(outcome, value: 42)
+
+        artifact_path = g.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "answer")
+        expect(File).to exist(artifact_path)
+        artifact = JSON.parse(File.read(artifact_path))
+        expect(artifact["role"]).to eq("calculator")
+        expect(artifact["method_name"]).to eq("answer")
+        expect(artifact["code"]).to eq("result = 42")
+        expect(artifact["prompt_version"]).to eq(Agent::PROMPT_VERSION)
+        expect(artifact["runtime_version"]).to eq(Agent::VERSION)
+        expect(artifact["success_count"]).to eq(1)
+        expect(artifact["failure_count"]).to eq(0)
+        expect(artifact["history"].size).to eq(1)
+        expect(artifact.dig("history", 0, "trigger")).to eq("initial_forge")
+      end
+    end
+
+    it "tracks adaptive and extrinsic failure classes in artifact metrics" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        g = described_class.new("rss_parser")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "parse_failed",
+                error_message: "feed parse failed",
+                retriable: false
+              )
+            RUBY
+          ),
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "timeout",
+                error_message: "upstream timeout",
+                retriable: true
+              )
+            RUBY
+          )
+        )
+
+        first = g.parse("feed-1")
+        second = g.parse("feed-2")
+
+        expect_error_outcome(first, type: "parse_failed", retriable: false)
+        expect_error_outcome(second, type: "timeout", retriable: true)
+
+        artifact_path = g.send(:_toolstore_artifact_path, role_name: "rss_parser", method_name: "parse")
+        artifact = JSON.parse(File.read(artifact_path))
+        expect(artifact["success_count"]).to eq(0)
+        expect(artifact["failure_count"]).to eq(2)
+        expect(artifact["adaptive_failure_count"]).to eq(1)
+        expect(artifact["extrinsic_failure_count"]).to eq(1)
+        expect(artifact["intrinsic_failure_count"]).to eq(0)
+        expect(artifact["last_failure_class"]).to eq("extrinsic")
+        expect(artifact["last_failure_reason"]).to include("upstream timeout")
+      end
+    end
+
+    it "caps artifact history to latest three generations with lineage links" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_enabled: true, toolstore_root: tmpdir)
+        g = described_class.new("calculator")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: "result = 1"),
+          program_payload(code: "result = 2"),
+          program_payload(code: "result = 3"),
+          program_payload(code: "result = 4")
+        )
+
+        4.times { g.answer }
+
+        artifact_path = g.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "answer")
+        artifact = JSON.parse(File.read(artifact_path))
+        history = artifact["history"]
+        expect(history.size).to eq(3)
+        expect(history[0]["parent_id"]).to eq(history[1]["id"])
+        expect(history[1]["parent_id"]).to eq(history[2]["id"])
+      end
+    end
+
+    it "executes from persisted artifact without calling provider when read path is enabled" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: false
+        )
+        seeder = described_class.new("calculator")
+        stub_llm_response("result = 42")
+        expect_ok_outcome(seeder.answer, value: 42)
+
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: true
+        )
+        warm = described_class.new("calculator")
+        expect(mock_provider).not_to receive(:generate_program)
+
+        expect_ok_outcome(warm.answer, value: 42)
+      end
+    end
+
+    it "falls back to generation when persisted artifact fails checksum validation" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: false
+        )
+        seeder = described_class.new("calculator")
+        stub_llm_response("result = 42")
+        expect_ok_outcome(seeder.answer, value: 42)
+
+        artifact_path = seeder.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "answer")
+        artifact = JSON.parse(File.read(artifact_path))
+        artifact["code"] = "result = 12345"
+        File.write(artifact_path, JSON.generate(artifact))
+
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: true
+        )
+        fallback = described_class.new("calculator")
+        expect(mock_provider).to receive(:generate_program).and_return(program_payload(code: "result = 99"))
+
+        expect_ok_outcome(fallback.answer, value: 99)
+      end
+    end
+
+    it "repairs persisted adaptive failures when repair is enabled and budget is available" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: false
+        )
+        seeder = described_class.new("rss_parser")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "parse_failed",
+                error_message: "seed parse failed",
+                retriable: false
+              )
+            RUBY
+          )
+        )
+        expect_error_outcome(seeder.parse("feed"), type: "parse_failed", retriable: false)
+
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: true,
+          toolstore_repair_enabled: true
+        )
+        repair_agent = described_class.new("rss_parser")
+        expect(mock_provider).to receive(:generate_program).and_return(program_payload(code: 'result = "repaired"'))
+        expect_ok_outcome(repair_agent.parse("feed"), value: "repaired")
+
+        artifact_path = repair_agent.send(:_toolstore_artifact_path, role_name: "rss_parser", method_name: "parse")
+        artifact = JSON.parse(File.read(artifact_path))
+        expect(artifact["repair_count_since_regen"]).to eq(1)
+        expect(artifact["last_repaired_at"]).not_to be_nil
+        expect(artifact["history"].first["trigger"]).to start_with("repair:")
+      end
+    end
+
+    it "skips repair and regenerates when repair budget is exhausted" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: false
+        )
+        seeder = described_class.new("rss_parser")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "parse_failed",
+                error_message: "seed parse failed",
+                retriable: false
+              )
+            RUBY
+          )
+        )
+        expect_error_outcome(seeder.parse("feed"), type: "parse_failed", retriable: false)
+
+        artifact_path = seeder.send(:_toolstore_artifact_path, role_name: "rss_parser", method_name: "parse")
+        artifact = JSON.parse(File.read(artifact_path))
+        artifact["repair_count_since_regen"] = Agent::MAX_REPAIRS_BEFORE_REGEN
+        File.write(artifact_path, JSON.generate(artifact))
+
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: true,
+          toolstore_repair_enabled: true
+        )
+        fallback = described_class.new("rss_parser")
+        expect(mock_provider).to receive(:generate_program).and_return(program_payload(code: 'result = "generated"'))
+        expect_ok_outcome(fallback.parse("feed"), value: "generated")
+
+        updated = JSON.parse(File.read(artifact_path))
+        expect(updated["repair_count_since_regen"]).to eq(0)
+      end
+    end
+
+    it "returns persisted extrinsic failures without repair/regeneration" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: false
+        )
+        seeder = described_class.new("http_fetcher")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "timeout",
+                error_message: "upstream timeout",
+                retriable: true
+              )
+            RUBY
+          )
+        )
+        expect_error_outcome(seeder.fetch("https://example.com"), type: "timeout", retriable: true)
+
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: true,
+          toolstore_repair_enabled: true
+        )
+        warm = described_class.new("http_fetcher")
+        expect(mock_provider).not_to receive(:generate_program)
+        expect_error_outcome(warm.fetch("https://example.com"), type: "timeout", retriable: true)
+      end
+    end
+  end
+
   describe "error types" do
     it "defines provider and execution errors" do
       expect(Agent::ProviderError).to be < StandardError
@@ -969,6 +1318,58 @@ RSpec.describe Agent do
       g.plan
     end
 
+    it "limits known tools rendered in prompt by KNOWN_TOOLS_PROMPT_LIMIT" do
+      g = described_class.new("planner")
+      tools = (1..(Agent::KNOWN_TOOLS_PROMPT_LIMIT + 3)).each_with_object({}) do |i, registry|
+        registry["tool_#{i}"] = { purpose: "purpose #{i}" }
+      end
+      g.remember(tools: tools)
+
+      prompt = g.send(:_known_tools_prompt)
+      rendered_tools = prompt.lines.grep(/^- /).map { |line| line.sub(/^- /, "").split(":").first }
+      expect(rendered_tools.size).to eq(Agent::KNOWN_TOOLS_PROMPT_LIMIT)
+      expect(rendered_tools.uniq.size).to eq(Agent::KNOWN_TOOLS_PROMPT_LIMIT)
+      expect(prompt).to start_with("<known_tools>\n")
+      expect(prompt).to end_with("</known_tools>\n")
+    end
+
+    it "ranks known tools by recency-weighted reliability" do
+      g = described_class.new("planner")
+      now = Time.now.utc
+      g.remember(
+        tools: {
+          "stale_tool" => {
+            purpose: "old",
+            usage_count: 20,
+            success_count: 10,
+            failure_count: 10,
+            last_used_at: (now - (90 * 86_400)).strftime("%Y-%m-%dT%H:%M:%S.%3NZ")
+          },
+          "fresh_reliable_tool" => {
+            purpose: "best",
+            usage_count: 5,
+            success_count: 5,
+            failure_count: 0,
+            last_used_at: now.strftime("%Y-%m-%dT%H:%M:%S.%3NZ")
+          },
+          "fresh_unreliable_tool" => {
+            purpose: "noisy",
+            usage_count: 5,
+            success_count: 1,
+            failure_count: 4,
+            last_used_at: now.strftime("%Y-%m-%dT%H:%M:%S.%3NZ")
+          }
+        }
+      )
+
+      prompt = g.send(:_known_tools_prompt)
+      best_index = prompt.index("- fresh_reliable_tool: best")
+      noisy_index = prompt.index("- fresh_unreliable_tool: noisy")
+      stale_index = prompt.index("- stale_tool: old")
+      expect(best_index).to be < noisy_index
+      expect(noisy_index).to be < stale_index
+    end
+
     it "sends tool schema via provider" do
       g = described_class.new("calculator")
       expect_llm_call_with(
@@ -1069,6 +1470,75 @@ RSpec.describe Agent do
       expect(entry).not_to have_key("system_prompt")
       expect(entry).not_to have_key("user_prompt")
       expect(entry).not_to have_key("context")
+    end
+
+    it "records persisted artifact execution source fields" do
+      Dir.mktmpdir("recurgent-log-artifact-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: false
+        )
+        seeder = described_class.new("calculator")
+        stub_llm_response("result = 7")
+        expect_ok_outcome(seeder.answer, value: 7)
+
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: true
+        )
+        artifact_log = File.join(tmpdir, "artifact-log.jsonl")
+        warm = described_class.new("calculator", log: artifact_log)
+        expect(mock_provider).not_to receive(:generate_program)
+        expect_ok_outcome(warm.answer, value: 7)
+
+        entry = JSON.parse(File.read(artifact_log))
+        expect(entry["program_source"]).to eq("persisted")
+        expect(entry["artifact_hit"]).to eq(true)
+        expect(entry["artifact_prompt_version"]).to eq(Agent::PROMPT_VERSION)
+        expect(entry["artifact_contract_fingerprint"]).to eq("none")
+      end
+    end
+
+    it "records repair attempt and success fields when persisted artifact is repaired" do
+      Dir.mktmpdir("recurgent-log-artifact-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: false
+        )
+        seeder = described_class.new("rss_parser")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "parse_failed",
+                error_message: "seed parse failed",
+                retriable: false
+              )
+            RUBY
+          )
+        )
+        expect_error_outcome(seeder.parse("feed"), type: "parse_failed", retriable: false)
+
+        Agent.configure_runtime(
+          toolstore_enabled: true,
+          toolstore_root: tmpdir,
+          toolstore_artifact_read_enabled: true,
+          toolstore_repair_enabled: true
+        )
+        artifact_log = File.join(tmpdir, "repair-log.jsonl")
+        repair_agent = described_class.new("rss_parser", log: artifact_log)
+        expect(mock_provider).to receive(:generate_program).and_return(program_payload(code: 'result = "repaired"'))
+        expect_ok_outcome(repair_agent.parse("feed"), value: "repaired")
+
+        entry = JSON.parse(File.read(artifact_log))
+        expect(entry["program_source"]).to eq("repaired")
+        expect(entry["repair_attempted"]).to eq(true)
+        expect(entry["repair_succeeded"]).to eq(true)
+        expect(entry["failure_class"]).to eq("adaptive")
+      end
     end
 
     it "logs delegated contract metadata when present" do
