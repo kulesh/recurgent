@@ -2,6 +2,7 @@
 
 ## Core Documents
 
+- `docs/architecture.md` - canonical runtime architecture diagrams (component map, call flow, persistence/repair, dual-lane evolution)
 - `docs/onboarding.md` - setup, workflow, quality gates
 - `docs/idea-brief.md` - product vision and design intent
 - `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary
@@ -59,19 +60,27 @@ The Ruby runtime (`runtimes/ruby`) keeps a narrow architecture:
 
 ## Data Flow
 
+Canonical diagrams live in `docs/architecture.md`.
+
 ```mermaid
 sequenceDiagram
   participant C as Caller
   participant A as Agent
   participant L as LLM Provider
+  participant S as Artifact Selector
   participant W as Worker
 
   C->>A: missing_method(args, kwargs)
-  A->>L: generate_program(system_prompt, user_prompt, schema)
-  L-->>A: { code, dependencies }
+  A->>S: select(role, method, args)
+  alt persisted artifact eligible
+    S-->>A: artifact code
+  else miss / stale / non-cacheable
+    A->>L: generate_program(system_prompt, user_prompt, schema)
+    L-->>A: { code, dependencies }
+  end
   alt dependencies empty
     A->>A: eval(code, binding)
-  else dependencies declared
+  else dependencies present
     A->>W: execute via JSON IPC
     W-->>A: value/context snapshot
   end

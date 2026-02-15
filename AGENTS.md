@@ -196,7 +196,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-15T15:20:00Z
+Last Updated (UTC): 2026-02-15T19:30:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -206,6 +206,7 @@ Last Updated (UTC): 2026-02-15T15:20:00Z
 - `CHANGELOG.md` - release history and notable changes
 - `SUPPORT.md` - support policy entrypoint
 - `docs/index.md` - top-level documentation map and architecture flow overview
+- `docs/architecture.md` - canonical runtime architecture diagrams (component map, call flow, persistence/repair policy, dual-lane evolution)
 - `docs/onboarding.md` - setup, developer workflow, quality gates
 - `docs/idea-brief.md` - concept vision, rationale, demos, future direction
 - `docs/observability.md` - mechanistic interpretability model, shared log schema, and live watcher usage

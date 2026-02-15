@@ -102,6 +102,7 @@ bundle exec rake
 ## Documentation
 
 - `docs/index.md` - documentation map and architecture overview
+- `docs/architecture.md` - canonical runtime architecture diagrams and flow maps
 - `docs/onboarding.md` - collaborator onboarding and daily workflow
 - `docs/idea-brief.md` - product vision and concept framing
 - `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary
@@ -133,12 +134,19 @@ bundle exec rake
 
 ```mermaid
 flowchart LR
-  U[User Code] --> M[method_missing]
-  M --> P[Provider generate_code]
-  P --> E[eval in object binding]
-  E --> O[Outcome]
-  E --> C[@context]
+  U[User Code] --> M[Agent method_missing]
+  M --> S[Artifact Selector]
+  S -->|hit + eligible| X[Persisted Execution]
+  S -->|miss / stale| P[Provider generate_program]
+  P --> X
+  X --> E[Eval or Worker Execution]
+  E --> V[Outcome Contract Validation]
+  V --> O[Outcome]
+  V --> L[Observability + Pattern Memory]
+  V --> T[ToolStore + ArtifactStore]
 ```
+
+Full architecture diagrams: `docs/architecture.md`.
 
 ## FAQ
 
