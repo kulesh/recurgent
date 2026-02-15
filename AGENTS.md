@@ -196,7 +196,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-15T01:36:48Z
+Last Updated (UTC): 2026-02-15T04:57:13Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -215,6 +215,8 @@ Last Updated (UTC): 2026-02-15T01:36:48Z
 - `docs/delegation-contracts.md` - Phase 1 Tool Builder-authored Tool contract fields and behavior
 - `docs/recurgent-implementation-plan.md` - phased implementation plan for LLM-native coordination API and naming transition
 - `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
+- `docs/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
+- `docs/baselines/2026-02-15/README.md` - baseline trace capture instructions and fixtures before artifact persistence rollout
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
 - `docs/support.md` - support scope and triage expectations
@@ -233,6 +235,7 @@ Last Updated (UTC): 2026-02-15T01:36:48Z
 - `docs/adrs/0009-issue-first-pr-compliance-gate.md` - issue-first PR quality gate decision for OSS maintenance
 - `docs/adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md` - proposed tool-declared dependency manifest and environment contract v1
 - `docs/adrs/0011-env-cache-policy-and-effective-manifest-execution.md` - source-policy-aware env caching and effective-manifest execution invariant
+- `docs/adrs/0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md` - proposed cross-session tool persistence and fitness-based artifact selection policy
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog

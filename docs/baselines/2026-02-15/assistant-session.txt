@@ -1,0 +1,11 @@
+/Users/kulesh/.local/share/mise/installs/ruby/3.4.7/lib/ruby/gems/3.4.0/gems/json-2.18.1/lib/json/common.rb:443: warning: JSON.generate: UTF-8 string passed as BINARY, this will raise an encoding error in json 3.0
+/Users/kulesh/.local/share/mise/installs/ruby/3.4.7/lib/ruby/gems/3.4.0/gems/json-2.18.1/lib/json/common.rb:443: warning: JSON.generate: UTF-8 string passed as BINARY, this will raise an encoding error in json 3.0
+=== Personal Assistant ===
+Model: claude-sonnet-4-5-20250929
+Type 'quit' or 'exit' to stop.
+
+> [parse_failed] Failed to parse RSS feed: Execution error in rss_parser.parse: cannot load such file -- rexml/document
+
+> [parse_failed] Could not parse Yahoo! News feed: No RSS/XML feed string provided. Expected a non-nil feed string to parse.
+
+> 

@@ -11,6 +11,8 @@
 - `docs/observability.md` - mechanistic interpretability via shared log schema and live watcher
 - `docs/recurgent-implementation-plan.md` - phased plan for LLM-native coordination API and naming transition
 - `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
+- `docs/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
+- `docs/baselines/2026-02-15/README.md` - pre-persistence baseline traces for assistant and philosophy debate scenarios
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/governance.md` - maintainer governance and decision model
 - `docs/support.md` - support policy and triage expectations
