@@ -77,8 +77,18 @@ class Agent
       @status == :ok
     end
 
+    # Tolerant alias for broader Result-style conventions.
+    def success?
+      ok?
+    end
+
     def error?
       !ok?
+    end
+
+    # Tolerant alias for broader Result-style conventions.
+    def failure?
+      error?
     end
 
     def value_or(default = nil)

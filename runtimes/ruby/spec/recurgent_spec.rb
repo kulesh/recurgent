@@ -80,6 +80,15 @@ RSpec.describe Agent do
       expect { described_class.new("test", max_generation_attempts: 0) }.to raise_error(ArgumentError, /max_generation_attempts/)
     end
 
+    it "accepts guardrail_recovery_budget" do
+      g = described_class.new("test", guardrail_recovery_budget: 2)
+      expect(g.instance_variable_get(:@guardrail_recovery_budget)).to eq(2)
+    end
+
+    it "raises when guardrail_recovery_budget is negative" do
+      expect { described_class.new("test", guardrail_recovery_budget: -1) }.to raise_error(ArgumentError, /guardrail_recovery_budget/)
+    end
+
     it "accepts provider_timeout_seconds" do
       g = described_class.new("test", provider_timeout_seconds: 30.5)
       expect(g.instance_variable_get(:@provider_timeout_seconds)).to eq(30.5)
@@ -165,12 +174,19 @@ RSpec.describe Agent do
     end
 
     it "delegates with inherited runtime settings by default" do
-      parent = described_class.for("planner", debug: true, max_generation_attempts: 4, provider_timeout_seconds: 45)
+      parent = described_class.for(
+        "planner",
+        debug: true,
+        max_generation_attempts: 4,
+        guardrail_recovery_budget: 2,
+        provider_timeout_seconds: 45
+      )
       child = parent.delegate("tax expert")
       expect(child).to be_a(described_class)
       expect(child.instance_variable_get(:@role)).to eq("tax expert")
       expect(child.instance_variable_get(:@debug)).to eq(true)
       expect(child.instance_variable_get(:@max_generation_attempts)).to eq(4)
+      expect(child.instance_variable_get(:@guardrail_recovery_budget)).to eq(2)
       expect(child.instance_variable_get(:@provider_timeout_seconds)).to eq(45)
       expect(child.instance_variable_get(:@delegation_budget)).to eq(7)
       expect(child.instance_variable_get(:@trace_id)).to eq(parent.instance_variable_get(:@trace_id))
@@ -459,6 +475,46 @@ RSpec.describe Agent do
       end
     end
 
+    it "treats low_utility and wrong_tool_boundary as adaptive failure classes" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        g = described_class.new("movie_finder")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "low_utility",
+                error_message: "parsed output was not useful",
+                retriable: false
+              )
+            RUBY
+          ),
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "wrong_tool_boundary",
+                error_message: "request crosses transport and extraction boundaries",
+                retriable: false
+              )
+            RUBY
+          )
+        )
+
+        first = g.fetch("https://example.com/1")
+        second = g.fetch("https://example.com/2")
+
+        expect_error_outcome(first, type: "low_utility", retriable: false)
+        expect_error_outcome(second, type: "wrong_tool_boundary", retriable: false)
+
+        artifact_path = g.send(:_toolstore_artifact_path, role_name: "movie_finder", method_name: "fetch")
+        artifact = JSON.parse(File.read(artifact_path))
+        expect(artifact["failure_count"]).to eq(2)
+        expect(artifact["adaptive_failure_count"]).to eq(2)
+        expect(artifact["intrinsic_failure_count"]).to eq(0)
+        expect(artifact["extrinsic_failure_count"]).to eq(0)
+      end
+    end
+
     it "caps artifact history to latest three generations with lineage links" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
         Agent.configure_runtime(toolstore_root: tmpdir)
@@ -608,6 +664,58 @@ RSpec.describe Agent do
         expect_error_outcome(warm.fetch("https://example.com"), type: "timeout", retriable: true)
       end
     end
+
+    it "converts success_no_parse status into low_utility and repairs on next persisted execution" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        contract = {
+          purpose: "fetch and parse movie listings",
+          deliverable: { type: "object", required: %w[status movies] }
+        }
+
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        seeder = described_class.new("movie_finder", delegation_contract: contract)
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.ok(
+                status: "success_no_parse",
+                movies: [],
+                message: "source reachable but parser extracted no listings"
+              )
+            RUBY
+          )
+        )
+        seeded = seeder.fetch_listings("https://www.fandango.com")
+        expect_error_outcome(seeded, type: "low_utility", retriable: false)
+        expect(seeded.metadata).to include(
+          mismatch: "low_utility_success_signal",
+          signaled_status: "success_no_parse"
+        )
+
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        warm = described_class.new("movie_finder", delegation_contract: contract)
+        expect(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              result = {
+                status: "success",
+                movies: [{ title: "Example Action Film" }]
+              }
+            RUBY
+          )
+        )
+        repaired = warm.fetch_listings("https://www.fandango.com")
+        expect(repaired).to be_ok
+        expect(repaired.value[:status]).to eq("success")
+        expect(repaired.value[:movies]).to be_an(Array)
+        expect(repaired.value[:movies].first[:title]).to eq("Example Action Film")
+
+        artifact_path = warm.send(:_toolstore_artifact_path, role_name: "movie_finder", method_name: "fetch_listings")
+        artifact = JSON.parse(File.read(artifact_path))
+        expect(artifact["repair_count_since_regen"]).to eq(1)
+        expect(artifact["last_repaired_at"]).not_to be_nil
+      end
+    end
   end
 
   describe "delegated outcome contract validation" do
@@ -664,6 +772,33 @@ RSpec.describe Agent do
         expected_shape: "non_nil_input",
         actual_shape: "nil",
         mismatch: "nil_required_input"
+      )
+    end
+
+    it "coerces success_no_parse ok outcomes into low_utility typed errors" do
+      finder = described_class.new(
+        "movie_finder",
+        delegation_contract: {
+          purpose: "fetch and parse movie listings",
+          deliverable: { type: "object", required: %w[status movies] }
+        }
+      )
+      stub_llm_response(
+        <<~RUBY
+          result = Agent::Outcome.ok(
+            status: "success_no_parse",
+            movies: [],
+            message: "fetched page but found no listings"
+          )
+        RUBY
+      )
+
+      outcome = finder.fetch_listings("https://www.fandango.com")
+      expect_error_outcome(outcome, type: "low_utility", retriable: false)
+      expect(outcome.metadata).to include(
+        mismatch: "low_utility_success_signal",
+        signaled_status: "success_no_parse",
+        signaled_message: "fetched page but found no listings"
       )
     end
   end
@@ -804,6 +939,39 @@ RSpec.describe Agent do
       expect_error_outcome(g.increment, type: "invalid_code", retriable: true)
     end
 
+    it "retries fresh generation once after execution error with runtime feedback" do
+      g = described_class.new("assistant", max_generation_attempts: 1)
+      prompts = []
+      allow(mock_provider).to receive(:generate_program) do |payload|
+        prompts << payload.fetch(:user_prompt, "")
+        if prompts.length == 1
+          program_payload(code: 'result = nil; result << "x"')
+        else
+          program_payload(code: 'buffer = +""; buffer << "x"; result = buffer')
+        end
+      end
+
+      outcome = g.ask("say x")
+      expect_ok_outcome(outcome, value: "x")
+      expect(prompts.length).to eq(2)
+      expect(prompts.last).to include("<execution_failure_feedback>")
+      expect(prompts.last).to include("Initialize accumulators before append operations")
+    end
+
+    it "returns execution error when fresh execution repair budget is exhausted" do
+      g = described_class.new("assistant", max_generation_attempts: 1)
+      prompts = []
+      allow(mock_provider).to receive(:generate_program) do |payload|
+        prompts << payload.fetch(:user_prompt, "")
+        program_payload(code: 'result = nil; result << "x"')
+      end
+
+      outcome = g.ask("say x")
+      expect_error_outcome(outcome, type: "execution", retriable: false)
+      expect(prompts.length).to eq(2)
+      expect(prompts.last).to include("<execution_failure_feedback>")
+    end
+
     it "allows return in generated code" do
       g = described_class.new("calculator")
       stub_llm_response("return 42")
@@ -824,6 +992,20 @@ RSpec.describe Agent do
       expect_ok_outcome(outcome, value: 42)
       expect(outcome.tool_role).to eq("assistant")
       expect(outcome.method_name).to eq("answer")
+    end
+
+    it "supports success? as a tolerant alias for ok?" do
+      g = described_class.new("assistant")
+      stub_llm_response("result = Agent::Outcome.ok(42).success?")
+
+      expect_ok_outcome(g.answer, value: true)
+    end
+
+    it "supports failure? as a tolerant alias for error?" do
+      g = described_class.new("assistant")
+      stub_llm_response('result = Agent::Outcome.error("x", "boom").failure?')
+
+      expect_ok_outcome(g.answer, value: true)
     end
 
     it "accepts hash-like kwargs in Agent::Outcome.call" do
@@ -879,7 +1061,7 @@ RSpec.describe Agent do
       expect_error_outcome(g.set_timer, type: "unsupported_capability", retriable: false)
     end
 
-    it "returns tool_registry_violation when generated code stores executable pseudo-tools in context[:tools]" do
+    it "returns guardrail_retry_exhausted when guardrail retries are exhausted on executable pseudo-tools in context[:tools]" do
       g = described_class.new("assistant")
       stub_llm_response(
         <<~RUBY
@@ -893,11 +1075,14 @@ RSpec.describe Agent do
       )
 
       outcome = g.ask("latest news")
-      expect_error_outcome(outcome, type: "tool_registry_violation", retriable: false)
-      expect(outcome.error_message).to include("context[:tools]")
+      expect_error_outcome(outcome, type: "guardrail_retry_exhausted", retriable: false)
+      expect(outcome.metadata).to include(
+        guardrail_recovery_attempts: 2,
+        last_violation_type: "tool_registry_violation"
+      )
     end
 
-    it "returns tool_registry_violation when generated code defines singleton methods on delegated tools" do
+    it "returns guardrail_retry_exhausted when generated code repeatedly defines singleton methods on delegated tools" do
       g = described_class.new("assistant")
       stub_llm_response(
         <<~RUBY
@@ -908,8 +1093,46 @@ RSpec.describe Agent do
       )
 
       outcome = g.ask("latest news")
-      expect_error_outcome(outcome, type: "tool_registry_violation", retriable: false)
-      expect(outcome.error_message).to include("Defining singleton methods on Agent instances")
+      expect_error_outcome(outcome, type: "guardrail_retry_exhausted", retriable: false)
+      expect(outcome.metadata).to include(
+        guardrail_recovery_attempts: 2,
+        last_violation_type: "tool_registry_violation"
+      )
+    end
+
+    it "recovers from a guardrail violation on the next regeneration attempt" do
+      g = described_class.new("assistant", max_generation_attempts: 1, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            fetcher = delegate("web_fetcher", purpose: "fetch content")
+            fetcher.define_singleton_method(:fetch_latest) { Agent::Outcome.ok({}) }
+            result = "done"
+          RUBY
+        ),
+        program_payload(code: "result = 42")
+      )
+
+      expect_ok_outcome(g.ask("latest news"), value: 42)
+      expect(mock_provider).to have_received(:generate_program).twice
+    end
+
+    it "rolls back attempt-local context mutations before guardrail retry" do
+      g = described_class.new("assistant", max_generation_attempts: 1, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            context[:note] = "polluted"
+            context[:tools] ||= {}
+            context[:tools]["bad_fetcher"] = { fetch_latest: -> { "bad" } }
+            result = "bad"
+          RUBY
+        ),
+        program_payload(code: "result = { note: context[:note], tools: context[:tools] }")
+      )
+
+      outcome = g.ask("latest news")
+      expect_ok_outcome(outcome, value: { note: nil, tools: nil })
     end
 
     it "returns invalid_dependency_manifest outcome when dependencies is not an array" do

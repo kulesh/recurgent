@@ -273,6 +273,7 @@ class Agent
         - You can access and modify context to store persistent data.
         - Outcome constructors available: Agent::Outcome.ok(...), Agent::Outcome.error(...), Agent::Outcome.call(value=nil, ...).
         - Prefer Agent::Outcome.ok/error as canonical forms; Agent::Outcome.call is a tolerant success alias.
+        - Outcome API idioms: use `outcome.ok?` / `outcome.error?` for branching, then `outcome.value` or `outcome.error_message`. (`success?`/`failure?` are tolerated aliases.)
         - For tool composition, preserve contract shapes: pass only fields expected by the downstream method (for example, RSS parser gets raw feed string, not fetch envelope Hash).
         - When consuming tool output hashes, handle both symbol and string keys unless you explicitly normalized keys.
         - For HTTP fetch operations, prefer https endpoints and handle 3xx redirects with a bounded hop count before failing.
@@ -281,6 +282,8 @@ class Agent
         - delegation does NOT grant new capabilities; child tools inherit the same runtime/tooling limits.
         - Do NOT delegate recursively to bypass unavailable capabilities.
         - If blocked by unavailable capability, return a typed non-retriable error outcome instead of fake success.
+        - If output is structurally valid but not useful for caller intent, return `Agent::Outcome.error(error_type: "low_utility", ...)` instead of `Outcome.ok` with placeholder status.
+        - If request crosses this Tool's boundary, return `Agent::Outcome.error(error_type: "wrong_tool_boundary", ...)` with metadata such as `boundary_axes`, `observed_task_shape`, and optional `suggested_split`.
         - For dependency-backed execution, results and context must stay JSON-serializable.
         - Be context-capacity aware: if memory grows large, prefer summarizing/pruning stale data over unbounded accumulation.
       RULES
@@ -292,9 +295,11 @@ class Agent
         - Infer what methods and behaviors are natural for role '#{@role}'.
         - Method names should be intuitive verbs or queries a caller would expect for this role.
         - Write clean, focused code that fulfills the active intent/contract.
+        - Initialize local accumulators before appending (for example `lines = []`, `response = +""`) before calling `<<`/`push`.
         - Parameterize inputs only when it improves clarity for the current implementation.
         - Do NOT over-generalize into frameworks or speculative abstractions.
         - If reuse is unlikely or semantics are unclear, keep scope narrow and explicit.
+        - Do NOT mutate Agent/Tool objects with metaprogramming (for example `define_singleton_method`); express behavior through normal generated methods and tool/delegate invocation paths.
       RULES
 
       depth_rules = case depth
@@ -344,6 +349,7 @@ class Agent
         - Am I returning real computed data, not placeholder/example data?
         - If capability blocked execution, did I return Agent::Outcome.error with typed metadata?
         - If a fetch/parse/external operation failed, did I avoid returning a plain success string that only says it failed?
+        - If I fetched/parsing succeeded technically but produced empty/junk output, did I return `low_utility` instead of `Outcome.ok`?
         - Does my stance choice fit current depth policy from the system prompt?
       CHECK
 

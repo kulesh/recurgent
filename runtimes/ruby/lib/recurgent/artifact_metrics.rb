@@ -18,10 +18,13 @@ class Agent
     ADAPTIVE_FAILURE_TYPES = %w[
       parse_error
       parse_failed
+      low_utility
+      wrong_tool_boundary
       missing_input
       invalid_format
       schema_mismatch
       contract_violation
+      guardrail_retry_exhausted
     ].freeze
 
     private

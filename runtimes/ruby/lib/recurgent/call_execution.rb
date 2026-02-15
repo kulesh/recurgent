@@ -42,7 +42,7 @@ class Agent
 
       state.outcome = _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
       state.outcome
-    rescue ProviderError, ExecutionError, ToolRegistryViolationError, BudgetExceededError, WorkerCrashError,
+    rescue ProviderError, ExecutionError, ToolRegistryViolationError, GuardrailRetryExhaustedError, BudgetExceededError, WorkerCrashError,
            NonSerializableResultError => e
       state.error = e
       state.outcome = _error_outcome_for(name, e)
@@ -68,33 +68,6 @@ class Agent
       return persisted_outcome unless persisted_outcome.nil?
 
       _generate_and_execute_fresh(name, args, kwargs, system_prompt, user_prompt, state)
-    end
-
-    def _generate_and_execute_fresh(name, args, kwargs, system_prompt, user_prompt, state)
-      generated_program, state.generation_attempt = _generate_program_with_retry(name, system_prompt, user_prompt) do |attempt_number|
-        state.generation_attempt = attempt_number
-      end
-      _capture_generated_program_state!(
-        state,
-        generated_program,
-        method_name: name,
-        args: args,
-        kwargs: kwargs
-      )
-      environment_info = _prepare_dependency_environment!(
-        method_name: name,
-        normalized_dependencies: state.normalized_dependencies
-      )
-      _capture_environment_state!(state, environment_info)
-      _execute_generated_program(
-        name,
-        state.code,
-        args,
-        kwargs,
-        normalized_dependencies: state.normalized_dependencies,
-        environment_info: environment_info,
-        state: state
-      )
     end
 
     def _execute_generated_program(name, code, args, kwargs, normalized_dependencies:, environment_info:, state:)

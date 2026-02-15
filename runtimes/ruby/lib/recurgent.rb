@@ -28,6 +28,10 @@ require_relative "recurgent/artifact_repair"
 require_relative "recurgent/persisted_execution"
 require_relative "recurgent/tool_maintenance"
 require_relative "recurgent/call_state"
+require_relative "recurgent/attempt_isolation"
+require_relative "recurgent/guardrail_policy"
+require_relative "recurgent/tool_registry_integrity"
+require_relative "recurgent/fresh_generation"
 require_relative "recurgent/call_execution"
 require_relative "recurgent/worker_executor"
 require_relative "recurgent/worker_supervisor"
@@ -66,6 +70,7 @@ class Agent
   VERSION = "0.1.0"
   DEFAULT_MODEL = "claude-sonnet-4-5-20250929"
   DEFAULT_MAX_GENERATION_ATTEMPTS = 2
+  DEFAULT_GUARDRAIL_RECOVERY_BUDGET = 1
   DEFAULT_PROVIDER_TIMEOUT_SECONDS = 120.0
   DEFAULT_DELEGATION_BUDGET = 8
   DEFAULT_GEM_SOURCES = ["https://rubygems.org"].freeze
@@ -93,6 +98,16 @@ class Agent
   class EnvironmentPreparingError < Error; end
   class TimeoutError < ProviderError; end
   class ToolRegistryViolationError < Error; end
+
+  class GuardrailRetryExhaustedError < Error
+    attr_reader :metadata
+
+    def initialize(message, metadata: {})
+      super(message)
+      @metadata = metadata
+    end
+  end
+
   class ExecutionError < Error; end
   class BudgetExceededError < Error; end
 
@@ -110,6 +125,7 @@ class Agent
     [DependencyActivationError, "dependency_activation_failed"],
     [EnvironmentPreparingError, "environment_preparing"],
     [ToolRegistryViolationError, "tool_registry_violation"],
+    [GuardrailRetryExhaustedError, "guardrail_retry_exhausted"],
     [WorkerCrashError, "worker_crash"],
     [NonSerializableResultError, "non_serializable_result"],
     [ProviderError, "provider"]
@@ -122,6 +138,12 @@ class Agent
     dependency_activation_failed
     environment_preparing
     worker_crash
+  ].freeze
+  TERMINAL_GUARDRAIL_MESSAGE_PATTERNS = [
+    /missing credential/i,
+    /api key/i,
+    /unsupported runtime capability/i,
+    /external service unavailable/i
   ].freeze
 
   include Prompting
@@ -140,6 +162,10 @@ class Agent
   include ArtifactSelector
   include ArtifactRepair
   include PersistedExecution
+  include AttemptIsolation
+  include GuardrailPolicy
+  include ToolRegistryIntegrity
+  include FreshGeneration
   include CallExecution
   include WorkerExecution
 
@@ -207,23 +233,7 @@ class Agent
 
   def initialize(role, **options)
     config = _resolve_initialize_config(options)
-
-    @role = role
-    @model_name = config[:model]
-    @provider = _build_provider(config[:model], config[:provider])
-    @context = {}
-    @verbose, @log, @debug = config.values_at(:verbose, :log, :debug)
-    @max_generation_attempts, @provider_timeout_seconds, @delegation_budget = _resolve_runtime_limits(config)
-    @delegation_contract, @delegation_contract_source = _resolve_delegation_contract(config)
-    @runtime_config = Agent.runtime_config
-    @environment_manager = nil
-    @env_manifest = nil
-    @env_id = nil
-    @worker_supervisor = nil
-    @prep_ticket_id = nil
-    @trace_id = _validate_trace_id(config[:trace_id] || _new_trace_id)
-    @log_dir_exists = false
-
+    _configure_runtime_state(role, config)
     _hydrate_tool_registry!
   end
 
@@ -328,6 +338,7 @@ class Agent
       log: @log,
       debug: @debug,
       max_generation_attempts: @max_generation_attempts,
+      guardrail_recovery_budget: @guardrail_recovery_budget,
       provider_timeout_seconds: @provider_timeout_seconds,
       delegation_budget: resolved_budget,
       trace_id: @trace_id
@@ -365,6 +376,7 @@ class Agent
       log: Agent.default_log_path,
       debug: false,
       max_generation_attempts: DEFAULT_MAX_GENERATION_ATTEMPTS,
+      guardrail_recovery_budget: DEFAULT_GUARDRAIL_RECOVERY_BUDGET,
       provider_timeout_seconds: DEFAULT_PROVIDER_TIMEOUT_SECONDS,
       delegation_budget: DEFAULT_DELEGATION_BUDGET,
       delegation_contract: nil,
@@ -380,6 +392,7 @@ class Agent
   def _resolve_runtime_limits(config)
     [
       _validate_max_generation_attempts(config[:max_generation_attempts]),
+      _validate_guardrail_recovery_budget(config[:guardrail_recovery_budget]),
       _validate_provider_timeout_seconds(config[:provider_timeout_seconds]),
       _validate_delegation_budget(config[:delegation_budget])
     ]
@@ -389,6 +402,25 @@ class Agent
     contract = _normalize_delegation_contract(config[:delegation_contract])
     source = _normalize_delegation_contract_source(config[:delegation_contract_source], contract)
     [contract, source]
+  end
+
+  def _configure_runtime_state(role, config)
+    @role = role
+    @model_name = config[:model]
+    @provider = _build_provider(config[:model], config[:provider])
+    @context = {}
+    @verbose, @log, @debug = config.values_at(:verbose, :log, :debug)
+    @max_generation_attempts, @guardrail_recovery_budget, @provider_timeout_seconds, @delegation_budget =
+      _resolve_runtime_limits(config)
+    @delegation_contract, @delegation_contract_source = _resolve_delegation_contract(config)
+    @runtime_config = Agent.runtime_config
+    @environment_manager = nil
+    @env_manifest = nil
+    @env_id = nil
+    @worker_supervisor = nil
+    @prep_ticket_id = nil
+    @trace_id = _validate_trace_id(config[:trace_id] || _new_trace_id)
+    @log_dir_exists = false
   end
 
   # Picks the right provider based on model name or explicit hint.
@@ -573,15 +605,17 @@ class Agent
   end
 
   def _error_outcome_for(method_name, error)
-    error_type = ERROR_TYPE_BY_CLASS.find { |klass, _| error.is_a?(klass) }&.last || "execution"
+    error_type = _error_type_for_exception(error)
     retriable = RETRIABLE_ERROR_TYPES.include?(error_type)
-    Outcome.error(
+    payload = {
       error_type: error_type,
       error_message: error.message,
       retriable: retriable,
       tool_role: @role,
       method_name: method_name
-    )
+    }
+    payload[:metadata] = error.metadata if error.respond_to?(:metadata)
+    Outcome.error(payload)
   end
 
   def _ensure_log_dir
@@ -685,60 +719,6 @@ class Agent
     return source if source.is_a?(String) && !source.strip.empty?
 
     "hash"
-  end
-
-  def _enforce_tool_registry_integrity!(method_name:, phase:)
-    registry = @context[:tools]
-    return if registry.nil?
-    raise ToolRegistryViolationError, "context[:tools] must be a Hash" unless registry.is_a?(Hash)
-
-    executable_paths = _tool_registry_executable_paths(registry, path: "context[:tools]")
-    return if executable_paths.empty?
-
-    raise ToolRegistryViolationError,
-          "Tool registry metadata cannot store executable objects " \
-          "(#{phase} #{@role}.#{method_name}): #{executable_paths.join(", ")}"
-  end
-
-  def _tool_registry_executable_paths(value, path:)
-    return [path] if _tool_registry_executable_value?(value)
-    return _tool_registry_array_executable_paths(value, path: path) if value.is_a?(Array)
-    return _tool_registry_hash_executable_paths(value, path: path) if value.is_a?(Hash)
-
-    []
-  end
-
-  def _tool_registry_array_executable_paths(array, path:)
-    array.each_with_index.flat_map do |entry, index|
-      _tool_registry_executable_paths(entry, path: "#{path}[#{index}]")
-    end
-  end
-
-  def _tool_registry_hash_executable_paths(hash, path:)
-    hash.flat_map do |key, entry|
-      child_path = "#{path}[#{key.inspect}]"
-      _tool_registry_executable_paths(entry, path: child_path)
-    end
-  end
-
-  def _tool_registry_executable_value?(value)
-    return true if _tool_registry_explicit_executable_type?(value)
-    return false if _tool_registry_plain_metadata_value?(value)
-
-    value.respond_to?(:call)
-  end
-
-  def _tool_registry_explicit_executable_type?(value)
-    value.is_a?(Proc) || value.is_a?(Method) || value.is_a?(UnboundMethod) || value.is_a?(Agent)
-  end
-
-  def _tool_registry_plain_metadata_value?(value)
-    case value
-    when nil, String, Numeric, Symbol, TrueClass, FalseClass
-      true
-    else
-      false
-    end
   end
 end
 

@@ -24,6 +24,13 @@ class Agent
     end
 
     def _core_log_fields(log_context)
+      _core_identity_fields(log_context)
+        .merge(_core_program_fields(log_context))
+        .merge(_core_pattern_fields(log_context))
+        .merge(_core_attempt_fields(log_context))
+    end
+
+    def _core_identity_fields(log_context)
       {
         timestamp: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S.%3NZ"),
         runtime: Agent::RUNTIME_NAME,
@@ -33,19 +40,42 @@ class Agent
         args: log_context[:args],
         kwargs: log_context[:kwargs],
         contract_source: @delegation_contract_source,
+        duration_ms: log_context[:duration_ms].round(1),
+        generation_attempt: log_context[:generation_attempt]
+      }
+    end
+
+    def _core_program_fields(log_context)
+      {
         code: log_context[:code],
         program_dependencies: log_context[:program_dependencies],
         normalized_dependencies: log_context[:normalized_dependencies],
         program_source: log_context[:program_source],
         repair_attempted: log_context[:repair_attempted],
         repair_succeeded: log_context[:repair_succeeded],
-        failure_class: log_context[:failure_class],
+        failure_class: log_context[:failure_class]
+      }
+    end
+
+    def _core_pattern_fields(log_context)
+      {
         capability_patterns: log_context[:capability_patterns],
         user_correction_detected: log_context[:user_correction_detected],
         user_correction_signal: log_context[:user_correction_signal],
-        user_correction_reference_call_id: log_context[:user_correction_reference_call_id],
-        duration_ms: log_context[:duration_ms].round(1),
-        generation_attempt: log_context[:generation_attempt]
+        user_correction_reference_call_id: log_context[:user_correction_reference_call_id]
+      }
+    end
+
+    def _core_attempt_fields(log_context)
+      {
+        attempt_id: log_context[:attempt_id],
+        attempt_stage: log_context[:attempt_stage],
+        validation_failure_type: log_context[:validation_failure_type],
+        rollback_applied: log_context[:rollback_applied],
+        retry_feedback_injected: log_context[:retry_feedback_injected],
+        guardrail_recovery_attempts: log_context[:guardrail_recovery_attempts],
+        execution_repair_attempts: log_context[:execution_repair_attempts],
+        guardrail_retry_exhausted: log_context[:guardrail_retry_exhausted]
       }
     end
 
