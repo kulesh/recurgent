@@ -42,7 +42,8 @@ class Agent
 
       state.outcome = _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
       state.outcome
-    rescue ProviderError, ExecutionError, BudgetExceededError, WorkerCrashError, NonSerializableResultError => e
+    rescue ProviderError, ExecutionError, ToolRegistryViolationError, BudgetExceededError, WorkerCrashError,
+           NonSerializableResultError => e
       state.error = e
       state.outcome = _error_outcome_for(name, e)
       state.outcome

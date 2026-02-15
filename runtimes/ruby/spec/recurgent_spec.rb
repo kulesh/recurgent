@@ -264,6 +264,13 @@ RSpec.describe Agent do
       parent = described_class.for("planner", delegation_budget: 0)
       expect { parent.delegate("tax expert") }.to raise_error(Agent::BudgetExceededError, /Delegation budget exceeded/)
     end
+
+    it "raises when remember stores executable values inside context[:tools]" do
+      parent = described_class.for("planner")
+      expect do
+        parent.remember(tools: { "web_fetcher" => { fetch: -> { :ok } } })
+      end.to raise_error(Agent::ToolRegistryViolationError, /cannot store executable objects/i)
+    end
   end
 
   describe "tool registry persistence" do
@@ -870,6 +877,39 @@ RSpec.describe Agent do
       RUBY
 
       expect_error_outcome(g.set_timer, type: "unsupported_capability", retriable: false)
+    end
+
+    it "returns tool_registry_violation when generated code stores executable pseudo-tools in context[:tools]" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          context[:tools] ||= {}
+          context[:tools]["bad_fetcher"] = {
+            purpose: "inline pseudo tool",
+            fetch_latest: -> { "not allowed" }
+          }
+          result = "done"
+        RUBY
+      )
+
+      outcome = g.ask("latest news")
+      expect_error_outcome(outcome, type: "tool_registry_violation", retriable: false)
+      expect(outcome.error_message).to include("context[:tools]")
+    end
+
+    it "returns tool_registry_violation when generated code defines singleton methods on delegated tools" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          fetcher = delegate("web_fetcher", purpose: "fetch content")
+          fetcher.define_singleton_method(:fetch_latest) { Agent::Outcome.ok({}) }
+          result = "done"
+        RUBY
+      )
+
+      outcome = g.ask("latest news")
+      expect_error_outcome(outcome, type: "tool_registry_violation", retriable: false)
+      expect(outcome.error_message).to include("Defining singleton methods on Agent instances")
     end
 
     it "returns invalid_dependency_manifest outcome when dependencies is not an array" do

@@ -92,6 +92,7 @@ class Agent
   class NonSerializableResultError < Error; end
   class EnvironmentPreparingError < Error; end
   class TimeoutError < ProviderError; end
+  class ToolRegistryViolationError < Error; end
   class ExecutionError < Error; end
   class BudgetExceededError < Error; end
 
@@ -108,6 +109,7 @@ class Agent
     [DependencyInstallError, "dependency_install_failed"],
     [DependencyActivationError, "dependency_activation_failed"],
     [EnvironmentPreparingError, "environment_preparing"],
+    [ToolRegistryViolationError, "tool_registry_violation"],
     [WorkerCrashError, "worker_crash"],
     [NonSerializableResultError, "non_serializable_result"],
     [ProviderError, "provider"]
@@ -279,6 +281,7 @@ class Agent
 
   def remember(**entries)
     entries.each { |key, value| @context[key.to_sym] = value }
+    _enforce_tool_registry_integrity!(method_name: "remember", phase: "remember")
     self
   end
 
@@ -341,6 +344,13 @@ class Agent
     )
     _register_delegated_tool(role: role, tool: tool, explicit_purpose: purpose)
     tool
+  end
+
+  # Tool objects must evolve through Agent dynamic dispatch, not ad hoc singleton methods.
+  # This prevents bypassing persistence, contract validation, and observability lanes.
+  def define_singleton_method(...)
+    raise ToolRegistryViolationError,
+          "Defining singleton methods on Agent instances is not supported; use tool/delegate invocation paths."
   end
 end
 
@@ -405,9 +415,11 @@ class Agent
     result = nil
     wrapped_code = _wrap_generated_code(code)
 
+    _enforce_tool_registry_integrity!(method_name: method_name, phase: "pre_execution")
     _with_outcome_call_context(method_name) do
       eval(wrapped_code, binding, "(agent:#{@role}.#{method_name})")
     end
+    _enforce_tool_registry_integrity!(method_name: method_name, phase: "post_execution")
 
     result
   rescue Agent::Error
@@ -624,6 +636,7 @@ class Agent
     metadata.merge!(_delegated_tool_contract_summary(contract))
 
     registry[role_name] = metadata
+    _enforce_tool_registry_integrity!(method_name: "delegate", phase: "register")
     _persist_tool_registry_entry(role_name, metadata)
   end
 
@@ -672,6 +685,60 @@ class Agent
     return source if source.is_a?(String) && !source.strip.empty?
 
     "hash"
+  end
+
+  def _enforce_tool_registry_integrity!(method_name:, phase:)
+    registry = @context[:tools]
+    return if registry.nil?
+    raise ToolRegistryViolationError, "context[:tools] must be a Hash" unless registry.is_a?(Hash)
+
+    executable_paths = _tool_registry_executable_paths(registry, path: "context[:tools]")
+    return if executable_paths.empty?
+
+    raise ToolRegistryViolationError,
+          "Tool registry metadata cannot store executable objects " \
+          "(#{phase} #{@role}.#{method_name}): #{executable_paths.join(", ")}"
+  end
+
+  def _tool_registry_executable_paths(value, path:)
+    return [path] if _tool_registry_executable_value?(value)
+    return _tool_registry_array_executable_paths(value, path: path) if value.is_a?(Array)
+    return _tool_registry_hash_executable_paths(value, path: path) if value.is_a?(Hash)
+
+    []
+  end
+
+  def _tool_registry_array_executable_paths(array, path:)
+    array.each_with_index.flat_map do |entry, index|
+      _tool_registry_executable_paths(entry, path: "#{path}[#{index}]")
+    end
+  end
+
+  def _tool_registry_hash_executable_paths(hash, path:)
+    hash.flat_map do |key, entry|
+      child_path = "#{path}[#{key.inspect}]"
+      _tool_registry_executable_paths(entry, path: child_path)
+    end
+  end
+
+  def _tool_registry_executable_value?(value)
+    return true if _tool_registry_explicit_executable_type?(value)
+    return false if _tool_registry_plain_metadata_value?(value)
+
+    value.respond_to?(:call)
+  end
+
+  def _tool_registry_explicit_executable_type?(value)
+    value.is_a?(Proc) || value.is_a?(Method) || value.is_a?(UnboundMethod) || value.is_a?(Agent)
+  end
+
+  def _tool_registry_plain_metadata_value?(value)
+    case value
+    when nil, String, Numeric, Symbol, TrueClass, FalseClass
+      true
+    else
+      false
+    end
   end
 end
 
