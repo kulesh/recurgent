@@ -28,6 +28,7 @@ RSpec.describe "Agent acceptance" do
   let(:routes) { {} }
   let(:errors) { {} }
   let(:provider) { provider_class.new(routes: routes, errors: errors) }
+  let(:runtime_toolstore_root) { Dir.mktmpdir("recurgent-acceptance-toolstore-") }
 
   def program(code:, dependencies: nil)
     payload = { code: code }
@@ -38,6 +39,13 @@ RSpec.describe "Agent acceptance" do
   before do
     allow(Agent::Providers::Anthropic).to receive(:new).and_return(provider)
     allow(Agent).to receive(:default_log_path).and_return(false)
+    Agent.reset_runtime_config!
+    Agent.configure_runtime(toolstore_root: runtime_toolstore_root)
+  end
+
+  after do
+    FileUtils.rm_rf(runtime_toolstore_root)
+    Agent.reset_runtime_config!
   end
 
   it "supports a calculator journey with persistent memory" do

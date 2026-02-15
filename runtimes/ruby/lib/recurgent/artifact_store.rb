@@ -8,8 +8,6 @@ class Agent
     private
 
     def _persist_method_artifact_for_call(method_name:, state:, duration_ms:)
-      return unless _toolstore_enabled?
-
       code = state.code.to_s
       return if code.strip.empty?
 
@@ -37,7 +35,7 @@ class Agent
       artifact["last_used_at"] = timestamp
       artifact["last_duration_ms"] = duration_ms.round(1)
       _artifact_write(method_name, artifact)
-      _toolstore_touch_tool_usage(@role, outcome: state.outcome)
+      _toolstore_touch_tool_usage(@role, method_name: method_name, outcome: state.outcome)
     rescue StandardError => e
       warn "[AGENT ARTIFACT #{@role}.#{method_name}] failed to persist artifact: #{e.class}: #{e.message}" if @debug
     end
@@ -51,6 +49,9 @@ class Agent
         "prompt_version" => Agent::PROMPT_VERSION,
         "runtime_version" => Agent::VERSION,
         "model" => @model_name,
+        "cacheable" => false,
+        "cacheability_reason" => "unknown",
+        "input_sensitive" => false,
         "code_checksum" => nil,
         "code" => "",
         "dependencies" => [],
@@ -124,6 +125,9 @@ class Agent
       artifact["prompt_version"] = Agent::PROMPT_VERSION
       artifact["runtime_version"] = Agent::VERSION
       artifact["model"] = @model_name
+      artifact["cacheable"] = state.cacheable == true
+      artifact["cacheability_reason"] = state.cacheability_reason
+      artifact["input_sensitive"] = state.input_sensitive == true
       artifact["code_checksum"] = checksum
       artifact["code"] = code
       artifact["dependencies"] = state.program_dependencies || []

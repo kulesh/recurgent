@@ -8,6 +8,8 @@ class Agent
     :program_source, :artifact_hit, :artifact_prompt_version, :artifact_contract_fingerprint,
     :cacheable, :cacheability_reason, :input_sensitive,
     :capability_patterns, :capability_pattern_evidence,
+    :contract_validation_applied, :contract_validation_passed,
+    :contract_validation_mismatch, :contract_validation_expected_keys, :contract_validation_actual_keys,
     :artifact_generation_trigger,
     :repair_attempted, :repair_succeeded, :failure_class,
     :generation_attempt, :error, :outcome,
@@ -26,6 +28,11 @@ class Agent
       input_sensitive: false,
       capability_patterns: [],
       capability_pattern_evidence: {},
+      contract_validation_applied: false,
+      contract_validation_passed: nil,
+      contract_validation_mismatch: nil,
+      contract_validation_expected_keys: [],
+      contract_validation_actual_keys: [],
       repair_attempted: false,
       repair_succeeded: false
     )

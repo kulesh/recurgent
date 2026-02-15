@@ -14,7 +14,6 @@ class Agent
       failure_message:,
       state:
     )
-      return nil unless _toolstore_repair_enabled?
       return nil unless _artifact_repair_budget_available?(persisted_artifact)
 
       state.repair_attempted = true
@@ -33,7 +32,13 @@ class Agent
         repair_system_prompt,
         repair_user_prompt
       )
-      _capture_generated_program_state!(state, repaired_program)
+      _capture_generated_program_state!(
+        state,
+        repaired_program,
+        method_name: method_name,
+        args: args,
+        kwargs: kwargs
+      )
       _mark_repaired_program_state!(state, trigger: _repair_trigger_for(failure_class))
       environment_info = _prepare_dependency_environment!(
         method_name: method_name,

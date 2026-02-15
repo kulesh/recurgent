@@ -80,7 +80,8 @@ class Agent
         error_message: encoded["error_message"] || "Worker returned error outcome",
         retriable: !encoded["retriable"].nil? && encoded["retriable"],
         tool_role: encoded["tool_role"] || @role,
-        method_name: encoded["method_name"] || method_name
+        method_name: encoded["method_name"] || method_name,
+        metadata: encoded["metadata"]
       )
     end
 

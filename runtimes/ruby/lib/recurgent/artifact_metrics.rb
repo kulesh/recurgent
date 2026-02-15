@@ -21,6 +21,7 @@ class Agent
       missing_input
       invalid_format
       schema_mismatch
+      contract_violation
     ].freeze
 
     private

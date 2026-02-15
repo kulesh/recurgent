@@ -104,6 +104,7 @@ class Agent
       active_contract = _active_contract_user_prompt
       known_tools = _known_tools_prompt
       recent_patterns = _recent_patterns_prompt(method_name: name, depth: depth)
+      interface_overlap = _known_tool_interface_overlap_prompt
 
       <<~PROMPT
         <invocation>
@@ -118,6 +119,7 @@ class Agent
 
         #{known_tools}
         #{_known_tools_usage_hint}
+        #{interface_overlap}
         #{recent_patterns}
 
         #{active_contract}
@@ -383,7 +385,9 @@ class Agent
       ranked_tools = _rank_known_tools_for_prompt(tools)
       lines = ranked_tools.first(Agent::KNOWN_TOOLS_PROMPT_LIMIT).map do |name, metadata|
         purpose = _extract_tool_purpose(metadata)
-        "- #{name}: #{purpose}"
+        methods = _extract_tool_methods(metadata)
+        suffix = methods.empty? ? "" : "\n  methods: [#{methods.join(", ")}]"
+        "- #{name}: #{purpose}#{suffix}"
       end
 
       <<~TOOLS
@@ -407,6 +411,41 @@ class Agent
       return "purpose unavailable" unless metadata.is_a?(Hash)
 
       metadata[:purpose] || metadata["purpose"] || "purpose unavailable"
+    end
+
+    def _extract_tool_methods(metadata)
+      return [] unless metadata.is_a?(Hash)
+
+      Array(metadata[:methods] || metadata["methods"]).map { |name| name.to_s.strip }.reject(&:empty?).uniq
+    end
+
+    def _known_tool_interface_overlap_prompt
+      overlaps = _known_tool_method_overlaps
+      return "" if overlaps.empty?
+
+      lines = overlaps.map do |entry|
+        methods = entry[:methods].join(", ")
+        "- #{entry[:name]} has multiple methods for similar capability: [#{methods}]"
+      end
+
+      <<~PROMPT
+        <interface_overlap_observations>
+        #{lines.join("\n")}
+        - Consider consolidating to one canonical method when behavior overlaps.
+        </interface_overlap_observations>
+      PROMPT
+    end
+
+    def _known_tool_method_overlaps
+      tools = @context[:tools]
+      return [] unless tools.is_a?(Hash)
+
+      tools.filter_map do |name, metadata|
+        methods = _extract_tool_methods(metadata)
+        next if methods.length < 2
+
+        { name: name.to_s, methods: methods.sort }
+      end.first(Agent::KNOWN_TOOLS_PROMPT_LIMIT)
     end
 
     # rubocop:disable Metrics/MethodLength

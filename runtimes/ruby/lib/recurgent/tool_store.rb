@@ -6,8 +6,6 @@ class Agent
     private
 
     def _hydrate_tool_registry!
-      return unless _toolstore_enabled?
-
       persisted_tools = _toolstore_load_registry_tools
       return if persisted_tools.empty?
 
@@ -20,8 +18,6 @@ class Agent
     end
 
     def _persist_tool_registry_entry(role_name, metadata)
-      return unless _toolstore_enabled?
-
       tools = _toolstore_load_registry_tools
       role_key = role_name.to_s
       tools[role_key] = _toolstore_merged_registry_entry(tools[role_key], metadata)
@@ -30,15 +26,13 @@ class Agent
       warn "[AGENT TOOLSTORE #{@role}] failed to persist registry entry for #{role_name}: #{e.message}" if @debug
     end
 
-    def _toolstore_touch_tool_usage(role_name, outcome:)
-      return unless _toolstore_enabled?
-
+    def _toolstore_touch_tool_usage(role_name, method_name:, outcome:)
       tools = _toolstore_load_registry_tools
       role_key = role_name.to_s
       metadata = tools[role_key]
       return unless metadata.is_a?(Hash)
 
-      tools[role_key] = _toolstore_touched_registry_entry(metadata, outcome: outcome)
+      tools[role_key] = _toolstore_touched_registry_entry(metadata, method_name: method_name, outcome: outcome)
       _toolstore_write_registry(tools)
     rescue StandardError => e
       warn "[AGENT TOOLSTORE #{@role}] failed to update usage metrics for #{role_name}: #{e.message}" if @debug
@@ -118,6 +112,8 @@ class Agent
       timestamp = _toolstore_timestamp
 
       merged = normalized_existing.merge(normalized)
+      merged[:methods] = _toolstore_merged_method_names(normalized_existing, normalized)
+      merged[:aliases] = _toolstore_merged_aliases(normalized_existing, normalized)
       merged[:created_at] ||= timestamp
       merged[:last_used_at] = timestamp
       merged[:usage_count] = normalized_existing.fetch(:usage_count, 0).to_i + 1
@@ -126,11 +122,12 @@ class Agent
       merged
     end
 
-    def _toolstore_touched_registry_entry(metadata, outcome:)
+    def _toolstore_touched_registry_entry(metadata, method_name:, outcome:)
       updated = metadata.dup
       updated[:last_used_at] = _toolstore_timestamp
       updated[:usage_count] = metadata.fetch(:usage_count, 0).to_i + 1
       _toolstore_apply_outcome_counters!(updated, outcome)
+      _toolstore_capture_method_name!(updated, method_name) if outcome&.ok?
       updated
     end
 
@@ -140,6 +137,36 @@ class Agent
       else
         metadata[:failure_count] = metadata.fetch(:failure_count, 0).to_i + 1
       end
+    end
+
+    def _toolstore_capture_method_name!(metadata, method_name)
+      method = method_name.to_s.strip
+      return if method.empty?
+
+      methods = _toolstore_method_names(metadata)
+      return if methods.include?(method)
+
+      metadata[:methods] = methods.append(method)
+    end
+
+    def _toolstore_merged_method_names(existing, incoming)
+      (_toolstore_method_names(existing) + _toolstore_method_names(incoming)).uniq
+    end
+
+    def _toolstore_merged_aliases(existing, incoming)
+      (_toolstore_aliases(existing) + _toolstore_aliases(incoming)).uniq
+    end
+
+    def _toolstore_method_names(metadata)
+      return [] unless metadata.is_a?(Hash)
+
+      Array(metadata[:methods] || metadata["methods"]).map { |name| name.to_s.strip }.reject(&:empty?).uniq
+    end
+
+    def _toolstore_aliases(metadata)
+      return [] unless metadata.is_a?(Hash)
+
+      Array(metadata[:aliases] || metadata["aliases"]).map { |name| name.to_s.strip }.reject(&:empty?).uniq
     end
 
     def _toolstore_parse_registry(path)

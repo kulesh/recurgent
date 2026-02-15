@@ -95,19 +95,28 @@ class Agent
     def _execute_generated_program(name, code, args, kwargs, normalized_dependencies:, environment_info:, state:)
       _print_generated_code(name, code) if @verbose
 
-      if _worker_execution_required?(normalized_dependencies)
-        return _execute_generated_program_in_worker(
-          name,
-          code,
-          args,
-          kwargs,
-          environment_info: environment_info,
-          state: state
-        )
-      end
+      outcome =
+        if _worker_execution_required?(normalized_dependencies)
+          _execute_generated_program_in_worker(
+            name,
+            code,
+            args,
+            kwargs,
+            environment_info: environment_info,
+            state: state
+          )
+        else
+          result = _execute_code(code, name, *args, **kwargs)
+          Outcome.coerce(result, tool_role: @role, method_name: name)
+        end
 
-      result = _execute_code(code, name, *args, **kwargs)
-      Outcome.coerce(result, tool_role: @role, method_name: name)
+      _validate_delegated_outcome_contract(
+        outcome: outcome,
+        method_name: name,
+        args: args,
+        kwargs: kwargs,
+        state: state
+      )
     end
 
     def _print_generated_code(name, code)

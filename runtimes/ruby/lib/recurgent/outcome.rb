@@ -2,7 +2,7 @@
 
 class Agent
   class Outcome
-    attr_reader :status, :value, :error_type, :error_message, :retriable, :tool_role, :method_name
+    attr_reader :status, :value, :error_type, :error_message, :retriable, :tool_role, :method_name, :metadata
 
     # Tolerant constructor: supports generated code that uses Outcome.call.
     # Canonical constructors remain .ok and .error.
@@ -49,7 +49,8 @@ class Agent
         method_name: resolved_method_name,
         error_type: error_type || _hash_get(kwargs, :error_type) || "execution",
         error_message: error_message || _hash_get(kwargs, :error_message) || "Execution failed",
-        retriable: _retriable_flag?(retriable || _hash_get(kwargs, :retriable))
+        retriable: _retriable_flag?(retriable || _hash_get(kwargs, :retriable)),
+        metadata: _error_metadata(kwargs)
       )
     end
 
@@ -61,7 +62,7 @@ class Agent
       ok(value: value, tool_role: tool_role, method_name: method_name)
     end
 
-    def initialize(status:, tool_role:, method_name:, value: nil, error_type: nil, error_message: nil, retriable: false)
+    def initialize(status:, tool_role:, method_name:, value: nil, error_type: nil, error_message: nil, retriable: false, metadata: nil)
       @status = status
       @value = value
       @error_type = error_type
@@ -69,6 +70,7 @@ class Agent
       @retriable = retriable
       @tool_role = tool_role
       @method_name = method_name
+      @metadata = metadata
     end
 
     def ok?
@@ -91,7 +93,8 @@ class Agent
         error_message: @error_message,
         retriable: @retriable,
         tool_role: @tool_role,
-        method_name: @method_name
+        method_name: @method_name,
+        metadata: @metadata
       }
     end
 
@@ -137,7 +140,8 @@ class Agent
         error_message: _hash_get(value, :error_message) || "Execution failed",
         retriable: _retriable_flag?(_hash_get(value, :retriable)),
         tool_role: _hash_get(value, :tool_role) || tool_role,
-        method_name: _hash_get(value, :method_name) || method_name
+        method_name: _hash_get(value, :method_name) || method_name,
+        metadata: _hash_get(value, :metadata)
       )
     end
 
@@ -203,9 +207,19 @@ class Agent
 
       value == true
     end
+
+    def self._error_metadata(kwargs)
+      explicit_metadata = _hash_get(kwargs, :metadata)
+      remaining = kwargs.reject { |key, _| key.to_s == "metadata" }
+      return explicit_metadata if remaining.empty?
+      return remaining if explicit_metadata.nil?
+      return explicit_metadata.merge(remaining) if explicit_metadata.is_a?(Hash)
+
+      explicit_metadata
+    end
     private_class_method :_coerce_hash, :_coerce_error_hash, :_coerce_ok_hash,
                          :_extract_status, :_hash_get, :_resolve_context,
                          :_resolve_ok_value, :_resolve_error_inputs,
-                         :_resolve_error_hash_input, :_retriable_flag?
+                         :_resolve_error_hash_input, :_retriable_flag?, :_error_metadata
   end
 end

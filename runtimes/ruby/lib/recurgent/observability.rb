@@ -16,6 +16,14 @@ class Agent
     end
 
     def _base_log_entry(log_context)
+      _core_log_fields(log_context)
+        .merge(_contract_validation_log_fields(log_context))
+        .merge(_artifact_cache_log_fields(log_context))
+        .merge(_trace_log_fields(log_context))
+        .merge(_environment_log_fields(log_context))
+    end
+
+    def _core_log_fields(log_context)
       {
         timestamp: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S.%3NZ"),
         runtime: Agent::RUNTIME_NAME,
@@ -35,9 +43,17 @@ class Agent
         capability_patterns: log_context[:capability_patterns],
         duration_ms: log_context[:duration_ms].round(1),
         generation_attempt: log_context[:generation_attempt]
-      }.merge(_artifact_cache_log_fields(log_context))
-        .merge(_trace_log_fields(log_context))
-        .merge(_environment_log_fields(log_context))
+      }
+    end
+
+    def _contract_validation_log_fields(log_context)
+      {
+        contract_validation_applied: log_context[:contract_validation_applied],
+        contract_validation_passed: log_context[:contract_validation_passed],
+        contract_validation_mismatch: log_context[:contract_validation_mismatch],
+        contract_validation_expected_keys: log_context[:contract_validation_expected_keys],
+        contract_validation_actual_keys: log_context[:contract_validation_actual_keys]
+      }
     end
 
     def _artifact_cache_log_fields(log_context)
@@ -98,17 +114,30 @@ class Agent
     end
 
     def _add_outcome_to_entry(entry, outcome)
-      entry[:outcome_status] = outcome.status
-      entry[:outcome_retriable] = outcome.retriable
-      entry[:outcome_tool_role] = outcome.tool_role
-      entry[:outcome_method_name] = outcome.method_name
-      if outcome.ok?
-        entry[:outcome_value_class] = outcome.value.class.name unless outcome.value.nil?
-        entry[:outcome_value] = _debug_serializable_value(outcome.value) if @debug
-      else
-        entry[:outcome_error_type] = outcome.error_type
-        entry[:outcome_error_message] = outcome.error_message
-      end
+      entry.merge!(_outcome_base_fields(outcome))
+      return _add_ok_outcome_to_entry(entry, outcome) if outcome.ok?
+
+      _add_error_outcome_to_entry(entry, outcome)
+    end
+
+    def _outcome_base_fields(outcome)
+      {
+        outcome_status: outcome.status,
+        outcome_retriable: outcome.retriable,
+        outcome_tool_role: outcome.tool_role,
+        outcome_method_name: outcome.method_name
+      }
+    end
+
+    def _add_ok_outcome_to_entry(entry, outcome)
+      entry[:outcome_value_class] = outcome.value.class.name unless outcome.value.nil?
+      entry[:outcome_value] = _debug_serializable_value(outcome.value) if @debug
+    end
+
+    def _add_error_outcome_to_entry(entry, outcome)
+      entry[:outcome_error_type] = outcome.error_type
+      entry[:outcome_error_message] = outcome.error_message
+      entry[:outcome_error_metadata] = outcome.metadata unless outcome.metadata.nil? || outcome.metadata.empty?
     end
 
     def _add_debug_to_entry(entry, system_prompt, user_prompt, error, capability_pattern_evidence)

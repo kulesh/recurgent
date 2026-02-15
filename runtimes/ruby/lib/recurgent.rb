@@ -7,6 +7,8 @@ require_relative "recurgent/dependency_manifest"
 require_relative "recurgent/environment_manager"
 require_relative "recurgent/generated_program"
 require_relative "recurgent/outcome"
+require_relative "recurgent/outcome_contract_shapes"
+require_relative "recurgent/outcome_contract_validator"
 require_relative "recurgent/providers"
 require_relative "recurgent/prompting"
 require_relative "recurgent/observability"
@@ -121,6 +123,7 @@ class Agent
 
   include Prompting
   include Observability
+  include OutcomeContractValidator
   include Dependencies
   include KnownToolRanker
   include ToolStorePaths
@@ -615,7 +618,7 @@ class Agent
 
     contract = tool.instance_variable_get(:@delegation_contract)
     purpose = explicit_purpose || contract&.fetch(:purpose, nil) || "purpose unavailable"
-    metadata = { purpose: purpose }
+    metadata = { purpose: purpose, methods: [], aliases: [] }
     metadata.merge!(_delegated_tool_contract_summary(contract))
 
     registry[role_name] = metadata

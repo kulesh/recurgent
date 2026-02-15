@@ -6,16 +6,26 @@ class Agent
     private
 
     def _select_persisted_artifact(method_name, state:)
-      return nil unless _toolstore_enabled? && _toolstore_artifact_read_enabled?
-
       artifact = _artifact_load(method_name)
       return nil unless artifact
+      return nil unless _artifact_cacheable_for_execution?(artifact, method_name: method_name)
       return nil unless _artifact_compatible_for_execution?(artifact)
       return nil if _artifact_degraded?(artifact)
 
       state.artifact_prompt_version = artifact["prompt_version"]
       state.artifact_contract_fingerprint = artifact["contract_fingerprint"]
       artifact
+    end
+
+    def _artifact_cacheable_for_execution?(artifact, method_name:)
+      cacheable = artifact["cacheable"]
+      return cacheable == true if [true, false].include?(cacheable)
+
+      # Legacy artifacts (pre-cacheability metadata):
+      # never reuse dynamic dispatch methods, allow stable method-level tools.
+      return false if _dynamic_dispatch_method?(method_name)
+
+      true
     end
 
     def _artifact_compatible_for_execution?(artifact)

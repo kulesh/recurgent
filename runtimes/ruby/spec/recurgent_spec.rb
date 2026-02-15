@@ -603,6 +603,64 @@ RSpec.describe Agent do
     end
   end
 
+  describe "delegated outcome contract validation" do
+    it "accepts symbol/string key equivalence and canonicalizes successful object outputs" do
+      tool = described_class.new(
+        "web_fetcher",
+        delegation_contract: {
+          purpose: "fetch and extract content from urls",
+          deliverable: { type: "object", required: ["body"] }
+        }
+      )
+      stub_llm_response('result = { body: "ok" }')
+
+      outcome = tool.fetch_url("https://example.com/feed")
+      expect_ok_outcome(outcome, value: { body: "ok", "body" => "ok" })
+      expect(outcome.value[:body]).to eq("ok")
+      expect(outcome.value["body"]).to eq("ok")
+    end
+
+    it "returns contract_violation when required keys are missing" do
+      tool = described_class.new(
+        "web_fetcher",
+        delegation_contract: {
+          purpose: "fetch and extract content from urls",
+          deliverable: { type: "object", required: ["body"] }
+        }
+      )
+      stub_llm_response("result = { status: 200 }")
+
+      outcome = tool.fetch_url("https://example.com/feed")
+      expect_error_outcome(outcome, type: "contract_violation", retriable: false)
+      expect(outcome.metadata).to include(
+        expected_shape: "object",
+        actual_shape: "object",
+        expected_keys: ["body"],
+        mismatch: "missing_required_key"
+      )
+      expect(outcome.metadata.fetch(:actual_keys)).to include(":status")
+    end
+
+    it "returns contract_violation for nil required input with empty success payload" do
+      parser = described_class.new(
+        "rss_parser",
+        delegation_contract: {
+          purpose: "parse rss feeds",
+          deliverable: { type: "array" }
+        }
+      )
+      stub_llm_response("result = []")
+
+      outcome = parser.parse(nil)
+      expect_error_outcome(outcome, type: "contract_violation", retriable: false)
+      expect(outcome.metadata).to include(
+        expected_shape: "non_nil_input",
+        actual_shape: "nil",
+        mismatch: "nil_required_input"
+      )
+    end
+  end
+
   describe "error types" do
     it "defines provider and execution errors" do
       expect(Agent::ProviderError).to be < StandardError
@@ -1408,6 +1466,39 @@ RSpec.describe Agent do
       expect(noisy_index).to be < stale_index
     end
 
+    it "includes known tool method names in known-tools prompt rendering" do
+      g = described_class.new("planner")
+      g.remember(
+        tools: {
+          "web_fetcher" => {
+            purpose: "fetch and extract content from urls",
+            methods: %w[fetch_url fetch]
+          }
+        }
+      )
+
+      prompt = g.send(:_known_tools_prompt)
+      expect(prompt).to include("- web_fetcher: fetch and extract content from urls")
+      expect(prompt).to include("methods: [fetch_url, fetch]")
+    end
+
+    it "injects interface overlap observations when a tool has multiple methods" do
+      g = described_class.new("planner")
+      g.remember(
+        tools: {
+          "web_fetcher" => {
+            purpose: "fetch and extract content from urls",
+            methods: %w[fetch fetch_url]
+          }
+        }
+      )
+
+      prompt = g.send(:_build_user_prompt, "ask", [], {}, call_context: { depth: 0 })
+      expect(prompt).to include("<interface_overlap_observations>")
+      expect(prompt).to include("- web_fetcher has multiple methods for similar capability: [fetch, fetch_url]")
+      expect(prompt).to include("Consider consolidating to one canonical method when behavior overlaps.")
+    end
+
     it "sends tool schema via provider" do
       g = described_class.new("calculator")
       expect_llm_call_with(
@@ -1637,6 +1728,30 @@ RSpec.describe Agent do
       expect(entry["contract_deliverable"]).to include("type" => "object")
       expect(entry["contract_acceptance"]).to eq([{ "assert" => "bytes > 0" }])
       expect(entry["contract_failure_policy"]).to include("on_error" => "fallback")
+    end
+
+    it "logs contract validation mismatch and error metadata for contract violations" do
+      g = described_class.new(
+        "web_fetcher",
+        log: log_path,
+        delegation_contract: {
+          purpose: "fetch and extract content from urls",
+          deliverable: { type: "object", required: ["body"] }
+        }
+      )
+      stub_llm_response("result = { status: 200 }")
+
+      outcome = g.fetch_url("https://example.com/feed")
+      expect_error_outcome(outcome, type: "contract_violation", retriable: false)
+
+      entry = JSON.parse(File.readlines(log_path).first)
+      expect(entry["contract_validation_applied"]).to eq(true)
+      expect(entry["contract_validation_passed"]).to eq(false)
+      expect(entry["contract_validation_mismatch"]).to eq("missing_required_key")
+      expect(entry["contract_validation_expected_keys"]).to eq(["body"])
+      expect(entry["contract_validation_actual_keys"]).to include(":status")
+      expect(entry["outcome_error_type"]).to eq("contract_violation")
+      expect(entry["outcome_error_metadata"]).to include("mismatch" => "missing_required_key")
     end
 
     it "does not create a file when log: false" do
