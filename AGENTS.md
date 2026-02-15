@@ -12,6 +12,7 @@ This project uses **bd (beads)** for issue tracking.
 Run `bd prime` for workflow context, or install hooks (`bd hooks install`) for auto-injection.
 
 **Quick reference:**
+
 - `bd ready` - Find unblocked work
 - `bd create "Title" --type task --priority 2` - Create issue
 - `bd close <id>` - Complete work
@@ -117,6 +118,13 @@ Occasionally refer to your programming buddy by their name.
 
 ## About This Project
 
+### Project Tenets
+
+- Agent-first mental model: Everything in this repository is designed for an agent first and then a human.
+- Ubiquitous language of the project, therefore, should be in distribution of the backing models of the agents.
+- Runtime ergonomics are designed for introspection, prescription, and evolution not process.
+- Tolerant interfaces by default.
+
 This is a multi-runtime repository for Recurgent:
 
 - `runtimes/ruby` is the active runtime implementation
@@ -196,7 +204,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-15T19:30:00Z
+Last Updated (UTC): 2026-02-15T20:55:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -220,6 +228,7 @@ Last Updated (UTC): 2026-02-15T19:30:00Z
 - `docs/cacheability-pattern-memory-implementation-plan.md` - phased implementation plan for ADR 0013 cacheability-gated artifact reuse and pattern-memory promotion
 - `docs/outcome-boundary-contract-validation-implementation-plan.md` - phased implementation plan for ADR 0014 delegated outcome validation and tolerant interface canonicalization
 - `docs/tool-self-awareness-boundary-referral-implementation-plan.md` - phased implementation plan for ADR 0015 dual-lane evolution model (inline correction + out-of-band evolution) with boundary referral and user-correction telemetry
+- `docs/validation-first-fresh-generation-implementation-plan.md` - phased implementation plan for ADR 0016 validation-first fresh-call lifecycle with transactional retries and recoverable guardrail regeneration
 - `docs/baselines/2026-02-15/README.md` - baseline trace capture instructions and fixtures before artifact persistence rollout
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
@@ -243,6 +252,7 @@ Last Updated (UTC): 2026-02-15T19:30:00Z
 - `docs/adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md` - cacheability-gated artifact execution and runtime pattern-memory injection for emergent tool promotion
 - `docs/adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md` - delegated outcome contract enforcement with tolerant key semantics and canonical method metadata
 - `docs/adrs/0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md` - Tool self-awareness protocol with `wrong_tool_boundary`/`low_utility` outcomes and cohesion-telemetry-driven Tool Builder evolution
+- `docs/adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md` - validation-first fresh-generation lifecycle with recoverable guardrail retries and commit-on-success attempt isolation
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog
@@ -274,5 +284,6 @@ Last Updated (UTC): 2026-02-15T19:30:00Z
 - `.github/dependabot.yml` - automated dependency update configuration
 
 Index Maintenance Rule:
+
 - Append or update this index whenever adding/renaming key docs, architecture files, or workflows.
 - Refresh timestamp at least daily on active development days.

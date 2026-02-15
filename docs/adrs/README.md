@@ -19,6 +19,8 @@ This directory captures architecture decisions that shape Recurgent's runtime be
 - `0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md`
 - `0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md`
 - `0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md`
+- `0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md`
+- `0017-contract-driven-utility-failures-and-observational-runtime.md`
 
 ## Status Values
 

@@ -16,6 +16,8 @@
 - `docs/cacheability-pattern-memory-implementation-plan.md` - phased implementation plan for ADR 0013 cacheability-gated artifact reuse and pattern-memory promotion
 - `docs/outcome-boundary-contract-validation-implementation-plan.md` - phased implementation plan for ADR 0014 delegated outcome validation and tolerant interface canonicalization
 - `docs/tool-self-awareness-boundary-referral-implementation-plan.md` - phased implementation plan for ADR 0015 dual-lane evolution with `wrong_tool_boundary`, `low_utility`, cohesion telemetry, and user-correction signals
+- `docs/validation-first-fresh-generation-implementation-plan.md` - phased implementation plan for ADR 0016 validation-first fresh-call lifecycle, transactional retries, and recoverable guardrail recovery
+- `docs/contract-driven-utility-failures-implementation-plan.md` - phased implementation plan for ADR 0017 contract-driven utility failures with observational runtime semantics and out-of-band evolution pressure
 - `docs/baselines/2026-02-15/README.md` - pre-persistence baseline traces for assistant and philosophy debate scenarios
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/governance.md` - maintainer governance and decision model
@@ -26,6 +28,8 @@
 - `docs/adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md` - cacheability-gated artifact execution and pattern-memory-assisted promotion policy
 - `docs/adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md` - delegated outcome-shape enforcement and tolerant interface canonicalization policy
 - `docs/adrs/0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md` - Tool self-awareness protocol, boundary-referral outcomes, and cohesion-telemetry-driven evolution policy
+- `docs/adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md` - validation-first fresh-call lifecycle with recoverable guardrail retries and commit-on-success attempt isolation
+- `docs/adrs/0017-contract-driven-utility-failures-and-observational-runtime.md` - runtime stays observational for utility semantics; utility failures come from enforceable contracts and out-of-band evolution pressure
 - `docs/maintenance.md` - runtime and dependency maintenance policy
 - `CONTRIBUTING.md` - contribution policy and quality gates
 - `CODE_OF_CONDUCT.md` - collaboration and anti-spam behavior policy

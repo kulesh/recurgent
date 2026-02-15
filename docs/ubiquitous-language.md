@@ -23,6 +23,27 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - `JSON Boundary`: rule that cross-process request/response payloads are JSON-serializable values only.
 - `Environment Preparing`: transient runtime state when dependencies are being resolved/materialized.
 
+## Lifecycle and Guardrail Terms
+
+- `Fresh Generation Path`: non-persisted call path that generates code for the current invocation.
+- `Pre-Execution Validation`: validation stage between generation and execution that checks syntax/policy/guardrails.
+- `Recoverable Guardrail`: policy violation that can be corrected by regenerating code in the same call.
+- `Terminal Guardrail`: policy violation that cannot be corrected by regeneration alone (for example missing credentials or unsupported runtime capability).
+- `Guardrail Recovery Budget`: bounded retry budget dedicated to recoverable guardrail regeneration.
+- `Attempt Isolation`: per-attempt transactional execution boundary that prevents failed-attempt mutations from leaking.
+- `Commit on Success`: state mutations from an attempt become durable only after validation + execution succeed.
+- `Rollback`: restoration of pre-attempt state when an isolated attempt fails recoverably/terminally.
+- `Guardrail Retry Exhausted`: typed terminal outcome when recoverable guardrail retries are consumed.
+- `Attempt Stage`: lifecycle stage marker for one attempt (`generated`, `validated`, `executed`, `rolled_back`).
+
+## Evolution Terms
+
+- `Inline Lane`: hot-path correction and typed failure signaling during active calls.
+- `Out-of-Band Lane`: asynchronous reflective evolution path over accumulated telemetry.
+- `Wrong Tool Boundary`: typed referral that a Tool was asked to cross capability boundaries it should not own.
+- `Low Utility`: typed signal that output was structurally valid but semantically weak for intent.
+- `User Correction`: high-confidence utility signal from short-window same-topic re-ask behavior.
+
 ## Why These Terms
 
 - They encode intent (problem solving) rather than mechanism (orchestration).
@@ -38,6 +59,9 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - Use `Dependency Manifest` and `Environment Manifest` consistently (do not conflate declared vs frozen manifests).
 - Use `env_id` when referring to deterministic environment identity in logs, outcomes, and docs.
 - Use `JSON Boundary` to describe cross-process data contracts for worker execution.
+- Use `recoverable_guardrail` by default unless explicitly terminal.
+- Use `guardrail_recovery_budget` distinctly from provider generation retries.
+- Use `commit on success`/`rollback` language for attempt-local transaction semantics.
 
 ## Primitive Usage
 
