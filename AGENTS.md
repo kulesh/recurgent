@@ -196,7 +196,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-15T07:50:00Z
+Last Updated (UTC): 2026-02-15T15:05:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -240,6 +240,7 @@ Last Updated (UTC): 2026-02-15T07:50:00Z
 - `docs/adrs/0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md` - proposed cross-session tool persistence and fitness-based artifact selection policy
 - `docs/adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md` - cacheability-gated artifact execution and runtime pattern-memory injection for emergent tool promotion
 - `docs/adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md` - delegated outcome contract enforcement with tolerant key semantics and canonical method metadata
+- `docs/adrs/0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md` - Tool self-awareness protocol with `wrong_tool_boundary`/`low_utility` outcomes and cohesion-telemetry-driven Tool Builder evolution
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog

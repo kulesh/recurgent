@@ -23,6 +23,7 @@
 - `docs/adrs/README.md` - architecture decision index and status model
 - `docs/adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md` - cacheability-gated artifact execution and pattern-memory-assisted promotion policy
 - `docs/adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md` - delegated outcome-shape enforcement and tolerant interface canonicalization policy
+- `docs/adrs/0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md` - Tool self-awareness protocol, boundary-referral outcomes, and cohesion-telemetry-driven evolution policy
 - `docs/maintenance.md` - runtime and dependency maintenance policy
 - `CONTRIBUTING.md` - contribution policy and quality gates
 - `CODE_OF_CONDUCT.md` - collaboration and anti-spam behavior policy
