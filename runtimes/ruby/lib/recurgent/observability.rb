@@ -150,7 +150,7 @@ class Agent
 
     # Keep debug logs robust when runtime values are not JSON-friendly.
     def _debug_serializable_value(value)
-      JSON.parse(JSON.generate(value))
+      JSON.parse(JSON.generate(_json_safe(value)))
     rescue JSON::GeneratorError, TypeError
       value.inspect
     end

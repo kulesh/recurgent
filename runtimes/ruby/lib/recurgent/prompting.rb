@@ -379,7 +379,7 @@ class Agent
     end
 
     def _known_tools_prompt
-      tools = @context[:tools]
+      tools = _known_tools_snapshot
       return "<known_tools></known_tools>\n" unless tools.is_a?(Hash) && !tools.empty?
 
       ranked_tools = _rank_known_tools_for_prompt(tools)
@@ -437,7 +437,7 @@ class Agent
     end
 
     def _known_tool_method_overlaps
-      tools = @context[:tools]
+      tools = _known_tools_snapshot
       return [] unless tools.is_a?(Hash)
 
       tools.filter_map do |name, metadata|
@@ -446,6 +446,63 @@ class Agent
 
         { name: name.to_s, methods: methods.sort }
       end.first(Agent::KNOWN_TOOLS_PROMPT_LIMIT)
+    end
+
+    def _known_tools_snapshot
+      persisted_tools = _toolstore_load_registry_tools
+      memory_tools = @context[:tools]
+
+      snapshot = _merge_known_tools_for_prompt(persisted_tools, memory_tools)
+      @context[:tools] = snapshot if snapshot.is_a?(Hash) && !snapshot.empty?
+      snapshot
+    end
+
+    def _merge_known_tools_for_prompt(persisted_tools, memory_tools)
+      persisted = _normalized_known_tools_hash(persisted_tools)
+      memory = _normalized_known_tools_hash(memory_tools)
+      return persisted if memory.empty?
+      return memory if persisted.empty?
+
+      _merge_known_tool_indexes(persisted, memory)
+    end
+
+    def _normalized_known_tools_hash(tools)
+      return {} unless tools.is_a?(Hash)
+
+      tools
+    end
+
+    def _merge_known_tool_indexes(persisted, memory)
+      _known_tool_names(persisted, memory).each_with_object({}) do |name, merged|
+        merged[name] = _merge_known_tool_metadata_for_prompt(
+          _known_tool_metadata_for_name(persisted, name),
+          _known_tool_metadata_for_name(memory, name)
+        )
+      end
+    end
+
+    def _known_tool_names(persisted, memory)
+      (persisted.keys + memory.keys).map(&:to_s).uniq
+    end
+
+    def _known_tool_metadata_for_name(tools, name)
+      tools[name] || tools[name.to_sym]
+    end
+
+    def _merge_known_tool_metadata_for_prompt(persisted_metadata, memory_metadata)
+      persisted = persisted_metadata.is_a?(Hash) ? _normalize_loaded_tool_metadata(persisted_metadata) : {}
+      memory = memory_metadata.is_a?(Hash) ? _normalize_loaded_tool_metadata(memory_metadata) : {}
+
+      merged = persisted.merge(memory)
+      merged[:methods] = (_extract_tool_methods(persisted) + _extract_tool_methods(memory)).uniq
+      merged[:aliases] = (_extract_tool_aliases(persisted) + _extract_tool_aliases(memory)).uniq
+      merged
+    end
+
+    def _extract_tool_aliases(metadata)
+      return [] unless metadata.is_a?(Hash)
+
+      Array(metadata[:aliases] || metadata["aliases"]).map { |name| name.to_s.strip }.reject(&:empty?).uniq
     end
 
     # rubocop:disable Metrics/MethodLength

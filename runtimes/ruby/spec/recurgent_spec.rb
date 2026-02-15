@@ -1482,6 +1482,39 @@ RSpec.describe Agent do
       expect(prompt).to include("methods: [fetch_url, fetch]")
     end
 
+    it "merges persisted method metadata into known-tools prompt when memory snapshot is stale" do
+      Dir.mktmpdir("recurgent-known-tools-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        registry_path = File.join(tmpdir, "registry.json")
+        File.write(
+          registry_path,
+          JSON.generate(
+            schema_version: Agent::TOOLSTORE_SCHEMA_VERSION,
+            tools: {
+              "web_fetcher" => {
+                purpose: "fetch and extract content from urls",
+                methods: ["fetch_url"]
+              }
+            }
+          )
+        )
+
+        g = described_class.new("planner")
+        g.remember(
+          tools: {
+            "web_fetcher" => {
+              purpose: "fetch and extract content from urls",
+              methods: []
+            }
+          }
+        )
+
+        prompt = g.send(:_known_tools_prompt)
+        expect(prompt).to include("- web_fetcher: fetch and extract content from urls")
+        expect(prompt).to include("methods: [fetch_url]")
+      end
+    end
+
     it "injects interface overlap observations when a tool has multiple methods" do
       g = described_class.new("planner")
       g.remember(
@@ -1777,6 +1810,18 @@ RSpec.describe Agent do
       expect(entry["outcome_value"]).to eq(6)
       expect(entry["system_prompt"]).to include("calculator")
       expect(entry["user_prompt"]).to include("increment")
+    end
+
+    it "normalizes non-utf8 debug values before JSON serialization" do
+      g = described_class.new("calculator", log: log_path, debug: true)
+      binary = [0xC3, 0x28].pack("C*").force_encoding(Encoding::ASCII_8BIT)
+
+      value = g.send(:_debug_serializable_value, { "body" => binary })
+      body = value.fetch("body")
+
+      expect(body).to be_a(String)
+      expect(body.encoding).to eq(Encoding::UTF_8)
+      expect(body.valid_encoding?).to eq(true)
     end
 
     it "records capability patterns in logs and persists them for future sessions" do
