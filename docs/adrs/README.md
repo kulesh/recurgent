@@ -22,6 +22,7 @@ This directory captures architecture decisions that shape Recurgent's runtime be
 - `0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md`
 - `0017-contract-driven-utility-failures-and-observational-runtime.md`
 - `0018-contextview-and-recursive-context-exploration-v1.md`
+- `0019-structured-conversation-history-first-and-recursion-deferral.md`
 
 ## Status Values
 

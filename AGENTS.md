@@ -204,7 +204,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-16T01:21:32Z
+Last Updated (UTC): 2026-02-16T01:40:56Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -256,6 +256,7 @@ Last Updated (UTC): 2026-02-16T01:21:32Z
 - `docs/adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md` - validation-first fresh-generation lifecycle with recoverable guardrail retries and commit-on-success attempt isolation
 - `docs/adrs/0017-contract-driven-utility-failures-and-observational-runtime.md` - runtime remains observational for utility semantics; utility failures are contract-driven and evolve through explicit pressure
 - `docs/adrs/0018-contextview-and-recursive-context-exploration-v1.md` - proposed ContextView + recurse primitives for same-capability recursive context exploration with contract/guardrail invariants
+- `docs/adrs/0019-structured-conversation-history-first-and-recursion-deferral.md` - proposed data-first conversation history approach with recursion primitives deferred pending observed trace evidence
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog
