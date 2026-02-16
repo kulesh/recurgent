@@ -45,7 +45,7 @@ class Agent
     rescue ProviderError, ExecutionError, ToolRegistryViolationError, GuardrailRetryExhaustedError,
            OutcomeRepairRetryExhaustedError, BudgetExceededError, WorkerCrashError, NonSerializableResultError => e
       state.error = e
-      state.outcome = _error_outcome_for(name, e)
+      state.outcome = _error_outcome_for(name, e, call_context: call_context)
       state.outcome
     ensure
       duration_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
@@ -82,6 +82,7 @@ class Agent
 
     def _execute_generated_program(name, code, args, kwargs, normalized_dependencies:, environment_info:, state:)
       _print_generated_code(name, code) if @verbose
+      _validate_generated_code_policy!(name, code)
 
       outcome =
         if _worker_execution_required?(normalized_dependencies)
@@ -100,6 +101,7 @@ class Agent
           Outcome.coerce(result, tool_role: @role, method_name: name)
         end
 
+      _validate_generated_outcome_policy!(name, code, outcome)
       _validate_delegated_outcome_contract(
         outcome: outcome,
         method_name: name,

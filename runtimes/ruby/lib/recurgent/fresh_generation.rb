@@ -191,6 +191,7 @@ class Agent
         !context[:execution_feedback].nil? ||
         !context[:outcome_feedback].nil?
       state.validation_failure_type = nil
+      state.guardrail_violation_subtype = nil
       state.rollback_applied = false
       state.execution_repair_attempts = context[:execution_repair_attempts]
       state.outcome_repair_attempts = context[:outcome_repair_attempts]
@@ -210,6 +211,7 @@ class Agent
       _restore_attempt_snapshot!(attempt_snapshot)
       _apply_guardrail_failure_state!(state, error)
       classification = _classify_guardrail_violation(error)
+      state.guardrail_violation_subtype = classification[:violation_subtype]
       raise if classification[:guardrail_class] == "terminal_guardrail"
 
       next_feedback, next_attempts = _next_guardrail_retry_feedback!(

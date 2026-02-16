@@ -4,6 +4,7 @@ class Agent
   # Agent::GuardrailPolicy — guardrail retry prompting and violation classification.
   module GuardrailPolicy
     include GuardrailOutcomeFeedback
+    include GuardrailCodeChecks
 
     private
 
@@ -22,6 +23,7 @@ class Agent
         <guardrail_feedback>
         <guardrail_class>#{feedback[:guardrail_class]}</guardrail_class>
         <violation_type>#{feedback[:violation_type]}</violation_type>
+        <violation_subtype>#{feedback[:violation_subtype]}</violation_subtype>
         <violation_message>#{feedback[:violation_message]}</violation_message>
         <violation_location>#{feedback[:violation_location] || "unknown"}</violation_location>
         <required_correction>#{feedback[:required_correction]}</required_correction>
@@ -73,13 +75,6 @@ class Agent
       ERROR_TYPE_BY_CLASS.find { |klass, _| error.is_a?(klass) }&.last || "execution"
     end
 
-    def _validate_generated_code_policy!(_method_name, code)
-      return unless code.to_s.match?(/\.\s*define_singleton_method\s*\(/)
-
-      raise ToolRegistryViolationError,
-            "Defining singleton methods on Agent instances is not supported; use tool/delegate invocation paths."
-    end
-
     def _classify_guardrail_violation(error)
       violation_message = error.message.to_s
       guardrail_class = if TERMINAL_GUARDRAIL_MESSAGE_PATTERNS.any? { |pattern| violation_message.match?(pattern) }
@@ -90,6 +85,7 @@ class Agent
       {
         guardrail_class: guardrail_class,
         violation_type: _error_type_for_exception(error),
+        violation_subtype: _guardrail_violation_subtype(violation_message),
         violation_message: violation_message,
         violation_location: _guardrail_violation_location(error),
         required_correction: _guardrail_required_correction(violation_message)
@@ -108,8 +104,29 @@ class Agent
         return "Materialize tools with tool(\"name\") or delegate(\"name\", ...), then call dynamic methods; " \
                "do not define singleton methods."
       end
+      if message.match?(/context\[:tools\] is a Hash keyed by tool name/i)
+        return "Use `context[:tools].key?(\"tool_name\")` for existence checks, or iterate " \
+               "`context[:tools].each do |tool_name, metadata| ... end`."
+      end
+      if message.match?(/Hardcoded fallback payloads for external-fetch flows/i)
+        return "Do not return hardcoded fallback lists as `Outcome.ok`. Return typed `low_utility` (or " \
+               "`unsupported_capability`) unless output is derived from actual fetched/parsing results."
+      end
+      if message.match?(/External-data success must include `provenance\.sources\[\]`/i)
+        return "For external-data success, return a value with `provenance: { sources: [...] }` and include " \
+               "`uri`, `fetched_at`, `retrieval_tool`, `retrieval_mode` (`live|cached|fixture`) for each source."
+      end
 
       "Rewrite using policy-compliant tool/delegate invocation paths and avoid executable metadata mutation."
+    end
+
+    def _guardrail_violation_subtype(message)
+      return "singleton_method_mutation" if message.match?(/singleton methods on Agent instances/i)
+      return "context_tools_shape_misuse" if message.match?(/context\[:tools\] is a Hash keyed by tool name/i)
+      return "hardcoded_external_fallback_success" if message.match?(/Hardcoded fallback payloads for external-fetch flows/i)
+      return "missing_external_provenance" if message.match?(/External-data success must include `provenance\.sources\[\]`/i)
+
+      "unknown_guardrail_violation"
     end
 
     def _classify_execution_failure(error)
@@ -153,6 +170,7 @@ class Agent
           metadata: {
             guardrail_recovery_attempts: next_attempts,
             last_violation_type: classification[:violation_type],
+            last_violation_subtype: classification[:violation_subtype],
             last_violation_message: classification[:violation_message]
           }
         )

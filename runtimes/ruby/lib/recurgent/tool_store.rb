@@ -3,6 +3,8 @@
 class Agent
   # Agent::ToolStore — JSON-backed persistence for delegated tool registry metadata.
   module ToolStore
+    include ToolStoreIntentMetadata
+
     private
 
     def _hydrate_tool_registry!
@@ -114,6 +116,7 @@ class Agent
       merged = normalized_existing.merge(normalized)
       merged[:methods] = _toolstore_merged_method_names(normalized_existing, normalized)
       merged[:aliases] = _toolstore_merged_aliases(normalized_existing, normalized)
+      _toolstore_apply_intent_metadata!(merged, normalized_existing, normalized)
       merged[:created_at] ||= timestamp
       merged[:last_used_at] = timestamp
       merged[:usage_count] = normalized_existing.fetch(:usage_count, 0).to_i + 1

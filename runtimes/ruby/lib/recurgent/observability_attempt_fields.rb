@@ -13,6 +13,7 @@ class Agent
         rollback_applied: log_context[:rollback_applied],
         retry_feedback_injected: log_context[:retry_feedback_injected],
         execution_receiver: log_context[:execution_receiver],
+        guardrail_violation_subtype: log_context[:guardrail_violation_subtype],
         guardrail_recovery_attempts: log_context[:guardrail_recovery_attempts],
         execution_repair_attempts: log_context[:execution_repair_attempts],
         outcome_repair_attempts: log_context[:outcome_repair_attempts],

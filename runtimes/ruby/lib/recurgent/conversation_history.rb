@@ -89,8 +89,35 @@ class Agent
         error_type: outcome.error_type,
         retriable: outcome.retriable
       }
+      summary.merge!(_conversation_history_provenance_summary(outcome.value)) if outcome.ok?
       summary[:value_class] = outcome.value.class.name unless outcome.value.nil?
       summary
+    end
+
+    def _conversation_history_provenance_summary(value)
+      provenance = _conversation_history_extract_provenance(value)
+      return {} unless provenance.is_a?(Hash)
+
+      sources = _conversation_history_value(provenance, :sources)
+      return {} unless sources.is_a?(Array)
+
+      source_entries = sources.select { |entry| entry.is_a?(Hash) }
+      return {} if source_entries.empty?
+
+      first_source = source_entries.first
+      primary_uri = _conversation_history_value(first_source, :uri)
+      retrieval_mode = _conversation_history_value(first_source, :retrieval_mode)
+
+      summary = { source_count: source_entries.length }
+      summary[:primary_uri] = _normalize_utf8(primary_uri.to_s) unless primary_uri.to_s.strip.empty?
+      summary[:retrieval_mode] = retrieval_mode.to_s unless retrieval_mode.to_s.strip.empty?
+      summary
+    end
+
+    def _conversation_history_extract_provenance(value)
+      return nil unless value.is_a?(Hash)
+
+      _conversation_history_value(value, :provenance)
     end
 
     def _conversation_history_safe(value)

@@ -43,13 +43,54 @@ class Agent
       raw_summary = _conversation_history_value(entry, :outcome_summary)
       return { status: "unknown", ok: false, error_type: nil, retriable: false } unless raw_summary.is_a?(Hash)
 
+      _normalize_conversation_history_outcome_summary_base(raw_summary)
+        .merge(_normalize_conversation_history_outcome_summary_provenance(raw_summary))
+    end
+
+    def _normalize_conversation_history_outcome_summary_base(raw_summary)
       {
         status: _conversation_history_value(raw_summary, :status)&.to_s || "unknown",
-        ok: !!_conversation_history_value(raw_summary, :ok),
+        ok: _conversation_history_truthy?(_conversation_history_value(raw_summary, :ok)),
         error_type: _conversation_history_value(raw_summary, :error_type),
-        retriable: !!_conversation_history_value(raw_summary, :retriable),
+        retriable: _conversation_history_truthy?(_conversation_history_value(raw_summary, :retriable)),
         value_class: _conversation_history_value(raw_summary, :value_class)&.to_s
       }.compact
+    end
+
+    def _normalize_conversation_history_outcome_summary_provenance(raw_summary)
+      source_count = _normalize_conversation_history_source_count(_conversation_history_value(raw_summary, :source_count))
+      primary_uri = _normalize_conversation_history_optional_string(_conversation_history_value(raw_summary, :primary_uri))
+      retrieval_mode = _normalize_conversation_history_optional_string(_conversation_history_value(raw_summary, :retrieval_mode))
+
+      normalized = {}
+      normalized[:source_count] = source_count unless source_count.nil?
+      normalized[:primary_uri] = primary_uri unless primary_uri.nil?
+      normalized[:retrieval_mode] = retrieval_mode unless retrieval_mode.nil?
+      normalized
+    end
+
+    def _normalize_conversation_history_source_count(value)
+      return nil if value.nil?
+
+      parsed = value.is_a?(Integer) ? value : Integer(value, 10)
+      return nil if parsed.negative?
+
+      parsed
+    rescue ArgumentError, TypeError
+      nil
+    end
+
+    def _normalize_conversation_history_optional_string(value)
+      return nil if value.nil?
+
+      text = value.to_s.strip
+      return nil if text.empty?
+
+      _normalize_utf8(text)
+    end
+
+    def _conversation_history_truthy?(value)
+      value ? true : false
     end
 
     def _normalize_conversation_history_speaker(value)

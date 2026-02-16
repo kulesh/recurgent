@@ -24,7 +24,7 @@ class Agent
         state: state,
         outcome: persisted_outcome
       )
-    rescue ExecutionError, WorkerCrashError, NonSerializableResultError,
+    rescue ExecutionError, WorkerCrashError, NonSerializableResultError, ToolRegistryViolationError,
            InvalidDependencyManifestError, DependencyManifestIncompatibleError,
            DependencyPolicyViolationError, DependencyResolutionError,
            DependencyInstallError, DependencyActivationError, ProviderError => e

@@ -48,6 +48,7 @@ class Agent
         #{decomposition_nudge}
 
         You have access to 'context' (a Hash) to store and retrieve data.
+        Tool registry is available at `context[:tools]` as metadata (authoritative + complete).
         Every dynamic call returns an Outcome object to the caller.
         #{known_tools}
         #{contract_guidance}
@@ -147,13 +148,18 @@ class Agent
 
           Decomposition Nudge:
           - Experienced Tool Builders decompose before acting: separate capability from trigger task.
-          - Tool registry snapshot is included below as `<known_tools>`; use it for reuse-first decisions.
-          - `<known_tools>` is registry metadata, not callable objects.
+          - Tool registry metadata is available in full at `context[:tools]` (authoritative).
+          - `<known_tools>` below is a non-exhaustive preview for quick scanning.
+          - Both `context[:tools]` and `<known_tools>` are metadata, not callable objects.
           - To invoke a known tool, use `tool("tool_name")` (preferred) or `delegate("tool_name", ...)`.
           - Before choosing stance, briefly decompose:
               1. What capability is required? (e.g., HTTP fetch, parsing, summarization)
-              2. Is that capability already available in known tools/context?
+              2. Is that capability already available in `context[:tools]`?
               3. If missing, what is the most general useful form of the capability?
+          - Capability-fit rule:
+              match required capability against tool `capabilities` metadata first; do not reuse a tool whose capability profile does not fit the user intent.
+          - Build-intent rule:
+              if the user explicitly asks to build/create/make a tool, treat that as a Forge signal at depth 0 unless blocked by runtime capability limits.
           - Naming nudge:
               prefer names that reflect capability and reuse potential rather than the immediate trigger phrasing.
           - Reuse-first rule:
@@ -164,8 +170,9 @@ class Agent
 
           Decomposition Nudge:
           - You are a Tool executing delegated work: verify whether you can fulfill the task directly with current capabilities.
-          - Check `<known_tools>` and context before creating anything new.
-          - `<known_tools>` entries are metadata only; invoke tools via `tool("tool_name")` or explicit `delegate(...)`.
+          - Check `context[:tools]` first before creating anything new.
+          - `<known_tools>` is a non-exhaustive preview of the same registry metadata.
+          - Registry entries are metadata only; invoke tools via `tool("tool_name")` or explicit `delegate(...)`.
           - If capability is missing, prefer local Shape or typed error; Forge only when the active contract clearly implies a reusable interface.
         NUDGE
       else
@@ -196,7 +203,7 @@ class Agent
 
           Depth-0 stance selection:
           - If task is a general capability (HTTP fetch, parsing, file I/O, text transformation, data extraction), default to Forge even on first encounter.
-          - Rule-of-3 repetition is for domain-specific tasks, not general capabilities.
+          - If user explicitly requests building/creating/making a tool, default to Forge.
           - At depth 0, when in doubt between Do and Forge, choose Forge.
           - Cost model at depth 0: an unused durable tool is cheaper than repeated one-off reimplementation.
 
@@ -274,6 +281,8 @@ class Agent
         - Writing to context is internal memory only, not an external side effect.
         - Be truthful and capability-accurate; never claim an action occurred unless this code actually performed it.
         - You can access and modify context to store persistent data.
+        - `context[:tools]` is a Hash keyed by tool name; each value is tool metadata (purpose, methods, capabilities, stats).
+        - For registry checks, prefer `context[:tools].key?("tool_name")` or `context[:tools].each do |tool_name, metadata| ... end`.
         - `context[:conversation_history]` is available as a structured Array of prior call records; prefer direct Ruby filtering/querying when needed.
         - Conversation-history records are additive; treat optional fields defensively (`record[:field] || record["field"]`).
         - Outcome constructors available: Agent::Outcome.ok(...), Agent::Outcome.error(...), Agent::Outcome.call(value=nil, ...).
@@ -282,13 +291,17 @@ class Agent
         - For tool composition, preserve contract shapes: pass only fields expected by the downstream method (for example, RSS parser gets raw feed string, not fetch envelope Hash).
         - When consuming tool output hashes, handle both symbol and string keys unless you explicitly normalized keys.
         - For HTTP fetch operations, prefer https endpoints and handle 3xx redirects with a bounded hop count before failing.
+        - External-data success invariant: if code fetches/parses remote data and returns success, include provenance envelope.
+        - Provenance envelope shape (tolerant key types): `provenance: { sources: [{ uri:, fetched_at:, retrieval_tool:, retrieval_mode: ("live"|"cached"|"fixture") }] }`.
         - You may require Ruby standard library (net/http, json, date, socket, etc.) but NOT external gems.
         - If your design needs non-stdlib gems, declare each one in `dependencies`; keep declarations minimal and non-speculative.
         - delegation does NOT grant new capabilities; child tools inherit the same runtime/tooling limits.
         - Do NOT delegate recursively to bypass unavailable capabilities.
         - If blocked by unavailable capability, return a typed non-retriable error outcome instead of fake success.
         - If output is structurally valid but not useful for caller intent, return `Agent::Outcome.error(error_type: "low_utility", ...)` instead of `Outcome.ok` with placeholder status.
+        - For user requests that explicitly ask for a list/items/results, guidance-only prose without concrete items is `low_utility`, not success.
         - If request crosses this Tool's boundary, return `Agent::Outcome.error(error_type: "wrong_tool_boundary", ...)` with metadata such as `boundary_axes`, `observed_task_shape`, and optional `suggested_split`.
+        - Compare active `intent_signature` with Tool purpose/capabilities; if mismatched, prefer `wrong_tool_boundary` over low-quality success.
         - If usefulness must be enforced inline, encode it as machine-checkable `deliverable` constraints (for example `min_items`) rather than relying on status strings.
         - For dependency-backed execution, results and context must stay JSON-serializable.
         - Be context-capacity aware: if memory grows large, prefer summarizing/pruning stale data over unbounded accumulation.
@@ -315,7 +328,8 @@ class Agent
                         - Generalize one step above the immediate task (task-adjacent generality).
                         - Parameterize obvious inputs (url, query, filepath, etc.); e.g., prefer fetch_url(url) over fetch_specific_article().
                         - At depth 0, for general capabilities (HTTP fetch/parsing/file I/O/text transform), prefer Forge even if direct code is short.
-                        - Known tools from `<known_tools>` are metadata snapshots. Reuse them by materializing with `tool("name")`, not by reading `context[:tools]` as executable objects.
+                        - Tool registry is authoritative at `context[:tools]`. Query it directly to find capability-fit candidates.
+                        - Reuse by materializing with `tool("name")` (or explicit `delegate(...)`), not by calling `context[:tools]` entries as executable objects.
                         - When delegating, strongly prefer an explicit contract:
                             tool = delegate(
                               "translator",
@@ -356,6 +370,8 @@ class Agent
         - If capability blocked execution, did I return Agent::Outcome.error with typed metadata?
         - If a fetch/parse/external operation failed, did I avoid returning a plain success string that only says it failed?
         - If I fetched/parsing succeeded technically but produced empty/junk output, did I return `low_utility` instead of `Outcome.ok`?
+        - If I returned success for external data, did I include provenance with sources + retrieval_mode?
+        - If user asked for list/items/results, did I return concrete items instead of guidance-only prose?
         - Does my stance choice fit current depth policy from the system prompt?
       CHECK
 
@@ -394,6 +410,8 @@ class Agent
       snapshot = @context.dup
       snapshot.delete(:tools)
       snapshot.delete("tools")
+      tools = _known_tools_snapshot
+      snapshot[:tools] = { count: tools.length } if tools.is_a?(Hash)
       history = _conversation_history_records
       snapshot[:conversation_history] = { count: history.length }
       snapshot
@@ -405,6 +423,9 @@ class Agent
         <conversation_history>
         <record_count>#{history.length}</record_count>
         <access_hint>History contents are available in context[:conversation_history]. Inspect via generated Ruby code when needed; prompt does not preload records.</access_hint>
+        <record_schema>Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, outcome_summary.</record_schema>
+        <source_refs_hint>When present, outcome_summary may include compact source refs: source_count, primary_uri, retrieval_mode.</source_refs_hint>
+        <query_hint>Prefer canonical fields (for example `record[:args]`, `record[:method_name]`, `record[:outcome_summary]`) over ad hoc keys.</query_hint>
         </conversation_history>
       HISTORY
     end
@@ -417,7 +438,12 @@ class Agent
       lines = ranked_tools.first(Agent::KNOWN_TOOLS_PROMPT_LIMIT).map do |name, metadata|
         purpose = _extract_tool_purpose(metadata)
         methods = _extract_tool_methods(metadata)
-        suffix = methods.empty? ? "" : "\n  methods: [#{methods.join(", ")}]"
+        capabilities = _extract_tool_capabilities(metadata)
+        intent_signatures = _extract_tool_intent_signatures(metadata)
+        suffix = +""
+        suffix << "\n  methods: [#{methods.join(", ")}]" unless methods.empty?
+        suffix << "\n  capabilities: [#{capabilities.join(", ")}]" unless capabilities.empty?
+        suffix << "\n  intent_signatures: [#{intent_signatures.join(", ")}]" unless intent_signatures.empty?
         "- #{name}: #{purpose}#{suffix}"
       end
 
@@ -431,8 +457,12 @@ class Agent
     def _known_tools_usage_hint
       <<~HINT
         <known_tools_usage>
-        - `<known_tools>` lists metadata only (name/purpose/contract hints).
-        - Do NOT call values from `context[:tools]` as if they are executable objects.
+        - Tool registry is available in full at `context[:tools]` (authoritative, complete metadata).
+        - `context[:tools]` shape: `{ "tool_name" => { purpose:, methods:, capabilities:, ... } }`.
+        - `<known_tools>` is a non-exhaustive preview for quick scanning.
+        - Match user intent against `capabilities` before reusing a tool; avoid capability-mismatched reuse.
+        - Query `context[:tools]` directly to find best-fit candidates, then materialize the chosen tool.
+        - Do NOT call values from `context[:tools]` directly; they are metadata, not executable objects.
         - To reuse a known tool, materialize it with `tool("tool_name")` (preferred) or `delegate("tool_name", ...)`.
         </known_tools_usage>
       HINT
@@ -448,6 +478,27 @@ class Agent
       return [] unless metadata.is_a?(Hash)
 
       Array(metadata[:methods] || metadata["methods"]).map { |name| name.to_s.strip }.reject(&:empty?).uniq
+    end
+
+    def _extract_tool_capabilities(metadata)
+      return [] unless metadata.is_a?(Hash)
+
+      explicit = _explicit_tool_capabilities(metadata)
+      return explicit unless explicit.empty?
+
+      _heuristic_tool_capabilities(_heuristic_tool_capability_source_text(metadata))
+    end
+
+    def _extract_tool_intent_signatures(metadata)
+      return [] unless metadata.is_a?(Hash)
+
+      signatures = Array(metadata[:intent_signatures] || metadata["intent_signatures"])
+      signatures << metadata[:intent_signature] if metadata.key?(:intent_signature)
+      signatures << metadata["intent_signature"] if metadata.key?("intent_signature")
+      signatures
+        .map { |value| value.to_s.strip }
+        .reject(&:empty?)
+        .uniq
     end
 
     def _known_tool_interface_overlap_prompt
@@ -525,9 +576,54 @@ class Agent
       memory = memory_metadata.is_a?(Hash) ? _normalize_loaded_tool_metadata(memory_metadata) : {}
 
       merged = persisted.merge(memory)
-      merged[:methods] = (_extract_tool_methods(persisted) + _extract_tool_methods(memory)).uniq
-      merged[:aliases] = (_extract_tool_aliases(persisted) + _extract_tool_aliases(memory)).uniq
+      merged[:methods] = _merge_known_tool_string_lists(persisted, memory, :methods)
+      merged[:aliases] = _merge_known_tool_string_lists(persisted, memory, :aliases)
+      merged[:intent_signatures] = _merge_known_tool_intent_signatures(persisted, memory)
+      merged[:intent_signature] = merged[:intent_signatures].last unless merged[:intent_signatures].empty?
       merged
+    end
+
+    def _explicit_tool_capabilities(metadata)
+      Array(metadata[:capabilities] || metadata["capabilities"])
+        .map { |tag| tag.to_s.strip.downcase }
+        .reject(&:empty?)
+        .uniq
+    end
+
+    def _heuristic_tool_capability_source_text(metadata)
+      parts = [
+        _extract_tool_purpose(metadata),
+        _extract_tool_methods(metadata).join(" ")
+      ]
+      deliverable = metadata[:deliverable] || metadata["deliverable"]
+      parts << deliverable.inspect if deliverable
+      parts.join(" ").downcase
+    end
+
+    def _heuristic_tool_capabilities(text)
+      capability_rules = [
+        ["http_fetch", /\b(http|https|url|fetch|net::http)\b/],
+        ["rss_parse", /\brss\b/],
+        ["html_extract", /\b(html|scrape|extract|parse)\b/],
+        ["news_headline_extract", /\b(news|headline)\b/],
+        ["movie_listings", /\b(movie|theater|showtime|listing)\b/],
+        ["json_parse", /\bjson\b/],
+        ["text_summarization", /\b(summary|summarize|synthesis)\b/]
+      ]
+
+      capability_rules
+        .select { |(_, pattern)| text.match?(pattern) }
+        .map(&:first)
+    end
+
+    def _merge_known_tool_string_lists(persisted, memory, key)
+      left = Array(persisted[key] || persisted[key.to_s]).map { |value| value.to_s.strip }.reject(&:empty?)
+      right = Array(memory[key] || memory[key.to_s]).map { |value| value.to_s.strip }.reject(&:empty?)
+      (left + right).uniq
+    end
+
+    def _merge_known_tool_intent_signatures(persisted, memory)
+      (_extract_tool_intent_signatures(persisted) + _extract_tool_intent_signatures(memory)).uniq
     end
 
     def _extract_tool_aliases(metadata)
@@ -604,10 +700,48 @@ class Agent
           ```
           </pattern>
 
+          <pattern kind="external_data_success_with_provenance">
+          ```ruby
+          fetcher = tool("web_fetcher")
+          fetched = fetcher.fetch_url("https://example.com/feed")
+          if fetched.ok?
+            payload = fetched.value
+            stories = payload[:items] || payload["items"] || []
+            result = Agent::Outcome.ok(
+              data: stories,
+              provenance: {
+                sources: [
+                  {
+                    uri: "https://example.com/feed",
+                    fetched_at: Time.now.utc.iso8601,
+                    retrieval_tool: "web_fetcher",
+                    retrieval_mode: "live"
+                  }
+                ]
+              }
+            )
+          else
+            result = Agent::Outcome.error(
+              error_type: fetched.error_type,
+              error_message: fetched.error_message,
+              retriable: fetched.retriable,
+              tool_role: @role,
+              method_name: "#{name}"
+            )
+          end
+          ```
+          </pattern>
+
           <pattern kind="reuse_known_tool">
           ```ruby
-          # Reuse from registry: materialize the known tool, do not read context[:tools] as executable.
-          web_fetcher = tool("web_fetcher")
+          # Query full registry metadata from context[:tools], then materialize the chosen tool.
+          registry = context[:tools] || {}
+          candidate_name, = registry.find do |_tool_name, metadata|
+            caps = Array(metadata[:capabilities] || metadata["capabilities"]).map { |tag| tag.to_s.downcase }
+            caps.include?("http_fetch")
+          end
+          chosen_tool = candidate_name || "web_fetcher"
+          web_fetcher = tool(chosen_tool)
           fetched = web_fetcher.fetch_url("https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en")
           if fetched.ok?
             payload = fetched.value
@@ -687,12 +821,15 @@ class Agent
     def _active_contract_user_prompt
       return "" unless @delegation_contract
 
+      intent_signature = @delegation_contract[:intent_signature]
+      intent_line = intent_signature.nil? ? "" : "\n<intent_signature>#{intent_signature.inspect}</intent_signature>"
       <<~CONTRACT
         <active_contract>
         <purpose>#{@delegation_contract[:purpose].inspect}</purpose>
         <deliverable>#{@delegation_contract[:deliverable].inspect}</deliverable>
         <acceptance>#{@delegation_contract[:acceptance].inspect}</acceptance>
         <failure_policy>#{@delegation_contract[:failure_policy].inspect}</failure_policy>
+        #{intent_line}
         </active_contract>
       CONTRACT
     end
@@ -707,6 +844,8 @@ class Agent
     def _delegation_contract_prompt
       return _no_contract_prompt unless @delegation_contract
 
+      intent_signature = @delegation_contract[:intent_signature]
+      intent_line = intent_signature.nil? ? "" : "\n- intent_signature: #{intent_signature.inspect}"
       <<~PROMPT
 
         Tool Builder Delegation Contract:
@@ -714,6 +853,7 @@ class Agent
         - deliverable: #{@delegation_contract[:deliverable].inspect}
         - acceptance: #{@delegation_contract[:acceptance].inspect}
         - failure_policy: #{@delegation_contract[:failure_policy].inspect}
+        #{intent_line}
         Treat this as the active contract for this tool call.
       PROMPT
     end

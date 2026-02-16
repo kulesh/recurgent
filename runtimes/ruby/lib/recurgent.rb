@@ -6,6 +6,7 @@ require "securerandom"
 require_relative "recurgent/dependency_manifest"
 require_relative "recurgent/environment_manager"
 require_relative "recurgent/generated_program"
+require_relative "recurgent/json_normalization"
 require_relative "recurgent/outcome"
 require_relative "recurgent/conversation_history_normalization"
 require_relative "recurgent/conversation_history"
@@ -21,6 +22,7 @@ require_relative "recurgent/dependencies"
 require_relative "recurgent/runtime_config"
 require_relative "recurgent/known_tool_ranker"
 require_relative "recurgent/tool_store_paths"
+require_relative "recurgent/tool_store_intent_metadata"
 require_relative "recurgent/tool_store"
 require_relative "recurgent/capability_pattern_extractor"
 require_relative "recurgent/user_correction_signals"
@@ -35,9 +37,13 @@ require_relative "recurgent/tool_maintenance"
 require_relative "recurgent/call_state"
 require_relative "recurgent/attempt_isolation"
 require_relative "recurgent/guardrail_outcome_feedback"
+require_relative "recurgent/guardrail_code_checks"
 require_relative "recurgent/guardrail_policy"
+require_relative "recurgent/guardrail_boundary_normalization"
 require_relative "recurgent/tool_registry_integrity"
 require_relative "recurgent/execution_sandbox"
+require_relative "recurgent/delegation_intent"
+require_relative "recurgent/delegation_options"
 require_relative "recurgent/fresh_outcome_repair"
 require_relative "recurgent/fresh_generation"
 require_relative "recurgent/call_execution"
@@ -93,7 +99,7 @@ class Agent
   CALL_STACK_KEY = :__recurgent_call_stack
   OUTCOME_CONTEXT_KEY = :__recurgent_outcome_context
   RUNTIME_NAME = "ruby"
-  DELEGATION_CONTRACT_FIELDS = %i[purpose deliverable acceptance failure_policy].freeze
+  DELEGATION_CONTRACT_FIELDS = %i[purpose deliverable acceptance failure_policy intent_signature].freeze
   class Error < StandardError; end
   class ProviderError < Error; end
   class InvalidCodeError < ProviderError; end
@@ -168,6 +174,7 @@ class Agent
 
   include Prompting
   include Observability
+  include JsonNormalization
   include ConversationHistory
   include OutcomeContractValidator
   include Dependencies
@@ -185,7 +192,10 @@ class Agent
   include PersistedExecution
   include AttemptIsolation
   include GuardrailPolicy
+  include GuardrailBoundaryNormalization
   include ToolRegistryIntegrity
+  include DelegationIntent
+  include DelegationOptions
   include FreshOutcomeRepair
   include FreshGeneration
   include CallExecution
@@ -202,13 +212,23 @@ class Agent
     File.join(state_home, "recurgent", "tools")
   end
 
-  def self.for(role, purpose: nil, deliverable: nil, acceptance: nil, failure_policy: nil, delegation_contract: nil, **)
+  def self.for(
+    role,
+    purpose: nil,
+    deliverable: nil,
+    acceptance: nil,
+    failure_policy: nil,
+    intent_signature: nil,
+    delegation_contract: nil,
+    **
+  )
     contract, source = _compose_delegation_contract(
       delegation_contract,
       purpose: purpose,
       deliverable: deliverable,
       acceptance: acceptance,
-      failure_policy: failure_policy
+      failure_policy: failure_policy,
+      intent_signature: intent_signature
     )
     new(role, **, delegation_contract: contract, delegation_contract_source: source)
   end
@@ -269,7 +289,6 @@ class Agent
   #
   # The *, ** syntax captures both positional and keyword arguments, forwarding
   # them through to the LLM-generated code.
-
   def method_missing(name, *args, **)
     method_name = name.to_s
 
@@ -326,15 +345,11 @@ class Agent
     metadata = _registered_tool_metadata(role_name)
     raise ArgumentError, "Unknown tool '#{role_name}' in #{@role}.tool" unless metadata
 
-    purpose = options.key?(:purpose) ? options.delete(:purpose) : _tool_metadata_field(metadata, :purpose)
-    deliverable = options.key?(:deliverable) ? options.delete(:deliverable) : _tool_metadata_field(metadata, :deliverable)
-    acceptance = options.key?(:acceptance) ? options.delete(:acceptance) : _tool_metadata_field(metadata, :acceptance)
-    failure_policy =
-      if options.key?(:failure_policy)
-        options.delete(:failure_policy)
-      else
-        _tool_metadata_field(metadata, :failure_policy)
-      end
+    purpose = _tool_metadata_option(options: options, metadata: metadata, key: :purpose)
+    deliverable = _tool_metadata_option(options: options, metadata: metadata, key: :deliverable)
+    acceptance = _tool_metadata_option(options: options, metadata: metadata, key: :acceptance)
+    failure_policy = _tool_metadata_option(options: options, metadata: metadata, key: :failure_policy)
+    intent_signature = _tool_metadata_option(options: options, metadata: metadata, key: :intent_signature)
 
     delegate(
       role_name,
@@ -342,11 +357,20 @@ class Agent
       deliverable: deliverable,
       acceptance: acceptance,
       failure_policy: failure_policy,
+      intent_signature: intent_signature,
       **options
     )
   end
 
-  def delegate(role, purpose: nil, deliverable: nil, acceptance: nil, failure_policy: nil, **options)
+  def delegate(
+    role,
+    purpose: nil,
+    deliverable: nil,
+    acceptance: nil,
+    failure_policy: nil,
+    intent_signature: nil,
+    **options
+  )
     raise BudgetExceededError, "Delegation budget exceeded in #{@role}.delegate (remaining: 0)" if @delegation_budget&.zero?
 
     resolved_budget = options.fetch(:delegation_budget) do
@@ -366,13 +390,16 @@ class Agent
       delegation_budget: resolved_budget,
       trace_id: @trace_id
     }
-    delegate_options = inherited.merge(options)
+    runtime_options, ignored_options = _partition_delegate_runtime_options(options)
+    delegate_options = inherited.merge(runtime_options)
+    _warn_ignored_delegate_options(role: role, ignored_options: ignored_options) unless ignored_options.empty?
     tool = Agent.for(
       role,
       purpose: purpose,
       deliverable: deliverable,
       acceptance: acceptance,
       failure_policy: failure_policy,
+      intent_signature: _resolve_delegate_intent_signature(intent_signature),
       delegation_contract: explicit_contract,
       **delegate_options
     )
@@ -469,7 +496,7 @@ class Agent
     execution_result = nil
 
     _enforce_tool_registry_integrity!(method_name: method_name, phase: "pre_execution")
-    _with_outcome_call_context(method_name) do
+    _with_outcome_call_context(method_name, args: args, kwargs: kwargs) do
       execution_result = sandbox.execute(
         wrapped_code: wrapped_code,
         filename: "(agent:#{@role}.#{method_name})"
@@ -555,9 +582,14 @@ class Agent
     ].join("\n")
   end
 
-  def _with_outcome_call_context(method_name)
+  def _with_outcome_call_context(method_name, args: [], kwargs: {})
     previous = Thread.current[OUTCOME_CONTEXT_KEY]
-    Thread.current[OUTCOME_CONTEXT_KEY] = { tool_role: @role, method_name: method_name }
+    Thread.current[OUTCOME_CONTEXT_KEY] = {
+      tool_role: @role,
+      method_name: method_name,
+      args: args,
+      kwargs: kwargs
+    }
     yield
   ensure
     Thread.current[OUTCOME_CONTEXT_KEY] = previous
@@ -607,6 +639,7 @@ class Agent
     return nil if normalized.empty?
 
     _validate_delegation_contract_purpose!(normalized[:purpose])
+    _validate_delegation_contract_intent_signature!(normalized[:intent_signature])
 
     normalized
   end
@@ -631,7 +664,7 @@ class Agent
     error.message.to_s.match?(/\b(timeout|timed out|execution expired)\b/i)
   end
 
-  def _error_outcome_for(method_name, error)
+  def _error_outcome_for(method_name, error, call_context: nil)
     error_type = _error_type_for_exception(error)
     retriable = RETRIABLE_ERROR_TYPES.include?(error_type)
     payload = {
@@ -642,6 +675,7 @@ class Agent
       method_name: method_name
     }
     payload[:metadata] = error.metadata if error.respond_to?(:metadata)
+    payload = _normalize_top_level_guardrail_exhaustion_payload(payload: payload, error: error, call_context: call_context)
     Outcome.error(payload)
   end
 
@@ -654,36 +688,6 @@ class Agent
 
   def _new_trace_id
     SecureRandom.hex(12)
-  end
-
-  def _json_safe(value)
-    case value
-    when String
-      _normalize_utf8(value)
-    when Array
-      value.map { |item| _json_safe(item) }
-    when Hash
-      value.each_with_object({}) do |(key, item), normalized|
-        normalized[_json_safe_hash_key(key)] = _json_safe(item)
-      end
-    else
-      value
-    end
-  end
-
-  def _normalize_utf8(value)
-    normalized = value.dup
-    normalized.force_encoding(Encoding::UTF_8)
-    return normalized if normalized.valid_encoding?
-
-    normalized.encode(Encoding::UTF_8, invalid: :replace, undef: :replace, replace: "\uFFFD")
-  end
-
-  def _json_safe_hash_key(key)
-    return _normalize_utf8(key) if key.is_a?(String)
-    return key if key.is_a?(Symbol)
-
-    key
   end
 
   def _register_delegated_tool(role:, tool:, explicit_purpose:)
@@ -714,10 +718,21 @@ class Agent
     metadata[key] || metadata[key.to_s]
   end
 
+  def _tool_metadata_option(options:, metadata:, key:)
+    options.key?(key) ? options.delete(key) : _tool_metadata_field(metadata, key)
+  end
+
   def _delegated_tool_contract_summary(contract)
     return {} unless contract.is_a?(Hash)
 
-    contract.slice(:deliverable, :acceptance, :failure_policy)
+    summary = contract.slice(:deliverable, :acceptance, :failure_policy, :intent_signature)
+    intent = summary.delete(:intent_signature)
+    return summary if intent.nil?
+
+    summary.merge(
+      intent_signature: intent,
+      intent_signatures: [intent.to_s]
+    )
   end
 
   def _validate_delegation_contract_type!(value)

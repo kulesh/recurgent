@@ -254,6 +254,48 @@ RSpec.describe Agent do
       expect(child.instance_variable_get(:@delegation_contract_source)).to eq("fields")
     end
 
+    it "propagates intent_signature into delegated contract and tool registry metadata" do
+      parent = described_class.for("tool_builder")
+      child = parent.delegate(
+        "movie_finder",
+        purpose: "fetch movie listings from a source",
+        deliverable: { type: "object", required: %w[status movies] },
+        acceptance: [{ assert: "movies includes concrete titles when successful" }],
+        failure_policy: { on_error: "return_error" },
+        intent_signature: "ask: movies currently in theaters"
+      )
+
+      expect(child.instance_variable_get(:@delegation_contract)).to include(
+        intent_signature: "ask: movies currently in theaters"
+      )
+      expect(parent.memory.dig(:tools, "movie_finder", :intent_signature)).to eq("ask: movies currently in theaters")
+      expect(parent.memory.dig(:tools, "movie_finder", :intent_signatures)).to include("ask: movies currently in theaters")
+    end
+
+    it "ignores non-runtime delegate options instead of raising unknown option errors" do
+      parent = described_class.for("tool_builder", debug: true)
+
+      child = nil
+      expect do
+        child = parent.delegate(
+          "movie_website_scraper",
+          purpose: "fetch and parse movie information from websites",
+          methods: {
+            search_movies: {
+              params: [
+                { name: "site_url", type: "string", required: false },
+                { name: "query", type: "string", required: false }
+              ]
+            }
+          },
+          capabilities: %w[http_fetch html_extract movie_data_parse]
+        )
+      end.not_to raise_error
+
+      expect(child).to be_a(described_class)
+      expect(child.instance_variable_get(:@role)).to eq("movie_website_scraper")
+    end
+
     it "merges delegate delegation_contract with contract fields (fields win)" do
       parent = described_class.for("tool_builder")
       child = parent.delegate(
@@ -1228,9 +1270,141 @@ RSpec.describe Agent do
 
       outcome = g.ask("latest news")
       expect_error_outcome(outcome, type: "guardrail_retry_exhausted", retriable: false)
+      expect(outcome.error_message).to eq("This request couldn't be completed after multiple attempts.")
+      expect(outcome.metadata).to include(
+        normalized: true,
+        normalization_policy: "guardrail_exhaustion_boundary_v1",
+        guardrail_class: "recoverable_guardrail",
+        guardrail_subtype: "singleton_method_mutation",
+        guardrail_recovery_attempts: 2,
+        last_violation_type: "tool_registry_violation"
+      )
+      expect(outcome.metadata[:last_violation_subtype]).to eq("singleton_method_mutation")
+    end
+
+    it "returns guardrail_retry_exhausted when generated code treats context[:tools] as an array of entries" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          web_fetcher_available = context[:tools]&.any? { |t| t.is_a?(Hash) && (t[:name] == "web_fetcher" || t["name"] == "web_fetcher") }
+          result = web_fetcher_available
+        RUBY
+      )
+
+      outcome = g.ask("latest news")
+      expect_error_outcome(outcome, type: "guardrail_retry_exhausted", retriable: false)
       expect(outcome.metadata).to include(
         guardrail_recovery_attempts: 2,
         last_violation_type: "tool_registry_violation"
+      )
+    end
+
+    it "returns guardrail_retry_exhausted when generated code returns hardcoded fallback as Outcome.ok in external-fetch flows" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          require 'net/http'
+          fallback_movies = [{ title: "Example" }]
+          result = Agent::Outcome.ok(fallback_movies)
+        RUBY
+      )
+
+      outcome = g.ask("latest movies")
+      expect_error_outcome(outcome, type: "guardrail_retry_exhausted", retriable: false)
+      expect(outcome.metadata).to include(
+        guardrail_recovery_attempts: 2,
+        last_violation_type: "tool_registry_violation"
+      )
+    end
+
+    it "returns guardrail_retry_exhausted when external-data success omits provenance metadata" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          require 'net/http'
+          result = Agent::Outcome.ok(
+            data: [{ title: "Example Story" }]
+          )
+        RUBY
+      )
+
+      outcome = g.ask("latest headlines")
+      expect_error_outcome(outcome, type: "guardrail_retry_exhausted", retriable: false)
+      expect(outcome.metadata).to include(
+        guardrail_recovery_attempts: 2,
+        last_violation_type: "tool_registry_violation"
+      )
+      expect(outcome.metadata[:last_violation_subtype]).to eq("missing_external_provenance")
+    end
+
+    it "does not normalize exhausted guardrail errors for depth-1 tool outcomes" do
+      g = described_class.new("assistant")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            child = delegate("child_tool", purpose: "do guarded work")
+            outcome = child.run
+            result = outcome
+          RUBY
+        ),
+        program_payload(
+          code: <<~RUBY
+            self.define_singleton_method(:oops) { 1 }
+            result = :bad
+          RUBY
+        ),
+        program_payload(
+          code: <<~RUBY
+            self.define_singleton_method(:oops) { 1 }
+            result = :bad
+          RUBY
+        )
+      )
+
+      outcome = g.ask("run child tool")
+      expect_error_outcome(outcome, type: "guardrail_retry_exhausted", retriable: false)
+      expect(outcome.error_message).to include("Recoverable guardrail retries exhausted for child_tool.run")
+      expect(outcome.metadata[:normalized]).to be_nil
+      expect(outcome.metadata[:normalization_policy]).to be_nil
+      expect(outcome.metadata[:last_violation_subtype]).to eq("singleton_method_mutation")
+    end
+
+    it "allows external-data success with provenance metadata" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          require 'net/http'
+          result = Agent::Outcome.ok(
+            data: [{ title: "Example Story" }],
+            provenance: {
+              sources: [
+                {
+                  uri: "https://example.com/feed",
+                  fetched_at: "2026-02-16T00:00:00Z",
+                  retrieval_tool: "web_fetcher",
+                  retrieval_mode: "live"
+                }
+              ]
+            }
+          )
+        RUBY
+      )
+
+      expect_ok_outcome(
+        g.ask("latest headlines"),
+        value: {
+          data: [{ title: "Example Story" }],
+          provenance: {
+            sources: [
+              {
+                uri: "https://example.com/feed",
+                fetched_at: "2026-02-16T00:00:00Z",
+                retrieval_tool: "web_fetcher",
+                retrieval_mode: "live"
+              }
+            ]
+          }
+        }
       )
     end
 
@@ -1248,6 +1422,100 @@ RSpec.describe Agent do
       )
 
       expect_ok_outcome(g.ask("latest news"), value: 42)
+      expect(mock_provider).to have_received(:generate_program).twice
+    end
+
+    it "recovers from context[:tools] shape misuse on the next regeneration attempt" do
+      g = described_class.new("assistant", max_generation_attempts: 1, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            web_fetcher_available = context[:tools]&.any? { |t| t.is_a?(Hash) && t[:name] == "web_fetcher" }
+            result = web_fetcher_available
+          RUBY
+        ),
+        program_payload(
+          code: <<~RUBY
+            registry = context[:tools] || {}
+            result = registry.key?("web_fetcher")
+          RUBY
+        )
+      )
+
+      expect_ok_outcome(g.ask("latest news"), value: false)
+      expect(mock_provider).to have_received(:generate_program).twice
+    end
+
+    it "recovers from hardcoded external fallback success on the next regeneration attempt" do
+      g = described_class.new("assistant", max_generation_attempts: 1, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            require 'net/http'
+            fallback_movies = [{ title: "Example" }]
+            result = Agent::Outcome.ok(fallback_movies)
+          RUBY
+        ),
+        program_payload(
+          code: <<~RUBY
+            result = Agent::Outcome.error(
+              error_type: "low_utility",
+              error_message: "Could not fetch live movie data",
+              retriable: false
+            )
+          RUBY
+        )
+      )
+
+      expect_error_outcome(g.ask("latest movies"), type: "low_utility", retriable: false)
+      expect(mock_provider).to have_received(:generate_program).twice
+    end
+
+    it "recovers from missing provenance on external-data success in the next regeneration attempt" do
+      g = described_class.new("assistant", max_generation_attempts: 1, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            require 'net/http'
+            result = Agent::Outcome.ok(data: [{ title: "Story" }])
+          RUBY
+        ),
+        program_payload(
+          code: <<~RUBY
+            result = Agent::Outcome.ok(
+              data: [{ title: "Story" }],
+              provenance: {
+                sources: [
+                  {
+                    uri: "https://example.com/feed",
+                    fetched_at: "2026-02-16T00:00:00Z",
+                    retrieval_tool: "web_fetcher",
+                    retrieval_mode: "live"
+                  }
+                ]
+              }
+            )
+          RUBY
+        )
+      )
+
+      outcome = g.ask("latest headlines")
+      expect_ok_outcome(
+        outcome,
+        value: {
+          data: [{ title: "Story" }],
+          provenance: {
+            sources: [
+              {
+                uri: "https://example.com/feed",
+                fetched_at: "2026-02-16T00:00:00Z",
+                retrieval_tool: "web_fetcher",
+                retrieval_mode: "live"
+              }
+            ]
+          }
+        }
+      )
       expect(mock_provider).to have_received(:generate_program).twice
     end
 
@@ -1319,6 +1587,63 @@ RSpec.describe Agent do
         error_type: nil,
         retriable: false,
         value_class: "String"
+      )
+    end
+
+    it "stores compact provenance refs in conversation history outcome summaries for external-data success" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          result = Agent::Outcome.ok(
+            data: [{ title: "Story" }],
+            provenance: {
+              sources: [
+                {
+                  uri: "https://news.example.com/feed",
+                  fetched_at: "2026-02-16T00:00:00Z",
+                  retrieval_tool: "web_fetcher",
+                  retrieval_mode: "live"
+                },
+                {
+                  uri: "https://news.example.com/backup",
+                  fetched_at: "2026-02-16T00:00:01Z",
+                  retrieval_tool: "web_fetcher",
+                  retrieval_mode: "cached"
+                }
+              ]
+            }
+          )
+        RUBY
+      )
+
+      expect_ok_outcome(
+        g.ask("latest stories"),
+        value: {
+          data: [{ title: "Story" }],
+          provenance: {
+            sources: [
+              {
+                uri: "https://news.example.com/feed",
+                fetched_at: "2026-02-16T00:00:00Z",
+                retrieval_tool: "web_fetcher",
+                retrieval_mode: "live"
+              },
+              {
+                uri: "https://news.example.com/backup",
+                fetched_at: "2026-02-16T00:00:01Z",
+                retrieval_tool: "web_fetcher",
+                retrieval_mode: "cached"
+              }
+            ]
+          }
+        }
+      )
+      summary = g.memory.fetch(:conversation_history).last.fetch(:outcome_summary)
+      expect(summary).to include(
+        status: "ok",
+        source_count: 2,
+        primary_uri: "https://news.example.com/feed",
+        retrieval_mode: "live"
       )
     end
 
@@ -1836,6 +2161,7 @@ RSpec.describe Agent do
         system_prompt: a_string_including("Set `result` or use `return`")
                        .and(including("Avoid `redo` unless in a clearly bounded loop"))
                        .and(including("context[:conversation_history]"))
+                       .and(including("External-data success invariant"))
       )
       g.read("README.md")
     end
@@ -1865,9 +2191,16 @@ RSpec.describe Agent do
         user_prompt: satisfy do |prompt|
           history_access_hint = "History contents are available in context[:conversation_history]. " \
                                 "Inspect via generated Ruby code when needed; prompt does not preload records."
+          schema_hint = "Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, outcome_summary."
+          source_refs_hint = "When present, outcome_summary may include compact source refs: source_count, primary_uri, retrieval_mode."
+          canonical_hint = "Prefer canonical fields (for example `record[:args]`, " \
+                           "`record[:method_name]`, `record[:outcome_summary]`) over ad hoc keys."
           prompt.include?("<conversation_history>") &&
             prompt.include?("<record_count>4</record_count>") &&
             prompt.include?(history_access_hint) &&
+            prompt.include?(schema_hint) &&
+            prompt.include?(source_refs_hint) &&
+            prompt.include?(canonical_hint) &&
             !prompt.include?("<recent_records>") &&
             !prompt.include?("c2") &&
             !prompt.include?("c3") &&
@@ -1962,6 +2295,22 @@ RSpec.describe Agent do
       expect(prompt).to include("methods: [fetch_url, fetch]")
     end
 
+    it "includes inferred capability tags in known-tools prompt rendering" do
+      g = described_class.new("planner")
+      g.remember(
+        tools: {
+          "movie_finder" => {
+            purpose: "fetch and parse movie listings from theater/movie websites",
+            methods: ["fetch_listings"]
+          }
+        }
+      )
+
+      prompt = g.send(:_known_tools_prompt)
+      expect(prompt).to include("- movie_finder: fetch and parse movie listings from theater/movie websites")
+      expect(prompt).to include("capabilities: [http_fetch, html_extract, movie_listings]")
+    end
+
     it "merges persisted method metadata into known-tools prompt when memory snapshot is stale" do
       Dir.mktmpdir("recurgent-known-tools-") do |tmpdir|
         Agent.configure_runtime(toolstore_root: tmpdir)
@@ -2028,15 +2377,19 @@ RSpec.describe Agent do
           purpose: "generate a PDF file",
           deliverable: { required: %w[path mime bytes] },
           acceptance: [{ assert: "mime == 'application/pdf'" }],
-          failure_policy: { on_error: "fallback" }
+          failure_policy: { on_error: "fallback" },
+          intent_signature: "ask: build pdf from report"
         }
       )
       expect_llm_call_with(
         code: "result = nil",
-        system_prompt: a_string_including("Tool Builder Delegation Contract").and(including("generate a PDF file")),
+        system_prompt: a_string_including("Tool Builder Delegation Contract")
+                       .and(including("generate a PDF file"))
+                       .and(including('intent_signature: "ask: build pdf from report"')),
         user_prompt: a_string_including("<invocation>")
                      .and(including("<active_contract>"))
                      .and(including("application/pdf"))
+                     .and(including("<intent_signature>\"ask: build pdf from report\"</intent_signature>"))
                      .and(including("<response_contract>"))
       )
       g.convert
