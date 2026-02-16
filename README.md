@@ -104,11 +104,11 @@ bundle exec rake
 - `docs/index.md` - documentation map and architecture overview
 - `docs/architecture.md` - canonical runtime architecture diagrams and flow maps
 - `docs/onboarding.md` - collaborator onboarding and daily workflow
-- `docs/idea-brief.md` - product vision and concept framing
+- `docs/specs/idea-brief.md` - product vision and concept framing
 - `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary
 - `docs/tolerant-delegation-interfaces.md` - canonical tolerant delegation guidance
 - `docs/delegate-vs-for.md` - decision rules for `delegate(...)` vs `Agent.for(...)`
-- `docs/delegation-contracts.md` - Tool Builder-authored Tool contract fields (`purpose`, `deliverable`, `acceptance`, `failure_policy`)
+- `docs/specs/delegation-contracts.md` - Tool Builder-authored Tool contract fields (`purpose`, `deliverable`, `acceptance`, `failure_policy`)
 - `docs/observability.md` - runtime log schema and live watcher usage
 - `docs/recurgent-implementation-plan.md` - implementation plan for LLM-native coordination surface and naming transition
 - `docs/roadmap.md` - project roadmap

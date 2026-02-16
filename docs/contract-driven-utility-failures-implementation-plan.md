@@ -163,7 +163,7 @@ Implementation:
 Key files:
 
 1. `runtimes/ruby/lib/recurgent/prompting.rb`
-2. `docs/delegation-contracts.md`
+2. `docs/specs/delegation-contracts.md`
 3. `docs/tolerant-delegation-interfaces.md` (if needed for examples)
 
 Exit criteria:

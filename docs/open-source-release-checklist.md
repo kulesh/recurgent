@@ -38,7 +38,7 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
   - [x] links to docs index and FAQs
 - [x] `docs/index.md` links are complete and not stale.
 - [x] `docs/onboarding.md` setup steps are reproducible with `mise`.
-- [x] `docs/delegation-contracts.md` matches runtime behavior (symmetry for `Agent.for` and `delegate`).
+- [x] `docs/specs/delegation-contracts.md` matches runtime behavior (symmetry for `Agent.for` and `delegate`).
 - [x] `docs/observability.md` matches emitted JSONL fields (`trace_id`, `call_id`, `contract_source`, etc.).
 - [x] `docs/delegate-vs-for.md` examples reflect current API.
 - [x] ADR index includes all active design decisions and no stale statuses.

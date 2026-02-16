@@ -4,11 +4,12 @@
 
 - `docs/architecture.md` - canonical runtime architecture diagrams (component map, call flow, persistence/repair, dual-lane evolution)
 - `docs/onboarding.md` - setup, workflow, quality gates
-- `docs/idea-brief.md` - product vision and design intent
+- `docs/specs/idea-brief.md` - product vision and design intent
+- `docs/specs/recursim-product-spec.md` - product specification for Recursim simulator focused on robustness and reliable emergence in self-contained systems
 - `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary
 - `docs/tolerant-delegation-interfaces.md` - tolerant delegation design guidance and examples
 - `docs/delegate-vs-for.md` - concrete `delegate(...)` vs `Agent.for(...)` decision guide
-- `docs/delegation-contracts.md` - Phase 1 Tool Builder-authored Tool contract metadata for both `Agent.for(...)` and `delegate(...)`
+- `docs/specs/delegation-contracts.md` - Phase 1 Tool Builder-authored Tool contract metadata for both `Agent.for(...)` and `delegate(...)`
 - `docs/observability.md` - mechanistic interpretability via shared log schema and live watcher
 - `docs/recurgent-implementation-plan.md` - phased plan for LLM-native coordination API and naming transition
 - `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments

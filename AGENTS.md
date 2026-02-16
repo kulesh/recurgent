@@ -204,7 +204,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-15T20:55:00Z
+Last Updated (UTC): 2026-02-16T00:10:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -216,12 +216,13 @@ Last Updated (UTC): 2026-02-15T20:55:00Z
 - `docs/index.md` - top-level documentation map and architecture flow overview
 - `docs/architecture.md` - canonical runtime architecture diagrams (component map, call flow, persistence/repair policy, dual-lane evolution)
 - `docs/onboarding.md` - setup, developer workflow, quality gates
-- `docs/idea-brief.md` - concept vision, rationale, demos, future direction
+- `docs/specs/idea-brief.md` - concept vision, rationale, demos, future direction
+- `docs/specs/recursim-product-spec.md` - product specification for Recursim simulator focused on robustness and reliable emergence in self-contained systems
 - `docs/observability.md` - mechanistic interpretability model, shared log schema, and live watcher usage
 - `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary and naming rules
 - `docs/tolerant-delegation-interfaces.md` - canonical tolerant delegation interface guidance and examples
 - `docs/delegate-vs-for.md` - concrete decision rules for delegate vs Agent.for usage
-- `docs/delegation-contracts.md` - Phase 1 Tool Builder-authored Tool contract fields and behavior
+- `docs/specs/delegation-contracts.md` - Phase 1 Tool Builder-authored Tool contract fields and behavior
 - `docs/recurgent-implementation-plan.md` - phased implementation plan for LLM-native coordination API and naming transition
 - `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
 - `docs/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
