@@ -7,11 +7,14 @@ require_relative "recurgent/dependency_manifest"
 require_relative "recurgent/environment_manager"
 require_relative "recurgent/generated_program"
 require_relative "recurgent/outcome"
+require_relative "recurgent/conversation_history"
 require_relative "recurgent/outcome_contract_constraints"
 require_relative "recurgent/outcome_contract_shapes"
 require_relative "recurgent/outcome_contract_validator"
 require_relative "recurgent/providers"
 require_relative "recurgent/prompting"
+require_relative "recurgent/observability_history_fields"
+require_relative "recurgent/observability_attempt_fields"
 require_relative "recurgent/observability"
 require_relative "recurgent/dependencies"
 require_relative "recurgent/runtime_config"
@@ -80,6 +83,7 @@ class Agent
   PROMPT_VERSION = "2026-02-15.depth-aware.v3"
   MAX_REPAIRS_BEFORE_REGEN = 3
   KNOWN_TOOLS_PROMPT_LIMIT = 12
+  CONVERSATION_HISTORY_PROMPT_PREVIEW_LIMIT = 3
   DYNAMIC_DISPATCH_METHODS = %w[ask chat discuss host].freeze
   CALL_STACK_KEY = :__recurgent_call_stack
   OUTCOME_CONTEXT_KEY = :__recurgent_outcome_context
@@ -149,6 +153,7 @@ class Agent
 
   include Prompting
   include Observability
+  include ConversationHistory
   include OutcomeContractValidator
   include Dependencies
   include KnownToolRanker

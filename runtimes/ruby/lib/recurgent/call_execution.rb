@@ -49,6 +49,16 @@ class Agent
       state.outcome
     ensure
       duration_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
+      history_append = _append_conversation_history_record!(
+        method_name: name,
+        args: args,
+        kwargs: kwargs,
+        duration_ms: duration_ms,
+        call_context: call_context,
+        outcome: state.outcome
+      )
+      state.history_record_appended = history_append[:appended]
+      state.conversation_history_size = history_append[:size]
       _record_pattern_memory_event(method_name: name, state: state, call_context: call_context)
       _persist_method_artifact_for_call(method_name: name, state: state, duration_ms: duration_ms)
       _log_dynamic_call(

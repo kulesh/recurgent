@@ -97,12 +97,13 @@ class Agent
     end
 
     def _build_user_prompt(name, args, kwargs, call_context: nil)
-      current_context = @context.dup
+      current_context = _prompt_memory_context
       depth = call_context&.fetch(:depth, 0) || 0
       self_check = _user_prompt_self_check(depth: depth)
       examples = _user_prompt_examples(name: name, depth: depth)
       active_contract = _active_contract_user_prompt
       known_tools = _known_tools_prompt
+      conversation_history = _conversation_history_user_prompt_block
       recent_patterns = _recent_patterns_prompt(method_name: name, depth: depth)
       interface_overlap = _known_tool_interface_overlap_prompt
 
@@ -116,6 +117,8 @@ class Agent
         <current_depth>#{depth}</current_depth>
         <memory>#{current_context.inspect}</memory>
         </invocation>
+
+        #{conversation_history}
 
         #{known_tools}
         #{_known_tools_usage_hint}
@@ -271,6 +274,8 @@ class Agent
         - Writing to context is internal memory only, not an external side effect.
         - Be truthful and capability-accurate; never claim an action occurred unless this code actually performed it.
         - You can access and modify context to store persistent data.
+        - `context[:conversation_history]` is available as a structured Array of prior call records; prefer direct Ruby filtering/querying when needed.
+        - Conversation-history records are additive; treat optional fields defensively (`record[:field] || record["field"]`).
         - Outcome constructors available: Agent::Outcome.ok(...), Agent::Outcome.error(...), Agent::Outcome.call(value=nil, ...).
         - Prefer Agent::Outcome.ok/error as canonical forms; Agent::Outcome.call is a tolerant success alias.
         - Outcome API idioms: use `outcome.ok?` / `outcome.error?` for branching, then `outcome.value` or `outcome.error_message`. (`success?`/`failure?` are tolerated aliases.)
@@ -383,6 +388,30 @@ class Agent
         #{_known_tools_prompt.rstrip}
         #{_known_tools_usage_hint.rstrip}
       TOOLS
+    end
+
+    def _prompt_memory_context
+      snapshot = @context.dup
+      history = _conversation_history_records
+      return snapshot if history.empty?
+
+      snapshot[:conversation_history] = {
+        count: history.length,
+        recent: _conversation_history_preview(limit: Agent::CONVERSATION_HISTORY_PROMPT_PREVIEW_LIMIT)
+      }
+      snapshot
+    end
+
+    def _conversation_history_user_prompt_block
+      history = _conversation_history_records
+      preview = _conversation_history_preview(limit: Agent::CONVERSATION_HISTORY_PROMPT_PREVIEW_LIMIT)
+      <<~HISTORY
+        <conversation_history>
+        <record_count>#{history.length}</record_count>
+        <recent_records>#{preview.inspect}</recent_records>
+        <access_hint>Full structured history is available at context[:conversation_history].</access_hint>
+        </conversation_history>
+      HISTORY
     end
 
     def _known_tools_prompt

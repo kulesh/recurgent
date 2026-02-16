@@ -1174,6 +1174,33 @@ RSpec.describe Agent do
       expect(mock_provider).to have_received(:generate_program).twice
     end
 
+    it "appends one conversation history record for one logical call across guardrail retries" do
+      g = described_class.new("assistant", max_generation_attempts: 1, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            fetcher = delegate("web_fetcher", purpose: "fetch content")
+            fetcher.define_singleton_method(:fetch_latest) { Agent::Outcome.ok({}) }
+            result = "done"
+          RUBY
+        ),
+        program_payload(code: "result = 42")
+      )
+
+      expect_ok_outcome(g.ask("latest news"), value: 42)
+      history = g.memory[:conversation_history]
+      expect(history).to be_a(Array)
+      expect(history.size).to eq(1)
+      expect(history.first).to include(
+        speaker: "user",
+        method_name: "ask"
+      )
+      expect(history.first.fetch(:outcome_summary)).to include(
+        status: "ok",
+        ok: true
+      )
+    end
+
     it "rolls back attempt-local context mutations before guardrail retry" do
       g = described_class.new("assistant", max_generation_attempts: 1, guardrail_recovery_budget: 1)
       allow(mock_provider).to receive(:generate_program).and_return(
@@ -1190,6 +1217,32 @@ RSpec.describe Agent do
 
       outcome = g.ask("latest news")
       expect_ok_outcome(outcome, value: { note: nil, tools: nil })
+    end
+
+    it "coerces malformed conversation_history to an array before appending canonical record" do
+      g = described_class.new("assistant")
+      g.remember(conversation_history: "malformed")
+      stub_llm_response("result = args.first")
+
+      expect_ok_outcome(g.echo("hello"), value: "hello")
+      history = g.memory[:conversation_history]
+      expect(history).to be_a(Array)
+      expect(history.size).to eq(1)
+      expect(history.first).to include(
+        call_id: be_a(String),
+        timestamp: be_a(String),
+        speaker: "user",
+        method_name: "echo",
+        args: ["hello"],
+        kwargs: {}
+      )
+      expect(history.first.fetch(:outcome_summary)).to include(
+        status: "ok",
+        ok: true,
+        error_type: nil,
+        retriable: false,
+        value_class: "String"
+      )
     end
 
     it "returns invalid_dependency_manifest outcome when dependencies is not an array" do
@@ -1627,7 +1680,7 @@ RSpec.describe Agent do
     it "returns inspect fallback on API failure" do
       g = described_class.new("calculator")
       allow(mock_provider).to receive(:generate_program).and_raise(StandardError, "API error")
-      expect(g.to_s).to eq("<Agent(calculator) context=[]>")
+      expect(g.to_s).to eq("<Agent(calculator) context=[:conversation_history]>")
     end
   end
 
@@ -1705,6 +1758,7 @@ RSpec.describe Agent do
         code: "result = nil",
         system_prompt: a_string_including("Set `result` or use `return`")
                        .and(including("Avoid `redo` unless in a clearly bounded loop"))
+                       .and(including("context[:conversation_history]"))
       )
       g.read("README.md")
     end
@@ -1717,6 +1771,32 @@ RSpec.describe Agent do
         user_prompt: a_string_including("value")
       )
       g.value
+    end
+
+    it "includes structured conversation history preview in user prompt" do
+      g = described_class.new("assistant")
+      g.remember(
+        conversation_history: [
+          { call_id: "c1", speaker: "user", method_name: "ask", outcome_summary: { status: "ok" } },
+          { call_id: "c2", speaker: "user", method_name: "ask", outcome_summary: { status: "ok" } },
+          { call_id: "c3", speaker: "user", method_name: "ask", outcome_summary: { status: "ok" } },
+          { call_id: "c4", speaker: "user", method_name: "ask", outcome_summary: { status: "error", error_type: "low_utility" } }
+        ]
+      )
+      expect_llm_call_with(
+        code: "result = nil",
+        user_prompt: satisfy do |prompt|
+          prompt.include?("<conversation_history>") &&
+            prompt.include?("<record_count>4</record_count>") &&
+            prompt.include?("Full structured history is available at context[:conversation_history]") &&
+            prompt.include?("c2") &&
+            prompt.include?("c3") &&
+            prompt.include?("c4") &&
+            !prompt.include?("c1")
+        end
+      )
+
+      g.ask("latest")
     end
 
     it "includes known tools in system prompt after delegation" do
@@ -2126,7 +2206,9 @@ RSpec.describe Agent do
       expect(entry).to have_key("user_prompt")
       expect(entry).to have_key("context")
       expect(entry).to have_key("capability_pattern_evidence")
-      expect(entry["context"]).to eq("value" => 6)
+      expect(entry["context"]).to include("value" => 6)
+      expect(entry["context"]["conversation_history"]).to be_a(Array)
+      expect(entry["context"]["conversation_history"].length).to eq(1)
       expect(entry["outcome_value"]).to eq(6)
       expect(entry["system_prompt"]).to include("calculator")
       expect(entry["user_prompt"]).to include("increment")
@@ -2314,6 +2396,22 @@ RSpec.describe Agent do
         expect(events.last["had_delegated_calls"]).to eq(false)
         expect(events.last.dig("user_correction", "signal")).to eq("temporal_reask_no_tooling")
       end
+    end
+
+    it "logs conversation history append and usage telemetry fields" do
+      g = described_class.new("assistant", log: log_path, debug: true)
+      stub_llm_response(<<~RUBY)
+        history = context[:conversation_history] || []
+        result = history.map { |entry| entry[:method_name] || entry["method_name"] }
+      RUBY
+
+      expect_ok_outcome(g.ask("hello"), value: [])
+
+      entry = JSON.parse(File.readlines(log_path).first)
+      expect(entry["history_record_appended"]).to eq(true)
+      expect(entry["conversation_history_size"]).to eq(1)
+      expect(entry["history_access_detected"]).to eq(true)
+      expect(entry["history_query_patterns"]).to include("map")
     end
 
     it "logs inspect fallback for non-JSON outcome values in debug mode" do

@@ -4,6 +4,9 @@ class Agent
   # Agent::Observability — log entry building, JSON safety, UTF-8 normalization, trace linkage.
   # Reads: @role, @model_name, @delegation_contract, @delegation_contract_source, @context, @debug
   module Observability
+    include ObservabilityHistoryFields
+    include ObservabilityAttemptFields
+
     private
 
     def _build_log_entry(log_context)
@@ -27,6 +30,7 @@ class Agent
       _core_identity_fields(log_context)
         .merge(_core_program_fields(log_context))
         .merge(_core_pattern_fields(log_context))
+        .merge(_core_history_fields(log_context))
         .merge(_core_attempt_fields(log_context))
     end
 
@@ -63,19 +67,6 @@ class Agent
         user_correction_detected: log_context[:user_correction_detected],
         user_correction_signal: log_context[:user_correction_signal],
         user_correction_reference_call_id: log_context[:user_correction_reference_call_id]
-      }
-    end
-
-    def _core_attempt_fields(log_context)
-      {
-        attempt_id: log_context[:attempt_id],
-        attempt_stage: log_context[:attempt_stage],
-        validation_failure_type: log_context[:validation_failure_type],
-        rollback_applied: log_context[:rollback_applied],
-        retry_feedback_injected: log_context[:retry_feedback_injected],
-        guardrail_recovery_attempts: log_context[:guardrail_recovery_attempts],
-        execution_repair_attempts: log_context[:execution_repair_attempts],
-        guardrail_retry_exhausted: log_context[:guardrail_retry_exhausted]
       }
     end
 

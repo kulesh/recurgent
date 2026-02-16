@@ -8,6 +8,7 @@ class Agent
     :program_source, :artifact_hit, :artifact_prompt_version, :artifact_contract_fingerprint,
     :cacheable, :cacheability_reason, :input_sensitive,
     :capability_patterns, :capability_pattern_evidence,
+    :history_record_appended, :conversation_history_size, :history_access_detected, :history_query_patterns,
     :user_correction_detected, :user_correction_signal, :user_correction_reference_call_id,
     :contract_validation_applied, :contract_validation_passed,
     :contract_validation_mismatch, :contract_validation_expected_keys, :contract_validation_actual_keys,
@@ -31,6 +32,10 @@ class Agent
       input_sensitive: false,
       capability_patterns: [],
       capability_pattern_evidence: {},
+      history_record_appended: false,
+      conversation_history_size: 0,
+      history_access_detected: false,
+      history_query_patterns: [],
       user_correction_detected: false,
       user_correction_signal: nil,
       user_correction_reference_call_id: nil,
@@ -60,6 +65,7 @@ class Agent
     state.artifact_hit = false
     _capture_cacheability_state!(state, method_name: method_name, args: args, kwargs: kwargs)
     _capture_capability_pattern_state!(state, method_name: method_name, args: args, kwargs: kwargs)
+    _capture_history_usage_state!(state)
     state.artifact_generation_trigger = nil
   end
 
@@ -81,6 +87,7 @@ class Agent
     state.cacheable = artifact["cacheable"] == true
     state.cacheability_reason = artifact["cacheability_reason"]
     state.input_sensitive = artifact["input_sensitive"] == true
+    _capture_history_usage_state!(state)
   end
 
   def _mark_repaired_program_state!(state, trigger:)
@@ -118,6 +125,25 @@ class Agent
     )
     state.capability_patterns = extraction[:patterns]
     state.capability_pattern_evidence = extraction[:evidence]
+  end
+
+  def _capture_history_usage_state!(state)
+    detection = _detect_conversation_history_usage(state.code.to_s)
+    state.history_access_detected = detection[:accessed]
+    state.history_query_patterns = detection[:patterns]
+  end
+
+  def _detect_conversation_history_usage(code)
+    return { accessed: false, patterns: [] } unless code.match?(/conversation_history/)
+
+    patterns = []
+    patterns << "filter" if code.match?(/\.(select|filter|reject|find_all)\b/)
+    patterns << "map" if code.match?(/\.(map|collect)\b/)
+    patterns << "slice" if code.match?(/(\.slice\(|\[\s*\d+\s*\.\.\s*\d*\s*\]|\.take\(|\.drop\()/)
+    patterns << "count" if code.match?(/\.(count|length|size)\b/)
+    patterns << "group" if code.match?(/\.(group_by|chunk)\b/)
+
+    { accessed: true, patterns: patterns.uniq }
   end
 
   def _classify_cacheability(method_name:, args:, kwargs:, code:)
