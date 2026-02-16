@@ -13,7 +13,6 @@
 
 # Ruby
 *.gem
-Gemfile.lock
 vendor/
 .bundle/
 
