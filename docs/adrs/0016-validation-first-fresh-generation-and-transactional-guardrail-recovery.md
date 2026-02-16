@@ -11,6 +11,7 @@ Recent traces exposed a lifecycle gap in fresh generation (non-persisted path):
 2. The same guardrail failure currently terminates the call instead of guiding bounded regeneration.
 3. Failed attempts can partially mutate `context` before the guardrail fires, polluting subsequent retries.
 4. Existing repair flow (ADR 0012) applies to persisted artifacts after execution failure, not to fresh code before successful execution.
+5. Generated code can swallow runtime exceptions and return retriable `Outcome.error`, which currently bypasses fresh-path retry/repair lanes.
 
 This creates a mismatch with project tenets:
 
@@ -34,12 +35,19 @@ For fresh generation calls, runtime flow becomes:
    - append structured failure feedback to retry prompt,
    - regenerate with bounded retry budget.
 4. If validation passes: execute program.
-5. If execution fails: continue to existing execution-failure handling (including persisted-artifact repair paths from ADR 0012 where applicable).
+5. If execution raises: continue to existing execution-failure handling.
+6. If execution returns retriable `Outcome.error` (including swallowed exceptions wrapped as typed errors):
+   - classify failure (`extrinsic`, `adaptive`, `intrinsic`),
+   - if class is non-extrinsic and budget remains, rollback and regenerate with structured outcome-failure feedback,
+   - otherwise return the outcome unchanged.
+7. If outcome-repair budget is exhausted for eligible retriable outcomes:
+   - return typed non-retriable outcome (`outcome_repair_retry_exhausted`) with last-outcome metadata.
 
 This separates:
 
 1. **validation failure before execution** from
-2. **execution failure after validation**.
+2. **execution exception after validation** from
+3. **retriable error outcomes after execution**.
 
 ### 2. Guardrail Classification Model
 
@@ -96,8 +104,9 @@ Use separate budgets for independent failure classes:
 
 1. `generation_retry_budget` (existing provider/schema generation retries),
 2. `guardrail_recovery_budget` (new recoverable-guardrail regeneration retries; v1 default: 1-2 attempts).
+3. `fresh_outcome_repair_budget` (new retriable-outcome regeneration retries on fresh path; v1 default: 1 attempt).
 
-Guardrail recovery must not consume provider-invalid-output retry budget.
+Guardrail recovery and outcome repair must not consume provider-invalid-output retry budget.
 
 If all attempts fail recoverable validation:
 
@@ -115,6 +124,9 @@ Extend logs and metrics with fresh-lifecycle fields:
 5. `retry_feedback_injected`
 6. `guardrail_recovery_attempts`
 7. `guardrail_retry_exhausted`
+8. `outcome_repair_attempts`
+9. `outcome_repair_triggered`
+10. `outcome_repair_retry_exhausted`
 
 These signals feed out-of-band quality analysis without widening hot-path complexity.
 
@@ -126,7 +138,8 @@ In scope:
 2. recoverable-vs-terminal guardrail classification;
 3. transactional attempt isolation and commit-on-success semantics;
 4. structured retry feedback prompt for recoverable guardrails;
-5. typed exhaustion outcomes and observability fields.
+5. fresh-path retriable-outcome repair lane with bounded budget;
+6. typed exhaustion outcomes and observability fields.
 
 Out of scope:
 
@@ -143,10 +156,12 @@ Out of scope:
 2. Retry safety improves due to rollback of failed-attempt mutations.
 3. Fresh and persisted paths form one coherent lifecycle:
    - pre-exec validation recovery,
-   - post-exec implementation repair.
+   - post-exec exception recovery,
+   - post-exec retriable-outcome recovery.
 4. Tool Builder behavior improves from structured policy feedback.
 5. Fewer false terminal failures for recoverable policy mistakes.
 6. Repeated guardrail-retry exhaustion becomes adaptive failure pressure instead of invisible churn.
+7. Swallowed exceptions wrapped by Tool code no longer bypass runtime repair behavior.
 
 ### Tradeoffs
 
@@ -154,6 +169,7 @@ Out of scope:
 2. Additional prompt tokens for retry feedback.
 3. Requires clear classification boundaries to avoid noisy retries.
 4. Snapshot/isolation implementation must be performant under larger contexts.
+5. Additional retry lane requires careful budget calibration to avoid latency inflation.
 
 ## Alternatives Considered
 
@@ -165,6 +181,8 @@ Out of scope:
    - Rejected: ADR 0012 is persisted-artifact lifecycle; this decision governs fresh-generation validation lifecycle.
 4. Retry without transaction isolation
    - Rejected: unsafe due to partial context pollution between attempts.
+5. Make Tool code self-orchestrate retries after returning `Outcome.error`
+   - Rejected: violates runtime-owned lifecycle management and increases generated-code volatility.
 
 ## Rollout Plan
 
@@ -191,7 +209,8 @@ Out of scope:
 
 1. Integrate metrics into out-of-band analysis.
 2. Tune recoverable/terminal classification thresholds.
-3. Add acceptance traces demonstrating convergence from first invalid attempt to valid second attempt.
+3. Tune fresh outcome repair budget and eligibility thresholds (retriable + non-extrinsic only).
+4. Add acceptance traces demonstrating convergence from first invalid attempt to valid second attempt.
 
 ## Guardrails
 
@@ -201,6 +220,7 @@ Out of scope:
 4. Retries are bounded; no unbounded regeneration loops.
 5. Terminal guardrails bypass retry and return typed outcomes immediately.
 6. `guardrail_retry_exhausted` contributes to adaptive failure pressure for tool-health/evolution telemetry.
+7. `outcome_repair_retry_exhausted` contributes to adaptive failure pressure for tool-health/evolution telemetry.
 
 ## Open Questions
 

@@ -3,11 +3,14 @@
 class Agent
   # Agent::GuardrailPolicy — guardrail retry prompting and violation classification.
   module GuardrailPolicy
+    include GuardrailOutcomeFeedback
+
     private
 
-    def _fresh_retry_user_prompt(base_user_prompt, guardrail_feedback:, execution_feedback:)
+    def _fresh_retry_user_prompt(base_user_prompt, guardrail_feedback:, execution_feedback:, outcome_feedback:)
       with_guardrail_feedback = _guardrail_retry_user_prompt(base_user_prompt, guardrail_feedback)
-      _execution_retry_user_prompt(with_guardrail_feedback, execution_feedback)
+      with_execution_feedback = _execution_retry_user_prompt(with_guardrail_feedback, execution_feedback)
+      _outcome_retry_user_prompt(with_execution_feedback, outcome_feedback)
     end
 
     def _guardrail_retry_user_prompt(base_user_prompt, feedback)
@@ -58,6 +61,12 @@ class Agent
       return value if value.is_a?(Integer) && value >= 0
 
       raise ArgumentError, "guardrail_recovery_budget must be an Integer >= 0"
+    end
+
+    def _validate_fresh_outcome_repair_budget(value)
+      return value if value.is_a?(Integer) && value >= 0
+
+      raise ArgumentError, "fresh_outcome_repair_budget must be an Integer >= 0"
     end
 
     def _error_type_for_exception(error)

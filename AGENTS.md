@@ -204,7 +204,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-16T01:46:12Z
+Last Updated (UTC): 2026-02-16T03:45:02Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -230,6 +230,7 @@ Last Updated (UTC): 2026-02-16T01:46:12Z
 - `docs/outcome-boundary-contract-validation-implementation-plan.md` - phased implementation plan for ADR 0014 delegated outcome validation and tolerant interface canonicalization
 - `docs/tool-self-awareness-boundary-referral-implementation-plan.md` - phased implementation plan for ADR 0015 dual-lane evolution model (inline correction + out-of-band evolution) with boundary referral and user-correction telemetry
 - `docs/validation-first-fresh-generation-implementation-plan.md` - phased implementation plan for ADR 0016 validation-first fresh-call lifecycle with transactional retries and recoverable guardrail regeneration
+- `docs/generated-code-execution-sandbox-isolation-implementation-plan.md` - phased implementation plan for ADR 0020 execution sandbox isolation and lifecycle integrity regression hardening
 - `docs/structured-conversation-history-implementation-plan.md` - phased implementation plan for ADR 0019 structured conversation history rollout and evidence collection before recursion primitives
 - `docs/baselines/2026-02-15/README.md` - baseline trace capture instructions and fixtures before artifact persistence rollout
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
@@ -258,6 +259,7 @@ Last Updated (UTC): 2026-02-16T01:46:12Z
 - `docs/adrs/0017-contract-driven-utility-failures-and-observational-runtime.md` - runtime remains observational for utility semantics; utility failures are contract-driven and evolve through explicit pressure
 - `docs/adrs/0018-contextview-and-recursive-context-exploration-v1.md` - proposed ContextView + recurse primitives for same-capability recursive context exploration with contract/guardrail invariants
 - `docs/adrs/0019-structured-conversation-history-first-and-recursion-deferral.md` - proposed data-first conversation history approach with recursion primitives deferred pending observed trace evidence
+- `docs/adrs/0020-generated-code-execution-sandbox-isolation.md` - proposed per-attempt sandbox execution receiver for generated code to prevent cross-call method leakage and preserve dynamic-dispatch lifecycle integrity
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog

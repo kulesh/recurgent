@@ -89,6 +89,15 @@ RSpec.describe Agent do
       expect { described_class.new("test", guardrail_recovery_budget: -1) }.to raise_error(ArgumentError, /guardrail_recovery_budget/)
     end
 
+    it "accepts fresh_outcome_repair_budget" do
+      g = described_class.new("test", fresh_outcome_repair_budget: 2)
+      expect(g.instance_variable_get(:@fresh_outcome_repair_budget)).to eq(2)
+    end
+
+    it "raises when fresh_outcome_repair_budget is negative" do
+      expect { described_class.new("test", fresh_outcome_repair_budget: -1) }.to raise_error(ArgumentError, /fresh_outcome_repair_budget/)
+    end
+
     it "accepts provider_timeout_seconds" do
       g = described_class.new("test", provider_timeout_seconds: 30.5)
       expect(g.instance_variable_get(:@provider_timeout_seconds)).to eq(30.5)
@@ -179,6 +188,7 @@ RSpec.describe Agent do
         debug: true,
         max_generation_attempts: 4,
         guardrail_recovery_budget: 2,
+        fresh_outcome_repair_budget: 3,
         provider_timeout_seconds: 45
       )
       child = parent.delegate("tax expert")
@@ -187,6 +197,7 @@ RSpec.describe Agent do
       expect(child.instance_variable_get(:@debug)).to eq(true)
       expect(child.instance_variable_get(:@max_generation_attempts)).to eq(4)
       expect(child.instance_variable_get(:@guardrail_recovery_budget)).to eq(2)
+      expect(child.instance_variable_get(:@fresh_outcome_repair_budget)).to eq(3)
       expect(child.instance_variable_get(:@provider_timeout_seconds)).to eq(45)
       expect(child.instance_variable_get(:@delegation_budget)).to eq(7)
       expect(child.instance_variable_get(:@trace_id)).to eq(parent.instance_variable_get(:@trace_id))
@@ -1029,6 +1040,55 @@ RSpec.describe Agent do
       expect(prompts.last).to include("<execution_failure_feedback>")
     end
 
+    it "retries fresh generation once after retriable error outcome with runtime feedback" do
+      g = described_class.new("assistant", max_generation_attempts: 1, fresh_outcome_repair_budget: 1)
+      prompts = []
+      allow(mock_provider).to receive(:generate_program) do |payload|
+        prompts << payload.fetch(:user_prompt, "")
+        if prompts.length == 1
+          program_payload(
+            code: <<~RUBY
+              result = Agent::Outcome.error(
+                error_type: "fetch_failed",
+                error_message: "Exception during fetch: NoMethodError - undefined method 'scan' for an instance of Agent::Outcome",
+                retriable: true
+              )
+            RUBY
+          )
+        else
+          program_payload(code: 'result = "recovered"')
+        end
+      end
+
+      outcome = g.ask("latest nyt")
+      expect_ok_outcome(outcome, value: "recovered")
+      expect(prompts.length).to eq(2)
+      expect(prompts.last).to include("<outcome_failure_feedback>")
+      expect(prompts.last).to include("Unwrap Outcome values before parsing")
+    end
+
+    it "returns outcome_repair_retry_exhausted when fresh outcome repair budget is exhausted" do
+      g = described_class.new("assistant", max_generation_attempts: 1, fresh_outcome_repair_budget: 1)
+      prompts = []
+      allow(mock_provider).to receive(:generate_program) do |payload|
+        prompts << payload.fetch(:user_prompt, "")
+        program_payload(
+          code: <<~RUBY
+            result = Agent::Outcome.error(
+              error_type: "fetch_failed",
+              error_message: "Exception during fetch: NoMethodError - undefined method 'scan' for an instance of Agent::Outcome",
+              retriable: true
+            )
+          RUBY
+        )
+      end
+
+      outcome = g.ask("latest nyt")
+      expect_error_outcome(outcome, type: "outcome_repair_retry_exhausted", retriable: false)
+      expect(prompts.length).to eq(2)
+      expect(prompts.last).to include("<outcome_failure_feedback>")
+    end
+
     it "allows return in generated code" do
       g = described_class.new("calculator")
       stub_llm_response("return 42")
@@ -1039,6 +1099,23 @@ RSpec.describe Agent do
       g = described_class.new("calculator")
       stub_llm_response("next 7")
       expect_ok_outcome(g.answer, value: 7)
+    end
+
+    it "keeps generated method definitions isolated to one execution attempt" do
+      g = described_class.new("assistant")
+      leaked_name = :leaked_helper_from_generated_code
+      expect(g.respond_to?(leaked_name)).to eq(false)
+
+      stub_llm_response(<<~RUBY)
+        def leaked_helper_from_generated_code
+          41
+        end
+        result = leaked_helper_from_generated_code
+      RUBY
+
+      expect_ok_outcome(g.ask("compute"), value: 41)
+      expect(g.respond_to?(leaked_name)).to eq(false)
+      expect(described_class.new("assistant").respond_to?(leaked_name)).to eq(false)
     end
 
     it "supports Agent::Outcome.call as a tolerant success constructor" do
@@ -1773,7 +1850,7 @@ RSpec.describe Agent do
       g.value
     end
 
-    it "includes structured conversation history preview in user prompt" do
+    it "includes conversation history count and access hint without preloading records in user prompt" do
       g = described_class.new("assistant")
       g.remember(
         conversation_history: [
@@ -1786,12 +1863,15 @@ RSpec.describe Agent do
       expect_llm_call_with(
         code: "result = nil",
         user_prompt: satisfy do |prompt|
+          history_access_hint = "History contents are available in context[:conversation_history]. " \
+                                "Inspect via generated Ruby code when needed; prompt does not preload records."
           prompt.include?("<conversation_history>") &&
             prompt.include?("<record_count>4</record_count>") &&
-            prompt.include?("Full structured history is available at context[:conversation_history]") &&
-            prompt.include?("c2") &&
-            prompt.include?("c3") &&
-            prompt.include?("c4") &&
+            prompt.include?(history_access_hint) &&
+            !prompt.include?("<recent_records>") &&
+            !prompt.include?("c2") &&
+            !prompt.include?("c3") &&
+            !prompt.include?("c4") &&
             !prompt.include?("c1")
         end
       )
@@ -2077,6 +2157,7 @@ RSpec.describe Agent do
         "generation_attempt" => 1,
         "outcome_status" => "ok"
       )
+      expect(entry["execution_receiver"]).to eq("sandbox")
       expect(entry["trace_id"]).to match(/\A[0-9a-f]{24}\z/)
       expect(entry["call_id"]).to match(/\A[0-9a-f]{16}\z/)
       expect(entry["parent_call_id"]).to be_nil
@@ -2386,9 +2467,21 @@ RSpec.describe Agent do
 
         entries = File.readlines(correction_log).map { |line| JSON.parse(line) }
         expect(entries.length).to eq(2)
+        expect(entries.map { |entry| entry["conversation_history_size"] }).to eq([1, 2])
         expect(entries.last["user_correction_detected"]).to eq(true)
         expect(entries.last["user_correction_signal"]).to eq("temporal_reask_no_tooling")
         expect(entries.last["user_correction_reference_call_id"]).to eq(entries.first["call_id"])
+
+        history = g.memory[:conversation_history]
+        expect(history).to all(
+          include(
+            :method_name,
+            :args,
+            :kwargs,
+            :outcome_summary
+          )
+        )
+        expect(history).to all(satisfy { |record| !record.key?(:message) })
 
         pattern_store = JSON.parse(File.read(File.join(tmpdir, "patterns.json")))
         events = pattern_store.dig("roles", "assistant", "events")

@@ -20,6 +20,7 @@
 - `docs/validation-first-fresh-generation-implementation-plan.md` - phased implementation plan for ADR 0016 validation-first fresh-call lifecycle, transactional retries, and recoverable guardrail recovery
 - `docs/contract-driven-utility-failures-implementation-plan.md` - phased implementation plan for ADR 0017 contract-driven utility failures with observational runtime semantics and out-of-band evolution pressure
 - `docs/structured-conversation-history-implementation-plan.md` - phased implementation plan for ADR 0019 structured `context[:conversation_history]` rollout and evidence collection before recursion primitives
+- `docs/generated-code-execution-sandbox-isolation-implementation-plan.md` - phased implementation plan for ADR 0020 per-attempt sandbox receiver migration, lifecycle integrity hardening, and trace-verified delegation fidelity
 - `docs/baselines/2026-02-15/README.md` - pre-persistence baseline traces for assistant and philosophy debate scenarios
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/governance.md` - maintainer governance and decision model
@@ -34,6 +35,7 @@
 - `docs/adrs/0017-contract-driven-utility-failures-and-observational-runtime.md` - runtime stays observational for utility semantics; utility failures come from enforceable contracts and out-of-band evolution pressure
 - `docs/adrs/0018-contextview-and-recursive-context-exploration-v1.md` - proposed ContextView and recurse primitives for same-capability recursive context exploration without bypassing contracts/guardrails
 - `docs/adrs/0019-structured-conversation-history-first-and-recursion-deferral.md` - proposed data-first path: structured `context[:conversation_history]` now, recursion primitives deferred pending trace evidence
+- `docs/adrs/0020-generated-code-execution-sandbox-isolation.md` - isolate generated code execution to per-attempt sandbox receiver to prevent cross-call method leakage and preserve lifecycle dispatch invariants
 - `docs/maintenance.md` - runtime and dependency maintenance policy
 - `CONTRIBUTING.md` - contribution policy and quality gates
 - `CODE_OF_CONDUCT.md` - collaboration and anti-spam behavior policy

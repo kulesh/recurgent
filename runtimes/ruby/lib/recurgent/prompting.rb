@@ -392,24 +392,19 @@ class Agent
 
     def _prompt_memory_context
       snapshot = @context.dup
+      snapshot.delete(:tools)
+      snapshot.delete("tools")
       history = _conversation_history_records
-      return snapshot if history.empty?
-
-      snapshot[:conversation_history] = {
-        count: history.length,
-        recent: _conversation_history_preview(limit: Agent::CONVERSATION_HISTORY_PROMPT_PREVIEW_LIMIT)
-      }
+      snapshot[:conversation_history] = { count: history.length }
       snapshot
     end
 
     def _conversation_history_user_prompt_block
       history = _conversation_history_records
-      preview = _conversation_history_preview(limit: Agent::CONVERSATION_HISTORY_PROMPT_PREVIEW_LIMIT)
       <<~HISTORY
         <conversation_history>
         <record_count>#{history.length}</record_count>
-        <recent_records>#{preview.inspect}</recent_records>
-        <access_hint>Full structured history is available at context[:conversation_history].</access_hint>
+        <access_hint>History contents are available in context[:conversation_history]. Inspect via generated Ruby code when needed; prompt does not preload records.</access_hint>
         </conversation_history>
       HISTORY
     end

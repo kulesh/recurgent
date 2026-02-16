@@ -25,6 +25,7 @@ class Agent
       schema_mismatch
       contract_violation
       guardrail_retry_exhausted
+      outcome_repair_retry_exhausted
     ].freeze
 
     private

@@ -9,7 +9,8 @@ The plan enforces:
 1. validation before execution,
 2. recoverable guardrail retries with bounded budget,
 3. attempt-local transactionality (commit on success, rollback on failure),
-4. strict guardrails that shape iteration rather than terminate it.
+4. strict guardrails that shape iteration rather than terminate it,
+5. fresh-path retriable `Outcome.error` repairs owned by runtime orchestration.
 
 ## Alignment with Project Tenets
 
@@ -32,8 +33,10 @@ In scope:
 4. Dedicated `guardrail_recovery_budget` separate from provider generation retries.
 5. Structured retry feedback contract for recoverable guardrail failures.
 6. Typed exhaustion outcome (`guardrail_retry_exhausted`).
-7. Observability/telemetry fields for attempt lifecycle and rollback.
-8. Integration with adaptive failure pressure signals.
+7. Fresh-path retriable-outcome repair lane with dedicated `fresh_outcome_repair_budget`.
+8. Typed exhaustion outcome for outcome-repair budget exhaustion (`outcome_repair_retry_exhausted`).
+9. Observability/telemetry fields for attempt lifecycle and rollback.
+10. Integration with adaptive failure pressure signals.
 
 Out of scope:
 
@@ -57,7 +60,8 @@ Current gaps:
 2. No retry loop for recoverable runtime guardrail violations.
 3. Failed fresh attempts can partially mutate `context`/registry before failure.
 4. No dedicated budget separation between provider-generation retries and guardrail recovery retries.
-5. No typed exhaustion outcome for repeated recoverable guardrail failures.
+5. No runtime-owned repair loop for retriable fresh-path `Outcome.error` returns.
+6. No typed exhaustion outcome for repeated retriable-outcome repairs.
 
 ## Design Constraints
 
@@ -213,8 +217,12 @@ Implementation:
    - `retry_feedback_injected`
    - `guardrail_recovery_attempts`
    - `guardrail_retry_exhausted`
+   - `outcome_repair_attempts`
+   - `outcome_repair_triggered`
+   - `outcome_repair_retry_exhausted`
 2. Persist guardrail exhaustion counts in artifact/tool metrics.
 3. Classify repeated guardrail exhaustion as adaptive pressure input.
+4. Classify repeated outcome-repair exhaustion as adaptive pressure input.
 
 Suggested files:
 
@@ -226,9 +234,39 @@ Suggested files:
 Exit criteria:
 
 1. Logs fully reconstruct per-attempt lifecycle.
-2. Repeated guardrail exhaustion appears in health metrics.
+2. Repeated guardrail and outcome-repair exhaustion appear in health metrics.
 
-### Phase 5: Hardening, Prompt Calibration, and Rollout
+### Phase 5: Fresh Outcome-Repair Lane (Post-Execution Error Outcomes)
+
+Goals:
+
+1. Recover from retriable fresh-path `Outcome.error` results without requiring thrown exceptions.
+2. Keep retry ownership in runtime, not generated Tool code.
+
+Implementation:
+
+1. After successful execution, evaluate returned `Outcome`.
+2. If `outcome.error? && outcome.retriable`:
+   - classify failure (`extrinsic`, `adaptive`, `intrinsic`),
+   - for non-extrinsic failures, rollback and regenerate using structured outcome-failure feedback.
+3. Use dedicated `fresh_outcome_repair_budget` (v1 default: 1) independent of other budgets.
+4. On exhaustion, emit typed non-retriable outcome `outcome_repair_retry_exhausted` with last-failure metadata.
+
+Suggested files:
+
+1. `runtimes/ruby/lib/recurgent/fresh_generation.rb`
+2. `runtimes/ruby/lib/recurgent/fresh_outcome_repair.rb`
+3. `runtimes/ruby/lib/recurgent/guardrail_policy.rb`
+4. `runtimes/ruby/lib/recurgent/guardrail_outcome_feedback.rb`
+5. `runtimes/ruby/lib/recurgent/call_state.rb`
+
+Exit criteria:
+
+1. Swallowed exceptions wrapped in retriable `Outcome.error` trigger one runtime-managed retry.
+2. Non-retriable or extrinsic errors do not trigger this lane.
+3. Exhaustion path returns typed `outcome_repair_retry_exhausted`.
+
+### Phase 6: Hardening, Prompt Calibration, and Rollout
 
 Goals:
 
@@ -245,6 +283,7 @@ Implementation:
    - explicit terminal allowlist.
 3. Validate with acceptance trace scenarios:
    - singleton-method failure then recovery,
+   - retriable outcome-error failure then recovery,
    - terminal missing-capability case (no retry),
    - mixed provider retry + guardrail retry sequence.
 
@@ -274,6 +313,21 @@ Exit criteria:
 }
 ```
 
+### Outcome-Repair Exhaustion Outcome
+
+```json
+{
+  "status": "error",
+  "error_type": "outcome_repair_retry_exhausted",
+  "error_message": "Retriable outcome-error repairs exhausted for personal assistant.ask",
+  "retriable": false,
+  "metadata": {
+    "outcome_repair_attempts": 1,
+    "last_error_type": "fetch_failed"
+  }
+}
+```
+
 ### Exhaustion Outcome
 
 ```json
@@ -297,11 +351,11 @@ Exit criteria:
    - default recoverable behavior,
    - explicit terminal mapping.
 2. Retry budget accounting:
-   - generation budget and guardrail budget are independent.
+   - generation, guardrail, and outcome-repair budgets are independent.
 3. Snapshot/restore:
    - rollback restores context and registry exactly.
 4. Exhaustion outcome shape:
-   - typed error with metadata.
+   - typed errors with metadata for both guardrail and outcome-repair exhaustion.
 
 ### Integration Tests
 
@@ -316,6 +370,7 @@ Exit criteria:
 3. Mixed failure-class sequence:
    - provider invalid output retries,
    - then guardrail recovery retries,
+   - then outcome-error recovery retry,
    - budgets tracked independently.
 
 ### Acceptance Tests
@@ -335,19 +390,23 @@ Exit criteria:
    - enable stage split and rollback first.
 2. Enable Phase 3 retry loop next:
    - start with `guardrail_recovery_budget=1`.
-3. Expand observability and adaptive pressure.
-4. Increase budget to 2 only after trace validation.
+3. Enable Phase 5 outcome-repair loop next:
+   - start with `fresh_outcome_repair_budget=1`.
+4. Expand observability and adaptive pressure.
+5. Increase budgets only after trace validation.
 
 ## Risks and Mitigations
 
 1. Risk: snapshot overhead on large contexts.
    - Mitigation: v1 snapshot/restore plus latency metrics; optimize only if needed.
 2. Risk: noisy retry loops.
-   - Mitigation: strict bounded budget + terminal allowlist.
+   - Mitigation: strict bounded budgets + terminal/extrinsic gating.
 3. Risk: over-classifying terminal failures as recoverable.
    - Mitigation: explicit terminal map with tests and periodic review.
 4. Risk: prompt bloat from retry feedback.
    - Mitigation: concise structured feedback fields only.
+5. Risk: swallowed exceptions silently bypass execution-exception lane.
+   - Mitigation: post-execution outcome evaluation lane with retriable gating.
 
 ## Completion Checklist
 
@@ -359,4 +418,7 @@ Exit criteria:
 6. [ ] `guardrail_retry_exhausted` typed outcome implemented.
 7. [ ] Observability fields emitted and documented.
 8. [ ] Adaptive pressure wiring includes repeated guardrail exhaustion.
+9. [ ] Fresh-path retriable outcome repair lane implemented with dedicated budget.
+10. [ ] `outcome_repair_retry_exhausted` typed outcome implemented and logged.
+11. [ ] Adaptive pressure wiring includes repeated outcome-repair exhaustion.
 9. [ ] Acceptance traces demonstrate recovery without leaked state.

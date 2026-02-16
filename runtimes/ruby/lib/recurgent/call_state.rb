@@ -14,7 +14,9 @@ class Agent
     :contract_validation_mismatch, :contract_validation_expected_keys, :contract_validation_actual_keys,
     :artifact_generation_trigger,
     :attempt_id, :attempt_stage, :validation_failure_type, :rollback_applied, :retry_feedback_injected,
-    :guardrail_recovery_attempts, :execution_repair_attempts, :guardrail_retry_exhausted,
+    :execution_receiver,
+    :guardrail_recovery_attempts, :execution_repair_attempts, :outcome_repair_attempts,
+    :outcome_repair_triggered, :guardrail_retry_exhausted, :outcome_repair_retry_exhausted,
     :repair_attempted, :repair_succeeded, :failure_class,
     :generation_attempt, :error, :outcome,
     keyword_init: true
@@ -49,9 +51,13 @@ class Agent
       validation_failure_type: nil,
       rollback_applied: false,
       retry_feedback_injected: false,
+      execution_receiver: nil,
       guardrail_recovery_attempts: 0,
       execution_repair_attempts: 0,
+      outcome_repair_attempts: 0,
+      outcome_repair_triggered: false,
       guardrail_retry_exhausted: false,
+      outcome_repair_retry_exhausted: false,
       repair_attempted: false,
       repair_succeeded: false
     )

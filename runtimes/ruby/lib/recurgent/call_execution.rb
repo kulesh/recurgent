@@ -42,8 +42,8 @@ class Agent
 
       state.outcome = _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
       state.outcome
-    rescue ProviderError, ExecutionError, ToolRegistryViolationError, GuardrailRetryExhaustedError, BudgetExceededError, WorkerCrashError,
-           NonSerializableResultError => e
+    rescue ProviderError, ExecutionError, ToolRegistryViolationError, GuardrailRetryExhaustedError,
+           OutcomeRepairRetryExhaustedError, BudgetExceededError, WorkerCrashError, NonSerializableResultError => e
       state.error = e
       state.outcome = _error_outcome_for(name, e)
       state.outcome
@@ -85,6 +85,7 @@ class Agent
 
       outcome =
         if _worker_execution_required?(normalized_dependencies)
+          state.execution_receiver = "worker"
           _execute_generated_program_in_worker(
             name,
             code,
@@ -94,6 +95,7 @@ class Agent
             state: state
           )
         else
+          state.execution_receiver = "sandbox"
           result = _execute_code(code, name, *args, **kwargs)
           Outcome.coerce(result, tool_role: @role, method_name: name)
         end

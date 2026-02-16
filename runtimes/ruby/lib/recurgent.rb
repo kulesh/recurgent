@@ -7,6 +7,7 @@ require_relative "recurgent/dependency_manifest"
 require_relative "recurgent/environment_manager"
 require_relative "recurgent/generated_program"
 require_relative "recurgent/outcome"
+require_relative "recurgent/conversation_history_normalization"
 require_relative "recurgent/conversation_history"
 require_relative "recurgent/outcome_contract_constraints"
 require_relative "recurgent/outcome_contract_shapes"
@@ -33,8 +34,11 @@ require_relative "recurgent/persisted_execution"
 require_relative "recurgent/tool_maintenance"
 require_relative "recurgent/call_state"
 require_relative "recurgent/attempt_isolation"
+require_relative "recurgent/guardrail_outcome_feedback"
 require_relative "recurgent/guardrail_policy"
 require_relative "recurgent/tool_registry_integrity"
+require_relative "recurgent/execution_sandbox"
+require_relative "recurgent/fresh_outcome_repair"
 require_relative "recurgent/fresh_generation"
 require_relative "recurgent/call_execution"
 require_relative "recurgent/worker_executor"
@@ -43,7 +47,7 @@ require_relative "recurgent/preparation_ticket"
 require_relative "recurgent/worker_execution"
 
 # An Agent object intercepts all method calls, asks an LLM what Ruby code
-# to run, then eval's that code in its own context. The agent's "role"
+# to run, then eval's that code in an ephemeral execution sandbox. The agent's "role"
 # (e.g. "calculator", "assistant") is passed to the LLM so it knows what
 # kind of tool it's supposed to be.
 #
@@ -75,6 +79,7 @@ class Agent
   DEFAULT_MODEL = "claude-sonnet-4-5-20250929"
   DEFAULT_MAX_GENERATION_ATTEMPTS = 2
   DEFAULT_GUARDRAIL_RECOVERY_BUDGET = 1
+  DEFAULT_FRESH_OUTCOME_REPAIR_BUDGET = 1
   DEFAULT_PROVIDER_TIMEOUT_SECONDS = 120.0
   DEFAULT_DELEGATION_BUDGET = 8
   DEFAULT_GEM_SOURCES = ["https://rubygems.org"].freeze
@@ -113,6 +118,15 @@ class Agent
     end
   end
 
+  class OutcomeRepairRetryExhaustedError < Error
+    attr_reader :metadata
+
+    def initialize(message, metadata: {})
+      super(message)
+      @metadata = metadata
+    end
+  end
+
   class ExecutionError < Error; end
   class BudgetExceededError < Error; end
 
@@ -131,6 +145,7 @@ class Agent
     [EnvironmentPreparingError, "environment_preparing"],
     [ToolRegistryViolationError, "tool_registry_violation"],
     [GuardrailRetryExhaustedError, "guardrail_retry_exhausted"],
+    [OutcomeRepairRetryExhaustedError, "outcome_repair_retry_exhausted"],
     [WorkerCrashError, "worker_crash"],
     [NonSerializableResultError, "non_serializable_result"],
     [ProviderError, "provider"]
@@ -171,6 +186,7 @@ class Agent
   include AttemptIsolation
   include GuardrailPolicy
   include ToolRegistryIntegrity
+  include FreshOutcomeRepair
   include FreshGeneration
   include CallExecution
   include WorkerExecution
@@ -345,6 +361,7 @@ class Agent
       debug: @debug,
       max_generation_attempts: @max_generation_attempts,
       guardrail_recovery_budget: @guardrail_recovery_budget,
+      fresh_outcome_repair_budget: @fresh_outcome_repair_budget,
       provider_timeout_seconds: @provider_timeout_seconds,
       delegation_budget: resolved_budget,
       trace_id: @trace_id
@@ -383,6 +400,7 @@ class Agent
       debug: false,
       max_generation_attempts: DEFAULT_MAX_GENERATION_ATTEMPTS,
       guardrail_recovery_budget: DEFAULT_GUARDRAIL_RECOVERY_BUDGET,
+      fresh_outcome_repair_budget: DEFAULT_FRESH_OUTCOME_REPAIR_BUDGET,
       provider_timeout_seconds: DEFAULT_PROVIDER_TIMEOUT_SECONDS,
       delegation_budget: DEFAULT_DELEGATION_BUDGET,
       delegation_contract: nil,
@@ -399,6 +417,7 @@ class Agent
     [
       _validate_max_generation_attempts(config[:max_generation_attempts]),
       _validate_guardrail_recovery_budget(config[:guardrail_recovery_budget]),
+      _validate_fresh_outcome_repair_budget(config[:fresh_outcome_repair_budget]),
       _validate_provider_timeout_seconds(config[:provider_timeout_seconds]),
       _validate_delegation_budget(config[:delegation_budget])
     ]
@@ -416,7 +435,7 @@ class Agent
     @provider = _build_provider(config[:model], config[:provider])
     @context = {}
     @verbose, @log, @debug = config.values_at(:verbose, :log, :debug)
-    @max_generation_attempts, @guardrail_recovery_budget, @provider_timeout_seconds, @delegation_budget =
+    @max_generation_attempts, @guardrail_recovery_budget, @fresh_outcome_repair_budget, @provider_timeout_seconds, @delegation_budget =
       _resolve_runtime_limits(config)
     @delegation_contract, @delegation_contract_source = _resolve_delegation_contract(config)
     @runtime_config = Agent.runtime_config
@@ -439,27 +458,25 @@ class Agent
     end
   end
 
-  # eval runs the LLM-generated code string in a binding that has access to:
-  #   context  — @context hash (read/write persistent state)
-  #   args     — positional arguments from the method call
-  #   kwargs   — keyword arguments from the method call
-  #   Agent — the class itself (so generated code can create child objects)
-  #   result   — starts nil; the code sets this to its return value
+  # Executes LLM-generated code on an ephemeral sandbox receiver.
   #
-  # The third argument to eval is a filename for stack traces, so errors
-  # in generated code show "(agent:calculator.sum)" instead of "(eval)".
+  # Generated code still gets local `context`, `args`, `kwargs`, and `result`
+  # bindings, but method definitions are isolated to the sandbox object so they
+  # cannot leak into Agent method lookup across calls.
   def _execute_code(code, method_name, *args, **kwargs)
-    context = @context
-    result = nil
     wrapped_code = _wrap_generated_code(code)
+    sandbox = ExecutionSandbox.new(agent: self, context: @context, args: args, kwargs: kwargs)
+    execution_result = nil
 
     _enforce_tool_registry_integrity!(method_name: method_name, phase: "pre_execution")
     _with_outcome_call_context(method_name) do
-      eval(wrapped_code, binding, "(agent:#{@role}.#{method_name})")
+      execution_result = sandbox.execute(
+        wrapped_code: wrapped_code,
+        filename: "(agent:#{@role}.#{method_name})"
+      )
     end
     _enforce_tool_registry_integrity!(method_name: method_name, phase: "post_execution")
-
-    result
+    execution_result
   rescue Agent::Error
     raise
   rescue StandardError, ScriptError => e
@@ -525,12 +542,16 @@ class Agent
     indented_code = code.lines.map { |line| "  #{line}" }.join
     [
       "__recurgent_result_sentinel = Object.new",
+      "context = __recurgent_context",
+      "args = __recurgent_args",
+      "kwargs = __recurgent_kwargs",
       "result = __recurgent_result_sentinel",
       "__recurgent_exec = lambda do",
       indented_code,
       "end",
       "__recurgent_return_value = __recurgent_exec.call",
-      "result = __recurgent_return_value if result.equal?(__recurgent_result_sentinel)"
+      "result = __recurgent_return_value if result.equal?(__recurgent_result_sentinel)",
+      "__recurgent_set_result(result)"
     ].join("\n")
   end
 

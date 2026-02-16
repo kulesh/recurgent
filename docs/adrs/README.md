@@ -23,6 +23,7 @@ This directory captures architecture decisions that shape Recurgent's runtime be
 - `0017-contract-driven-utility-failures-and-observational-runtime.md`
 - `0018-contextview-and-recursive-context-exploration-v1.md`
 - `0019-structured-conversation-history-first-and-recursion-deferral.md`
+- `0020-generated-code-execution-sandbox-isolation.md`
 
 ## Status Values
 

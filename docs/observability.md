@@ -50,6 +50,10 @@ Cross-runtime traceability fields (recommended):
 - `parent_call_id`
 - `depth`
 
+Execution-path field:
+
+- `execution_receiver` (`sandbox` for local generated execution, `worker` for dependency-backed worker execution)
+
 Contract metadata fields (optional but recommended when present):
 
 - `contract_purpose`

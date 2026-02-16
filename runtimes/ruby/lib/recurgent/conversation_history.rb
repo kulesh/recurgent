@@ -3,6 +3,8 @@
 class Agent
   # Agent::ConversationHistory — canonical structured call-history records stored in context.
   module ConversationHistory
+    include ConversationHistoryNormalization
+
     private
 
     def _append_conversation_history_record!(method_name:, args:, kwargs:, duration_ms:, call_context:, outcome:)
@@ -25,17 +27,17 @@ class Agent
     def _conversation_history_store
       history = @context[:conversation_history]
       return @context[:conversation_history] = [] if history.nil?
-      return history if history.is_a?(Array)
 
-      warn "[AGENT HISTORY #{@role}] coercing malformed context[:conversation_history] to []" if @debug
-      @context[:conversation_history] = []
+      unless history.is_a?(Array)
+        warn "[AGENT HISTORY #{@role}] coercing malformed context[:conversation_history] to []" if @debug
+        return @context[:conversation_history] = []
+      end
+
+      _normalize_conversation_history_store!(history)
     end
 
     def _conversation_history_records
-      history = @context[:conversation_history]
-      return [] unless history.is_a?(Array)
-
-      history
+      _conversation_history_store
     end
 
     def _conversation_history_preview(limit: Agent::CONVERSATION_HISTORY_PROMPT_PREVIEW_LIMIT)
