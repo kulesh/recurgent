@@ -204,7 +204,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-16T00:10:00Z
+Last Updated (UTC): 2026-02-16T01:21:32Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -254,6 +254,8 @@ Last Updated (UTC): 2026-02-16T00:10:00Z
 - `docs/adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md` - delegated outcome contract enforcement with tolerant key semantics and canonical method metadata
 - `docs/adrs/0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md` - Tool self-awareness protocol with `wrong_tool_boundary`/`low_utility` outcomes and cohesion-telemetry-driven Tool Builder evolution
 - `docs/adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md` - validation-first fresh-generation lifecycle with recoverable guardrail retries and commit-on-success attempt isolation
+- `docs/adrs/0017-contract-driven-utility-failures-and-observational-runtime.md` - runtime remains observational for utility semantics; utility failures are contract-driven and evolve through explicit pressure
+- `docs/adrs/0018-contextview-and-recursive-context-exploration-v1.md` - proposed ContextView + recurse primitives for same-capability recursive context exploration with contract/guardrail invariants
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog

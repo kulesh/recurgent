@@ -31,6 +31,7 @@
 - `docs/adrs/0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md` - Tool self-awareness protocol, boundary-referral outcomes, and cohesion-telemetry-driven evolution policy
 - `docs/adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md` - validation-first fresh-call lifecycle with recoverable guardrail retries and commit-on-success attempt isolation
 - `docs/adrs/0017-contract-driven-utility-failures-and-observational-runtime.md` - runtime stays observational for utility semantics; utility failures come from enforceable contracts and out-of-band evolution pressure
+- `docs/adrs/0018-contextview-and-recursive-context-exploration-v1.md` - proposed ContextView and recurse primitives for same-capability recursive context exploration without bypassing contracts/guardrails
 - `docs/maintenance.md` - runtime and dependency maintenance policy
 - `CONTRIBUTING.md` - contribution policy and quality gates
 - `CODE_OF_CONDUCT.md` - collaboration and anti-spam behavior policy

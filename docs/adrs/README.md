@@ -21,6 +21,7 @@ This directory captures architecture decisions that shape Recurgent's runtime be
 - `0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md`
 - `0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md`
 - `0017-contract-driven-utility-failures-and-observational-runtime.md`
+- `0018-contextview-and-recursive-context-exploration-v1.md`
 
 ## Status Values
 
