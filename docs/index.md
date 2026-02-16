@@ -19,6 +19,7 @@
 - `docs/tool-self-awareness-boundary-referral-implementation-plan.md` - phased implementation plan for ADR 0015 dual-lane evolution with `wrong_tool_boundary`, `low_utility`, cohesion telemetry, and user-correction signals
 - `docs/validation-first-fresh-generation-implementation-plan.md` - phased implementation plan for ADR 0016 validation-first fresh-call lifecycle, transactional retries, and recoverable guardrail recovery
 - `docs/contract-driven-utility-failures-implementation-plan.md` - phased implementation plan for ADR 0017 contract-driven utility failures with observational runtime semantics and out-of-band evolution pressure
+- `docs/structured-conversation-history-implementation-plan.md` - phased implementation plan for ADR 0019 structured `context[:conversation_history]` rollout and evidence collection before recursion primitives
 - `docs/baselines/2026-02-15/README.md` - pre-persistence baseline traces for assistant and philosophy debate scenarios
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/governance.md` - maintainer governance and decision model
