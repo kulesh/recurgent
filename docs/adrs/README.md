@@ -24,6 +24,8 @@ This directory captures architecture decisions that shape Recurgent's runtime be
 - `0018-contextview-and-recursive-context-exploration-v1.md`
 - `0019-structured-conversation-history-first-and-recursion-deferral.md`
 - `0020-generated-code-execution-sandbox-isolation.md`
+- `0021-external-data-provenance-invariant.md`
+- `0022-guardrail-exhaustion-boundary-normalization.md`
 
 ## Status Values
 

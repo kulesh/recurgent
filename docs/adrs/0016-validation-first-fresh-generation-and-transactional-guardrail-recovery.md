@@ -12,6 +12,7 @@ Recent traces exposed a lifecycle gap in fresh generation (non-persisted path):
 3. Failed attempts can partially mutate `context` before the guardrail fires, polluting subsequent retries.
 4. Existing repair flow (ADR 0012) applies to persisted artifacts after execution failure, not to fresh code before successful execution.
 5. Generated code can swallow runtime exceptions and return retriable `Outcome.error`, which currently bypasses fresh-path retry/repair lanes.
+6. When fresh execution is repaired successfully, the log often preserves only counters (`execution_repair_attempts`) but not the failed-attempt exception message/class that triggered repair.
 
 This creates a mismatch with project tenets:
 
@@ -127,6 +128,28 @@ Extend logs and metrics with fresh-lifecycle fields:
 8. `outcome_repair_attempts`
 9. `outcome_repair_triggered`
 10. `outcome_repair_retry_exhausted`
+11. `latest_failure_stage` (`validation`, `execution`, `outcome_policy`)
+12. `latest_failure_class`
+13. `latest_failure_message` (bounded/truncated)
+14. `attempt_failures` (ordered per-attempt internal diagnostics)
+
+### 7. Failed-Attempt Exception Telemetry (Internal-Only)
+
+When a fresh call requires retry/repair, runtime MUST persist structured failed-attempt diagnostics for introspection and evolution pressure:
+
+1. `attempt_failures[]` entries capture:
+   - `attempt_id`
+   - `stage` (`validation`, `execution`, `outcome_policy`)
+   - `error_class`
+   - `error_message` (truncated)
+   - `timestamp`
+   - `call_id`
+2. `latest_failure_*` summary mirrors the most recent `attempt_failures` entry for fast filtering.
+3. These diagnostics are internal-only:
+   - available in logs/artifact metadata,
+   - never surfaced directly to top-level user messages,
+   - compatible with ADR 0022 boundary normalization.
+4. Telemetry capture must be append-only within a call attempt sequence and deterministic across retries.
 
 These signals feed out-of-band quality analysis without widening hot-path complexity.
 
@@ -139,7 +162,8 @@ In scope:
 3. transactional attempt isolation and commit-on-success semantics;
 4. structured retry feedback prompt for recoverable guardrails;
 5. fresh-path retriable-outcome repair lane with bounded budget;
-6. typed exhaustion outcomes and observability fields.
+6. typed exhaustion outcomes and observability fields;
+7. failed-attempt exception telemetry (`attempt_failures`, `latest_failure_*`) for repaired fresh calls.
 
 Out of scope:
 
@@ -162,6 +186,7 @@ Out of scope:
 5. Fewer false terminal failures for recoverable policy mistakes.
 6. Repeated guardrail-retry exhaustion becomes adaptive failure pressure instead of invisible churn.
 7. Swallowed exceptions wrapped by Tool code no longer bypass runtime repair behavior.
+8. Runtime failures that trigger successful repair remain diagnosable after the fact.
 
 ### Tradeoffs
 
@@ -170,6 +195,7 @@ Out of scope:
 3. Requires clear classification boundaries to avoid noisy retries.
 4. Snapshot/isolation implementation must be performant under larger contexts.
 5. Additional retry lane requires careful budget calibration to avoid latency inflation.
+6. Failure-message persistence requires bounded-size hygiene to avoid noisy logs.
 
 ## Alternatives Considered
 
@@ -212,6 +238,12 @@ Out of scope:
 3. Tune fresh outcome repair budget and eligibility thresholds (retriable + non-extrinsic only).
 4. Add acceptance traces demonstrating convergence from first invalid attempt to valid second attempt.
 
+### Phase 5: Failed-Attempt Telemetry Completion
+
+1. Persist `attempt_failures` and `latest_failure_*` on fresh-call completion (including successful repaired calls).
+2. Mirror failure trigger metadata into artifact generation history when regeneration occurs.
+3. Add tests proving repaired calls retain first-attempt failure diagnostics with timestamp and stage.
+
 ## Guardrails
 
 1. Runtime guardrails remain enforceable constraints, never optional warnings.
@@ -221,6 +253,7 @@ Out of scope:
 5. Terminal guardrails bypass retry and return typed outcomes immediately.
 6. `guardrail_retry_exhausted` contributes to adaptive failure pressure for tool-health/evolution telemetry.
 7. `outcome_repair_retry_exhausted` contributes to adaptive failure pressure for tool-health/evolution telemetry.
+8. Failed-attempt diagnostics remain internal; user-boundary surfaces stay normalized per ADR 0022.
 
 ## Open Questions
 

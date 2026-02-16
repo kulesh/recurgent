@@ -61,6 +61,35 @@ Contract metadata fields (optional but recommended when present):
 - `contract_acceptance`
 - `contract_failure_policy`
 
+Lifecycle repair fields (recommended for fresh-path retries):
+
+- `attempt_id`
+- `attempt_stage` (`generated`, `validated`, `executed`, `rolled_back`)
+- `validation_failure_type`
+- `rollback_applied`
+- `retry_feedback_injected`
+- `guardrail_recovery_attempts`
+- `execution_repair_attempts`
+- `outcome_repair_attempts`
+- `outcome_repair_triggered`
+- `guardrail_retry_exhausted`
+- `outcome_repair_retry_exhausted`
+
+Failed-attempt diagnostics (internal-only):
+
+- `latest_failure_stage` (`validation`, `execution`, `outcome_policy`)
+- `latest_failure_class`
+- `latest_failure_message` (bounded/truncated)
+- `attempt_failures` (ordered array of per-attempt diagnostics):
+  - `attempt_id`
+  - `stage`
+  - `error_class`
+  - `error_message`
+  - `timestamp`
+  - `call_id`
+
+These fields are for logs/artifacts and repair analysis only. User-facing boundary messages remain normalized by lifecycle policy.
+
 ## How to Read Delegation Trees
 
 1. Group by `trace_id`.
