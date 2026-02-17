@@ -14,7 +14,7 @@ class Agent
       execution_repair_attempts:,
       outcome_repair_attempts:
     )
-      if outcome.ok? || !outcome.retriable
+      if _outcome_retry_not_applicable?(outcome)
         return _outcome_passthrough_result(
           outcome,
           guardrail_recovery_attempts,
@@ -34,11 +34,7 @@ class Agent
         )
       end
 
-      _restore_attempt_snapshot!(attempt_snapshot)
-      state.rollback_applied = true
-      state.attempt_stage = "outcome_retry"
-      state.validation_failure_type = outcome.error_type.to_s
-      state.outcome_repair_triggered = true
+      _prepare_outcome_retry_state!(state: state, attempt_snapshot: attempt_snapshot, outcome: outcome)
 
       if outcome_repair_attempts >= @fresh_outcome_repair_budget
         _raise_outcome_repair_exhausted!(
@@ -56,6 +52,19 @@ class Agent
         remaining_budget: @fresh_outcome_repair_budget - next_attempts
       )
       [nil, nil, nil, next_feedback, guardrail_recovery_attempts, execution_repair_attempts, next_attempts]
+    end
+
+    def _outcome_retry_not_applicable?(outcome)
+      outcome.ok? || !outcome.retriable
+    end
+
+    def _prepare_outcome_retry_state!(state:, attempt_snapshot:, outcome:)
+      _restore_attempt_snapshot!(attempt_snapshot)
+      state.rollback_applied = true
+      state.attempt_stage = "outcome_retry"
+      state.validation_failure_type = outcome.error_type.to_s
+      state.outcome_repair_triggered = true
+      _record_attempt_failure_from_outcome!(state: state, stage: "outcome_policy", outcome: outcome)
     end
 
     def _outcome_passthrough_result(outcome, guardrail_attempts, execution_attempts, outcome_attempts)

@@ -29,6 +29,7 @@ require_relative "recurgent/user_correction_signals"
 require_relative "recurgent/pattern_memory_store"
 require_relative "recurgent/pattern_prompting"
 require_relative "recurgent/artifact_metrics"
+require_relative "recurgent/artifact_trigger_metadata"
 require_relative "recurgent/artifact_store"
 require_relative "recurgent/artifact_selector"
 require_relative "recurgent/artifact_repair"
@@ -36,6 +37,7 @@ require_relative "recurgent/persisted_execution"
 require_relative "recurgent/tool_maintenance"
 require_relative "recurgent/call_state"
 require_relative "recurgent/attempt_isolation"
+require_relative "recurgent/attempt_failure_telemetry"
 require_relative "recurgent/guardrail_outcome_feedback"
 require_relative "recurgent/guardrail_code_checks"
 require_relative "recurgent/guardrail_policy"
@@ -191,6 +193,7 @@ class Agent
   include ArtifactRepair
   include PersistedExecution
   include AttemptIsolation
+  include AttemptFailureTelemetry
   include GuardrailPolicy
   include GuardrailBoundaryNormalization
   include ToolRegistryIntegrity

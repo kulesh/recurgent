@@ -210,6 +210,7 @@ class Agent
     )
       _restore_attempt_snapshot!(attempt_snapshot)
       _apply_guardrail_failure_state!(state, error)
+      _record_attempt_failure_from_error!(state: state, stage: "validation", error: error)
       classification = _classify_guardrail_violation(error)
       state.guardrail_violation_subtype = classification[:violation_subtype]
       raise if classification[:guardrail_class] == "terminal_guardrail"
@@ -235,6 +236,7 @@ class Agent
       state.rollback_applied = true
       state.attempt_stage = "execution_retry"
       state.validation_failure_type = _error_type_for_exception(error)
+      _record_attempt_failure_from_error!(state: state, stage: "execution", error: error)
 
       classification = _classify_execution_failure(error)
       raise unless execution_repair_attempts < FRESH_EXECUTION_REPAIR_BUDGET

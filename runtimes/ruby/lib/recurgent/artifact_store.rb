@@ -5,6 +5,8 @@ require "digest"
 class Agent
   # Agent::ArtifactStore — persisted generated-program artifacts and call fitness metrics.
   module ArtifactStore
+    include ArtifactTriggerMetadata
+
     private
 
     def _persist_method_artifact_for_call(method_name:, state:, duration_ms:)
@@ -157,6 +159,7 @@ class Agent
         "runtime_version" => Agent::VERSION,
         "model" => @model_name
       }
+      entry.merge!(_artifact_trigger_failure_metadata(state))
       artifact["history"] = [entry, *history].first(3)
     end
 
