@@ -157,7 +157,9 @@ class Agent
               2. Is that capability already available in `context[:tools]`?
               3. If missing, what is the most general useful form of the capability?
           - Capability-fit rule:
-              match required capability against tool `capabilities` metadata first; do not reuse a tool whose capability profile does not fit the user intent.
+              treat `capabilities` as optional hints, not strict gates; reason over `purpose`, `methods`, and `deliverable` when tags are missing or ambiguous.
+          - Avoid brittle matching:
+              do not hard-fail solely because a specific capability tag string is absent.
           - Build-intent rule:
               if the user explicitly asks to build/create/make a tool, treat that as a Forge signal at depth 0 unless blocked by runtime capability limits.
           - Naming nudge:
@@ -285,6 +287,9 @@ class Agent
         - For registry checks, prefer `context[:tools].key?("tool_name")` or `context[:tools].each do |tool_name, metadata| ... end`.
         - `context[:conversation_history]` is available as a structured Array of prior call records; prefer direct Ruby filtering/querying when needed.
         - Conversation-history records are additive; treat optional fields defensively (`record[:field] || record["field"]`).
+        - Source-followup rule: if user asks for source/provenance/how data was obtained, query `context[:conversation_history]` first and answer from prior `outcome_summary` source refs when present.
+        - For source follow-ups, prefer the most recent relevant successful record and include concrete refs (`primary_uri`, `retrieval_mode`, `source_count`, `timestamp` when available).
+        - Never infer or fabricate provenance if history refs are missing; return explicit unknown/missing-source response instead.
         - Outcome constructors available: Agent::Outcome.ok(...), Agent::Outcome.error(...), Agent::Outcome.call(value=nil, ...).
         - Prefer Agent::Outcome.ok/error as canonical forms; Agent::Outcome.call is a tolerant success alias.
         - Outcome API idioms: use `outcome.ok?` / `outcome.error?` for branching, then `outcome.value` or `outcome.error_message`. (`success?`/`failure?` are tolerated aliases.)
@@ -372,6 +377,7 @@ class Agent
         - If I fetched/parsing succeeded technically but produced empty/junk output, did I return `low_utility` instead of `Outcome.ok`?
         - If I returned success for external data, did I include provenance with sources + retrieval_mode?
         - If user asked for list/items/results, did I return concrete items instead of guidance-only prose?
+        - If this is a source/provenance follow-up, did I cite concrete source refs from history (`primary_uri`, `retrieval_mode`, `source_count`) instead of generic prose?
         - Does my stance choice fit current depth policy from the system prompt?
       CHECK
 
@@ -425,7 +431,14 @@ class Agent
         <access_hint>History contents are available in context[:conversation_history]. Inspect via generated Ruby code when needed; prompt does not preload records.</access_hint>
         <record_schema>Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, outcome_summary.</record_schema>
         <source_refs_hint>When present, outcome_summary may include compact source refs: source_count, primary_uri, retrieval_mode.</source_refs_hint>
-        <query_hint>Prefer canonical fields (for example `record[:args]`, `record[:method_name]`, `record[:outcome_summary]`) over ad hoc keys.</query_hint>
+        <query_hint>Prefer canonical fields (`record[:args]`, `record[:method_name]`, `record[:outcome_summary]`); do not rely on ad hoc keys.</query_hint>
+        <source_query_protocol>
+        - If current ask is about source/provenance/how data was obtained:
+          1) filter recent records with source refs in `outcome_summary`,
+          2) prefer the most recent relevant successful record,
+          3) answer with concrete refs (`primary_uri`, `retrieval_mode`, `source_count`),
+          4) if refs are missing, state unknown rather than inferring.
+        </source_query_protocol>
         </conversation_history>
       HISTORY
     end
@@ -460,7 +473,7 @@ class Agent
         - Tool registry is available in full at `context[:tools]` (authoritative, complete metadata).
         - `context[:tools]` shape: `{ "tool_name" => { purpose:, methods:, capabilities:, ... } }`.
         - `<known_tools>` is a non-exhaustive preview for quick scanning.
-        - Match user intent against `capabilities` before reusing a tool; avoid capability-mismatched reuse.
+        - Match by capability-fit: use `capabilities` when present, and infer from `purpose` + `methods` + `deliverable` when tags are missing.
         - Query `context[:tools]` directly to find best-fit candidates, then materialize the chosen tool.
         - Do NOT call values from `context[:tools]` directly; they are metadata, not executable objects.
         - To reuse a known tool, materialize it with `tool("tool_name")` (preferred) or `delegate("tool_name", ...)`.
@@ -542,8 +555,7 @@ class Agent
     def _merge_known_tools_for_prompt(persisted_tools, memory_tools)
       persisted = _normalized_known_tools_hash(persisted_tools)
       memory = _normalized_known_tools_hash(memory_tools)
-      return persisted if memory.empty?
-      return memory if persisted.empty?
+      return {} if persisted.empty? && memory.empty?
 
       _merge_known_tool_indexes(persisted, memory)
     end
@@ -580,6 +592,7 @@ class Agent
       merged[:aliases] = _merge_known_tool_string_lists(persisted, memory, :aliases)
       merged[:intent_signatures] = _merge_known_tool_intent_signatures(persisted, memory)
       merged[:intent_signature] = merged[:intent_signatures].last unless merged[:intent_signatures].empty?
+      merged[:capabilities] = _extract_tool_capabilities(merged)
       merged
     end
 
@@ -734,11 +747,20 @@ class Agent
 
           <pattern kind="reuse_known_tool">
           ```ruby
-          # Query full registry metadata from context[:tools], then materialize the chosen tool.
+          # Query full registry metadata from context[:tools], then materialize the best-fit tool.
+          # `capabilities` are optional hints; fall back to purpose/method reasoning when tags are absent.
           registry = context[:tools] || {}
-          candidate_name, = registry.find do |_tool_name, metadata|
+          candidate_name, _candidate_meta = registry.max_by do |_tool_name, metadata|
             caps = Array(metadata[:capabilities] || metadata["capabilities"]).map { |tag| tag.to_s.downcase }
-            caps.include?("http_fetch")
+            purpose = (metadata[:purpose] || metadata["purpose"]).to_s.downcase
+            methods = Array(metadata[:methods] || metadata["methods"]).map { |m| m.to_s.downcase }
+            deliverable = (metadata[:deliverable] || metadata["deliverable"]).inspect.downcase
+            score = 0
+            score += 3 if caps.include?("http_fetch")
+            score += 2 if methods.any? { |m| m.include?("fetch") || m.include?("url") }
+            score += 1 if purpose.match?(/\b(fetch|http|https|url)\b/)
+            score += 1 if deliverable.match?(/\bbody\b/)
+            score
           end
           chosen_tool = candidate_name || "web_fetcher"
           web_fetcher = tool(chosen_tool)

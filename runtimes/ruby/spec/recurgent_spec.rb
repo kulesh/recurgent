@@ -464,6 +464,34 @@ RSpec.describe Agent do
       end
     end
 
+    it "stores failed-attempt trigger diagnostics in artifact generation history after fresh repair succeeds" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        g = described_class.new("calculator", max_generation_attempts: 1)
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              value = nil
+              value << "x"
+              result = value
+            RUBY
+          ),
+          program_payload(code: 'result = "ok"')
+        )
+
+        expect_ok_outcome(g.answer, value: "ok")
+
+        artifact_path = g.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "answer")
+        artifact = JSON.parse(File.read(artifact_path))
+        history_entry = artifact.fetch("history").first
+        expect(history_entry["trigger"]).to eq("initial_forge")
+        expect(history_entry["trigger_stage"]).to eq("execution")
+        expect(history_entry["trigger_error_class"]).to eq("Agent::ExecutionError")
+        expect(history_entry["trigger_error_message"]).to include("undefined method")
+        expect(history_entry["trigger_attempt_id"]).to eq(1)
+      end
+    end
+
     it "persists dynamic methods for observability but does not reuse them from artifacts" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
         Agent.configure_runtime(toolstore_root: tmpdir)
@@ -2193,14 +2221,16 @@ RSpec.describe Agent do
                                 "Inspect via generated Ruby code when needed; prompt does not preload records."
           schema_hint = "Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, outcome_summary."
           source_refs_hint = "When present, outcome_summary may include compact source refs: source_count, primary_uri, retrieval_mode."
-          canonical_hint = "Prefer canonical fields (for example `record[:args]`, " \
-                           "`record[:method_name]`, `record[:outcome_summary]`) over ad hoc keys."
+          canonical_hint = "Prefer canonical fields (`record[:args]`, `record[:method_name]`, " \
+                           "`record[:outcome_summary]`); do not rely on ad hoc keys."
+          source_protocol_hint = "If current ask is about source/provenance/how data was obtained:"
           prompt.include?("<conversation_history>") &&
             prompt.include?("<record_count>4</record_count>") &&
             prompt.include?(history_access_hint) &&
             prompt.include?(schema_hint) &&
             prompt.include?(source_refs_hint) &&
             prompt.include?(canonical_hint) &&
+            prompt.include?(source_protocol_hint) &&
             !prompt.include?("<recent_records>") &&
             !prompt.include?("c2") &&
             !prompt.include?("c3") &&
@@ -2309,6 +2339,25 @@ RSpec.describe Agent do
       prompt = g.send(:_known_tools_prompt)
       expect(prompt).to include("- movie_finder: fetch and parse movie listings from theater/movie websites")
       expect(prompt).to include("capabilities: [http_fetch, html_extract, movie_listings]")
+    end
+
+    it "backfills inferred capabilities into in-memory tool metadata snapshot for prompt-time matching" do
+      g = described_class.new("planner")
+      g.remember(
+        tools: {
+          "web_fetcher" => {
+            purpose: "fetch content from HTTP/HTTPS URLs with redirect handling",
+            methods: ["fetch_url"]
+          }
+        }
+      )
+
+      snapshot = g.send(:_known_tools_snapshot)
+      snapshot_capabilities = snapshot.dig("web_fetcher", :capabilities) || snapshot.dig("web_fetcher", "capabilities")
+      memory_capabilities = g.memory.dig(:tools, "web_fetcher", :capabilities) ||
+                            g.memory.dig(:tools, "web_fetcher", "capabilities")
+      expect(snapshot_capabilities).to include("http_fetch")
+      expect(memory_capabilities).to include("http_fetch")
     end
 
     it "merges persisted method metadata into known-tools prompt when memory snapshot is stale" do
@@ -2521,6 +2570,105 @@ RSpec.describe Agent do
       expect(entry).not_to have_key("system_prompt")
       expect(entry).not_to have_key("user_prompt")
       expect(entry).not_to have_key("context")
+    end
+
+    it "logs validation-stage attempt failures for guardrail recovery that later succeeds" do
+      g = described_class.new("assistant", log: log_path, max_generation_attempts: 1, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            self.define_singleton_method(:oops) { 1 }
+            result = :bad
+          RUBY
+        ),
+        program_payload(code: "result = 42")
+      )
+
+      expect_ok_outcome(g.ask("latest news"), value: 42)
+
+      entry = JSON.parse(File.readlines(log_path).first)
+      expect(entry["guardrail_recovery_attempts"]).to eq(1)
+      expect(entry["attempt_failures"]).to be_a(Array)
+      expect(entry["attempt_failures"].length).to eq(1)
+      expect(entry["attempt_failures"].first).to include(
+        "attempt_id" => 1,
+        "stage" => "validation",
+        "error_class" => "Agent::ToolRegistryViolationError",
+        "call_id" => entry["call_id"]
+      )
+      expect(entry["latest_failure_stage"]).to eq("validation")
+      expect(entry["latest_failure_class"]).to eq("Agent::ToolRegistryViolationError")
+      expect(entry["latest_failure_message"]).to include("singleton methods on Agent instances")
+    end
+
+    it "logs execution-stage attempt failures for fresh execution repair retries" do
+      g = described_class.new("assistant", log: log_path, max_generation_attempts: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            response = nil
+            response << "x"
+            result = response
+          RUBY
+        ),
+        program_payload(
+          code: <<~RUBY
+            response = +""
+            response << "x"
+            result = response
+          RUBY
+        )
+      )
+
+      expect_ok_outcome(g.ask("latest news"), value: "x")
+
+      entry = JSON.parse(File.readlines(log_path).first)
+      expect(entry["execution_repair_attempts"]).to eq(1)
+      expect(entry["attempt_failures"]).to be_a(Array)
+      expect(entry["attempt_failures"].length).to eq(1)
+      expect(entry["attempt_failures"].first).to include(
+        "attempt_id" => 1,
+        "stage" => "execution",
+        "error_class" => "Agent::ExecutionError",
+        "call_id" => entry["call_id"]
+      )
+      expect(entry["latest_failure_stage"]).to eq("execution")
+      expect(entry["latest_failure_class"]).to eq("Agent::ExecutionError")
+      expect(entry["latest_failure_message"]).to include("undefined method")
+    end
+
+    it "logs outcome-policy attempt failures and truncates oversized failure messages" do
+      g = described_class.new("assistant", log: log_path, max_generation_attempts: 1, fresh_outcome_repair_budget: 1)
+      oversized_message = "x" * 500
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            result = Agent::Outcome.error(
+              error_type: "parse_failed",
+              error_message: "#{oversized_message}",
+              retriable: true
+            )
+          RUBY
+        ),
+        program_payload(code: 'result = Agent::Outcome.ok(data: "ok")')
+      )
+
+      expect_ok_outcome(g.ask("latest news"), value: { data: "ok" })
+
+      entry = JSON.parse(File.readlines(log_path).first)
+      expect(entry["outcome_repair_attempts"]).to eq(1)
+      expect(entry["attempt_failures"]).to be_a(Array)
+      expect(entry["attempt_failures"].length).to eq(1)
+      expect(entry["attempt_failures"].first).to include(
+        "attempt_id" => 1,
+        "stage" => "outcome_policy",
+        "error_class" => "Agent::OutcomeError",
+        "call_id" => entry["call_id"]
+      )
+      expect(entry["latest_failure_stage"]).to eq("outcome_policy")
+      expect(entry["latest_failure_class"]).to eq("Agent::OutcomeError")
+      expect(entry["latest_failure_message"].length).to be <= 400
+      expect(entry["latest_failure_message"]).to end_with("...")
     end
 
     it "records persisted artifact execution source fields" do
