@@ -204,7 +204,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-16T21:02:39Z
+Last Updated (UTC): 2026-02-17T01:56:40Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -213,8 +213,8 @@ Last Updated (UTC): 2026-02-16T21:02:39Z
 - `SECURITY.md` - vulnerability reporting and response targets
 - `CHANGELOG.md` - release history and notable changes
 - `SUPPORT.md` - support policy entrypoint
-- `docs/index.md` - top-level documentation map and architecture flow overview
-- `docs/architecture.md` - canonical runtime architecture diagrams (component map, call flow, persistence/repair policy, dual-lane evolution)
+- `docs/index.md` - top-level documentation map organized by product, architecture, ADRs, and plans
+- `docs/architecture.md` - canonical runtime architecture map for dispatch, retry lanes, persistence, boundary normalization, and observability
 - `docs/onboarding.md` - setup, developer workflow, quality gates
 - `docs/specs/idea-brief.md` - concept vision, rationale, demos, future direction
 - `docs/specs/recursim-product-spec.md` - product specification for Recursim simulator focused on robustness and reliable emergence in self-contained systems
@@ -223,18 +223,19 @@ Last Updated (UTC): 2026-02-16T21:02:39Z
 - `docs/tolerant-delegation-interfaces.md` - canonical tolerant delegation interface guidance and examples
 - `docs/delegate-vs-for.md` - concrete decision rules for delegate vs Agent.for usage
 - `docs/specs/delegation-contracts.md` - Phase 1 Tool Builder-authored Tool contract fields and behavior
-- `docs/recurgent-implementation-plan.md` - phased implementation plan for LLM-native coordination API and naming transition
-- `docs/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
-- `docs/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
-- `docs/cacheability-pattern-memory-implementation-plan.md` - phased implementation plan for ADR 0013 cacheability-gated artifact reuse and pattern-memory promotion
-- `docs/outcome-boundary-contract-validation-implementation-plan.md` - phased implementation plan for ADR 0014 delegated outcome validation and tolerant interface canonicalization
-- `docs/tool-self-awareness-boundary-referral-implementation-plan.md` - phased implementation plan for ADR 0015 dual-lane evolution model (inline correction + out-of-band evolution) with boundary referral and user-correction telemetry
-- `docs/validation-first-fresh-generation-implementation-plan.md` - phased implementation plan for ADR 0016 validation-first fresh-call lifecycle with transactional retries and recoverable guardrail regeneration
-- `docs/generated-code-execution-sandbox-isolation-implementation-plan.md` - phased implementation plan for ADR 0020 execution sandbox isolation and lifecycle integrity regression hardening
-- `docs/structured-conversation-history-implementation-plan.md` - phased implementation plan for ADR 0019 structured conversation history rollout and evidence collection before recursion primitives
-- `docs/external-data-provenance-implementation-plan.md` - phased implementation plan for ADR 0021 external-data provenance invariant across contracts, guardrails, history, and telemetry
-- `docs/guardrail-exhaustion-boundary-normalization-implementation-plan.md` - phased implementation plan for ADR 0022 generic guardrail exhaustion boundary normalization with top-level-only user-facing message stabilization
-- `docs/failed-attempt-exception-telemetry-implementation-plan.md` - phased implementation plan for ADR 0016 augmentation to persist failed-attempt exception diagnostics for repaired fresh calls
+- `docs/plans/README.md` - implementation plan map organized by runtime evolution, boundary hardening, and telemetry/context work
+- `docs/plans/recurgent-implementation-plan.md` - phased implementation plan for LLM-native coordination API and naming transition
+- `docs/plans/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
+- `docs/plans/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
+- `docs/plans/cacheability-pattern-memory-implementation-plan.md` - phased implementation plan for ADR 0013 cacheability-gated artifact reuse and pattern-memory promotion
+- `docs/plans/outcome-boundary-contract-validation-implementation-plan.md` - phased implementation plan for ADR 0014 delegated outcome validation and tolerant interface canonicalization
+- `docs/plans/tool-self-awareness-boundary-referral-implementation-plan.md` - phased implementation plan for ADR 0015 dual-lane evolution model (inline correction + out-of-band evolution) with boundary referral and user-correction telemetry
+- `docs/plans/validation-first-fresh-generation-implementation-plan.md` - phased implementation plan for ADR 0016 validation-first fresh-call lifecycle with transactional retries and recoverable guardrail regeneration
+- `docs/plans/generated-code-execution-sandbox-isolation-implementation-plan.md` - phased implementation plan for ADR 0020 execution sandbox isolation and lifecycle integrity regression hardening
+- `docs/plans/structured-conversation-history-implementation-plan.md` - phased implementation plan for ADR 0019 structured conversation history rollout and evidence collection before recursion primitives
+- `docs/plans/external-data-provenance-implementation-plan.md` - phased implementation plan for ADR 0021 external-data provenance invariant across contracts, guardrails, history, and telemetry
+- `docs/plans/guardrail-exhaustion-boundary-normalization-implementation-plan.md` - phased implementation plan for ADR 0022 generic guardrail exhaustion boundary normalization with top-level-only user-facing message stabilization
+- `docs/plans/failed-attempt-exception-telemetry-implementation-plan.md` - phased implementation plan for ADR 0016 augmentation to persist failed-attempt exception diagnostics for repaired fresh calls
 - `docs/baselines/2026-02-15/README.md` - baseline trace capture instructions and fixtures before artifact persistence rollout
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
