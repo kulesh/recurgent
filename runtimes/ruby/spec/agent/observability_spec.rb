@@ -580,7 +580,7 @@ RSpec.describe Agent, :agent_test_helpers do
                      .and(including("<examples>"))
                      .and(including("delegate("))
                      .and(including("purpose:"))
-                     .and(including("analysis.ok?"))
+                     .and(including("fetched.ok?"))
                      .and(including("unsupported_capability"))
       )
       g.discuss

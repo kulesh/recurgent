@@ -72,7 +72,7 @@ RSpec.describe Agent, :agent_test_helpers do
         code: "result = nil",
         user_prompt: a_string_including("delegate(")
                      .and(including("purpose:"))
-                     .and(including("analysis.ok?"))
+                     .and(including("fetched.ok?"))
                      .and(including("unsupported_capability"))
       )
       g.discuss

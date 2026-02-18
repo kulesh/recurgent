@@ -2,6 +2,16 @@
 
 class Agent
   module Prompting
+    CAPABILITY_HEURISTIC_RULES = [
+      ["http_fetch", /\b(http|https|url|fetch|net::http)\b/],
+      ["rss_parse", /\brss\b/],
+      ["html_extract", /\b(html|scrape|extract|parse)\b/],
+      ["news_headline_extract", /\b(news|headline)\b/],
+      ["movie_listings", /\b(movie|theater|showtime|listing)\b/],
+      ["json_parse", /\bjson\b/],
+      ["text_summarization", /\b(summary|summarize|synthesis)\b/]
+    ].freeze
+
     private
 
     def _tool_schema
@@ -486,10 +496,16 @@ class Agent
       metadata[:purpose] || metadata["purpose"] || "purpose unavailable"
     end
 
-    def _extract_tool_methods(metadata)
+    def _extract_tool_string_list(metadata, key, downcase: false)
       return [] unless metadata.is_a?(Hash)
 
-      Array(metadata[:methods] || metadata["methods"]).map { |name| name.to_s.strip }.reject(&:empty?).uniq
+      list = Array(metadata[key] || metadata[key.to_s]).map { |v| v.to_s.strip }
+      list = list.map(&:downcase) if downcase
+      list.reject(&:empty?).uniq
+    end
+
+    def _extract_tool_methods(metadata)
+      _extract_tool_string_list(metadata, :methods)
     end
 
     def _extract_tool_capabilities(metadata)
@@ -552,34 +568,20 @@ class Agent
     end
 
     def _merge_known_tools_for_prompt(persisted_tools, memory_tools)
-      persisted = _normalized_known_tools_hash(persisted_tools)
-      memory = _normalized_known_tools_hash(memory_tools)
+      persisted = persisted_tools.is_a?(Hash) ? persisted_tools : {}
+      memory = memory_tools.is_a?(Hash) ? memory_tools : {}
       return {} if persisted.empty? && memory.empty?
 
       _merge_known_tool_indexes(persisted, memory)
     end
 
-    def _normalized_known_tools_hash(tools)
-      return {} unless tools.is_a?(Hash)
-
-      tools
-    end
-
     def _merge_known_tool_indexes(persisted, memory)
-      _known_tool_names(persisted, memory).each_with_object({}) do |name, merged|
+      (persisted.keys + memory.keys).map(&:to_s).uniq.each_with_object({}) do |name, merged|
         merged[name] = _merge_known_tool_metadata_for_prompt(
-          _known_tool_metadata_for_name(persisted, name),
-          _known_tool_metadata_for_name(memory, name)
+          persisted[name] || persisted[name.to_sym],
+          memory[name] || memory[name.to_sym]
         )
       end
-    end
-
-    def _known_tool_names(persisted, memory)
-      (persisted.keys + memory.keys).map(&:to_s).uniq
-    end
-
-    def _known_tool_metadata_for_name(tools, name)
-      tools[name] || tools[name.to_sym]
     end
 
     def _merge_known_tool_metadata_for_prompt(persisted_metadata, memory_metadata)
@@ -596,10 +598,7 @@ class Agent
     end
 
     def _explicit_tool_capabilities(metadata)
-      Array(metadata[:capabilities] || metadata["capabilities"])
-        .map { |tag| tag.to_s.strip.downcase }
-        .reject(&:empty?)
-        .uniq
+      _extract_tool_string_list(metadata, :capabilities, downcase: true)
     end
 
     def _heuristic_tool_capability_source_text(metadata)
@@ -613,25 +612,11 @@ class Agent
     end
 
     def _heuristic_tool_capabilities(text)
-      capability_rules = [
-        ["http_fetch", /\b(http|https|url|fetch|net::http)\b/],
-        ["rss_parse", /\brss\b/],
-        ["html_extract", /\b(html|scrape|extract|parse)\b/],
-        ["news_headline_extract", /\b(news|headline)\b/],
-        ["movie_listings", /\b(movie|theater|showtime|listing)\b/],
-        ["json_parse", /\bjson\b/],
-        ["text_summarization", /\b(summary|summarize|synthesis)\b/]
-      ]
-
-      capability_rules
-        .select { |(_, pattern)| text.match?(pattern) }
-        .map(&:first)
+      CAPABILITY_HEURISTIC_RULES.select { |(_, pattern)| text.match?(pattern) }.map(&:first)
     end
 
     def _merge_known_tool_string_lists(persisted, memory, key)
-      left = Array(persisted[key] || persisted[key.to_s]).map { |value| value.to_s.strip }.reject(&:empty?)
-      right = Array(memory[key] || memory[key.to_s]).map { |value| value.to_s.strip }.reject(&:empty?)
-      (left + right).uniq
+      (_extract_tool_string_list(persisted, key) + _extract_tool_string_list(memory, key)).uniq
     end
 
     def _merge_known_tool_intent_signatures(persisted, memory)
@@ -639,205 +624,129 @@ class Agent
     end
 
     def _extract_tool_aliases(metadata)
-      return [] unless metadata.is_a?(Hash)
-
-      Array(metadata[:aliases] || metadata["aliases"]).map { |name| name.to_s.strip }.reject(&:empty?).uniq
+      _extract_tool_string_list(metadata, :aliases)
     end
 
-    # rubocop:disable Metrics/MethodLength
     def _user_prompt_examples(name:, depth:)
       return "" unless _emit_user_prompt_examples?
 
-      case depth
-      when 0
-        <<~EXAMPLES
-          <examples>
-          <pattern kind="stateful_operation">
-          ```ruby
-          context[:value] = context.fetch(:value, 0) + 1
-          result = context[:value]
-          ```
-          </pattern>
+      error_pattern = _capability_error_example(name: name)
+      depth_patterns = case depth
+                       when 0 then _depth_0_example_patterns(name: name)
+                       when 1 then _depth_1_example_patterns
+                       else _worker_example_patterns
+                       end
 
-          <pattern kind="read_only_query">
-          ```ruby
-          result = context.fetch(:value, 0)
-          ```
-          </pattern>
+      <<~EXAMPLES
+        <examples>
+        #{error_pattern}
 
-          <pattern kind="capability_limited_error">
-          ```ruby
-          result = Agent::Outcome.error(
-            error_type: "unsupported_capability",
-            error_message: "Required capability is unavailable in this runtime.",
-            retriable: false,
-            tool_role: @role,
-            method_name: "#{name}"
-          )
-          ```
-          </pattern>
-
-          <pattern kind="delegation_with_contract">
-          ```ruby
-          tool = delegate(
-            "analyst",
-            purpose: "analyze context data and return concise findings",
-            deliverable: { type: "object", required: ["summary"] },
-            acceptance: [{ assert: "summary is present" }],
-            failure_policy: { on_error: "return_error" }
-          )
-          analysis = tool.summarize(context[:data])
-          result = analysis.ok? ? analysis.value : "analysis failed: \#{analysis.error_type}"
-          ```
-          </pattern>
-
-          <pattern kind="forge_reusable_capability">
-          ```ruby
-          # Depth 0: general capability recognized as reusable, so Forge.
-          web_fetcher = delegate(
-            "web_fetcher",
-            purpose: "fetch and parse content from urls",
-            deliverable: { type: "object", required: ["status", "body"] },
-            acceptance: [{ assert: "status and body are present" }],
-            failure_policy: { on_error: "return_error" }
-          )
-          fetched = web_fetcher.fetch_url("https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en")
-          result = fetched.ok? ? fetched.value : Agent::Outcome.error(
-            error_type: fetched.error_type,
-            error_message: fetched.error_message,
-            retriable: fetched.retriable,
-            tool_role: @role,
-            method_name: "#{name}"
-          )
-          ```
-          </pattern>
-
-          <pattern kind="external_data_success_with_provenance">
-          ```ruby
-          fetcher = tool("web_fetcher")
-          fetched = fetcher.fetch_url("https://example.com/feed")
-          if fetched.ok?
-            payload = fetched.value
-            stories = payload[:items] || payload["items"] || []
-            result = Agent::Outcome.ok(
-              data: stories,
-              provenance: {
-                sources: [
-                  {
-                    uri: "https://example.com/feed",
-                    fetched_at: Time.now.utc.iso8601,
-                    retrieval_tool: "web_fetcher",
-                    retrieval_mode: "live"
-                  }
-                ]
-              }
-            )
-          else
-            result = Agent::Outcome.error(
-              error_type: fetched.error_type,
-              error_message: fetched.error_message,
-              retriable: fetched.retriable,
-              tool_role: @role,
-              method_name: "#{name}"
-            )
-          end
-          ```
-          </pattern>
-
-          <pattern kind="reuse_known_tool">
-          ```ruby
-          # Query full registry metadata from context[:tools], then materialize the best-fit tool.
-          # `capabilities` are optional hints; fall back to purpose/method reasoning when tags are absent.
-          registry = context[:tools] || {}
-          candidate_name, _candidate_meta = registry.max_by do |_tool_name, metadata|
-            caps = Array(metadata[:capabilities] || metadata["capabilities"]).map { |tag| tag.to_s.downcase }
-            purpose = (metadata[:purpose] || metadata["purpose"]).to_s.downcase
-            methods = Array(metadata[:methods] || metadata["methods"]).map { |m| m.to_s.downcase }
-            deliverable = (metadata[:deliverable] || metadata["deliverable"]).inspect.downcase
-            score = 0
-            score += 3 if caps.include?("http_fetch")
-            score += 2 if methods.any? { |m| m.include?("fetch") || m.include?("url") }
-            score += 1 if purpose.match?(/\b(fetch|http|https|url)\b/)
-            score += 1 if deliverable.match?(/\bbody\b/)
-            score
-          end
-          chosen_tool = candidate_name || "web_fetcher"
-          web_fetcher = tool(chosen_tool)
-          fetched = web_fetcher.fetch_url("https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en")
-          if fetched.ok?
-            payload = fetched.value
-            result = payload[:content] || payload["content"] || payload
-          else
-            result = Agent::Outcome.error(
-              error_type: fetched.error_type,
-              error_message: fetched.error_message,
-              retriable: fetched.retriable,
-              tool_role: @role,
-              method_name: "#{name}"
-            )
-          end
-          ```
-          </pattern>
-          </examples>
-        EXAMPLES
-      when 1
-        <<~EXAMPLES
-          <examples>
-          <pattern kind="direct_execution_default">
-          ```ruby
-          # Depth 1 default: do the work directly unless contract demands reusable publication.
-          value = kwargs.fetch(:value, args.first)
-          result = value.to_s.strip
-          ```
-          </pattern>
-
-          <pattern kind="local_shape_pattern">
-          ```ruby
-          # Local shape: extract a small helper pattern for this call only.
-          normalize = ->(text) { text.to_s.downcase.strip }
-          result = normalize.call(kwargs.fetch(:query, args.first))
-          ```
-          </pattern>
-
-          <pattern kind="capability_limited_error">
-          ```ruby
-          result = Agent::Outcome.error(
-            error_type: "unsupported_capability",
-            error_message: "Required capability is unavailable in this runtime.",
-            retriable: false,
-            tool_role: @role,
-            method_name: "#{name}"
-          )
-          ```
-          </pattern>
-          </examples>
-        EXAMPLES
-      else
-        <<~EXAMPLES
-          <examples>
-          <pattern kind="worker_direct_execution">
-          ```ruby
-          # Worker mode: execute directly and return.
-          result = args.first
-          ```
-          </pattern>
-
-          <pattern kind="capability_limited_error">
-          ```ruby
-          result = Agent::Outcome.error(
-            error_type: "unsupported_capability",
-            error_message: "Required capability is unavailable in this runtime.",
-            retriable: false,
-            tool_role: @role,
-            method_name: "#{name}"
-          )
-          ```
-          </pattern>
-          </examples>
-        EXAMPLES
-      end
+        #{depth_patterns}
+        </examples>
+      EXAMPLES
     end
-    # rubocop:enable Metrics/MethodLength
+
+    def _capability_error_example(name:)
+      <<~PATTERN.chomp
+        <pattern kind="capability_limited_error">
+        ```ruby
+        result = Agent::Outcome.error(
+          error_type: "unsupported_capability",
+          error_message: "Required capability is unavailable in this runtime.",
+          retriable: false,
+          tool_role: @role,
+          method_name: "#{name}"
+        )
+        ```
+        </pattern>
+      PATTERN
+    end
+
+    def _depth_0_example_patterns(name:)
+      <<~PATTERNS.chomp
+        <pattern kind="stateful_operation">
+        ```ruby
+        context[:value] = context.fetch(:value, 0) + 1
+        result = context[:value]
+        ```
+        </pattern>
+
+        <pattern kind="read_only_query">
+        ```ruby
+        result = context.fetch(:value, 0)
+        ```
+        </pattern>
+
+        <pattern kind="delegation_with_forge">
+        ```ruby
+        # Depth 0: general capability → Forge a reusable tool via delegation with contract.
+        fetcher = delegate(
+          "web_fetcher",
+          purpose: "fetch and parse content from urls",
+          deliverable: { type: "object", required: ["status", "body"] },
+          acceptance: [{ assert: "status and body are present" }],
+          failure_policy: { on_error: "return_error" }
+        )
+        fetched = fetcher.fetch_url("https://example.com/api")
+        result = fetched.ok? ? fetched.value : Agent::Outcome.error(
+          error_type: fetched.error_type, error_message: fetched.error_message,
+          retriable: fetched.retriable, tool_role: @role, method_name: "#{name}"
+        )
+        ```
+        </pattern>
+
+        <pattern kind="external_data_success_with_provenance">
+        ```ruby
+        fetcher = tool("web_fetcher")
+        fetched = fetcher.fetch_url("https://example.com/feed")
+        if fetched.ok?
+          items = fetched.value[:items] || fetched.value["items"] || []
+          result = Agent::Outcome.ok(
+            data: items,
+            provenance: { sources: [{ uri: "https://example.com/feed", fetched_at: Time.now.utc.iso8601,
+                                       retrieval_tool: "web_fetcher", retrieval_mode: "live" }] }
+          )
+        else
+          result = Agent::Outcome.error(
+            error_type: fetched.error_type, error_message: fetched.error_message,
+            retriable: fetched.retriable, tool_role: @role, method_name: "#{name}"
+          )
+        end
+        ```
+        </pattern>
+      PATTERNS
+    end
+
+    def _depth_1_example_patterns
+      <<~PATTERNS.chomp
+        <pattern kind="direct_execution_default">
+        ```ruby
+        # Depth 1 default: do the work directly unless contract demands reusable publication.
+        value = kwargs.fetch(:value, args.first)
+        result = value.to_s.strip
+        ```
+        </pattern>
+
+        <pattern kind="local_shape_pattern">
+        ```ruby
+        # Local shape: extract a small helper pattern for this call only.
+        normalize = ->(text) { text.to_s.downcase.strip }
+        result = normalize.call(kwargs.fetch(:query, args.first))
+        ```
+        </pattern>
+      PATTERNS
+    end
+
+    def _worker_example_patterns
+      <<~PATTERNS.chomp
+        <pattern kind="worker_direct_execution">
+        ```ruby
+        # Worker mode: execute directly and return.
+        result = args.first
+        ```
+        </pattern>
+      PATTERNS
+    end
 
     def _active_contract_user_prompt
       return "" unless @delegation_contract
