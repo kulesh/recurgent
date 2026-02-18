@@ -36,4 +36,4 @@ Layout/LineLength:
 
 Security/Eval:
   Exclude:
-    - "lib/recurgent.rb"
+    - "lib/recurgent/worker_entrypoint.rb"

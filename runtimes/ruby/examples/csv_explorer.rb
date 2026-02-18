@@ -3,7 +3,7 @@
 
 require_relative "../lib/recurgent"
 
-MODEL = "gpt-5.2-codex"
+MODEL = Agent::DEFAULT_MODEL
 FILE = File.expand_path("data/sales_2024.csv", __dir__)
 
 puts "=== CSV Explorer ==="
