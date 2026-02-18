@@ -11,6 +11,7 @@ bundle exec rubocop
 bundle exec rake
 ./bin/recurgent
 ruby examples/calculator.rb
+ruby examples/debate.rb
 ```
 
 ## Structure
