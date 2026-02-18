@@ -101,21 +101,21 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 
 ## 10. Release Artifact and Versioning
 
-- [ ] Decide and tag first public version (for example `v0.1.0`).
+- [x] Decide and tag first public version (for example `v0.1.0`).
 - [x] Ensure `CHANGELOG.md` has release notes for initial public release.
 - [x] Ensure runtime gem metadata links are valid (`homepage`, `source_code_uri`, `changelog_uri`).
 - [x] Confirm release process doc aligns with actual tagging and publishing commands.
-- [ ] Prepare release notes with:
-  - [ ] what is stable
-  - [ ] what is experimental
-  - [ ] migration notes (if any)
+- [x] Prepare release notes with:
+  - [x] what is stable
+  - [x] what is experimental
+  - [x] migration notes (if any)
 
 ## 11. Launch Day Checklist
 
 - [ ] Run final clean-room setup using onboarding docs.
 - [x] Run full tests/lint one final time on clean tree.
 - [ ] Verify examples used in README run without manual patching.
-- [ ] Publish release/tag.
+- [x] Publish release/tag.
 - [ ] Announce with clear expectations and known limitations.
 - [ ] Monitor first 24h issues and discussions.
 
@@ -150,6 +150,7 @@ Completed locally on 2026-02-18:
   - GitHub Dependabot vulnerability alerts enabled for the repository.
   - Branch protection enforces required checks: `Ruby test and lint`, `Enforce PR template and issue-first policy`, `bundler-audit`, `gitleaks`.
   - Secret scanning and code scanning still require repository visibility/licensing changes (tracked in Section 9 and Section 7).
+  - `v0.1.0` tag and release published: `https://github.com/kulesh/recurgent/releases/tag/v0.1.0`.
 
 ## Suggested Operating Rule
 
