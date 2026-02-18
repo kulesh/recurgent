@@ -30,8 +30,8 @@ class Agent
       @agent.remember(**entries)
     end
 
-    def memory
-      @agent.memory
+    def runtime_context
+      @agent.runtime_context
     end
 
     # Runtime shims consumed by wrapped generated code.

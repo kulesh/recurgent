@@ -48,6 +48,7 @@ class Agent
         #{decomposition_nudge}
 
         You have access to 'context' (a Hash) to store and retrieve data.
+        Treat `context` as your working memory.
         Tool registry is available at `context[:tools]` as metadata (authoritative + complete).
         Every dynamic call returns an Outcome object to the caller.
         #{known_tools}
@@ -283,6 +284,11 @@ class Agent
         - Writing to context is internal memory only, not an external side effect.
         - Be truthful and capability-accurate; never claim an action occurred unless this code actually performed it.
         - You can access and modify context to store persistent data.
+        - State-key continuity rule:
+            1. If context already has a key for the same semantic state, reuse that key.
+            2. If no scalar accumulator key exists yet, default to `context[:value]`.
+            3. Do not create parallel scalar aliases (for example `:memory`, `:accumulator`, `:calculator_value`) for the same state unless explicitly required.
+            4. Setter/readback coherence: if caller sets `obj.foo = x`, prefer `context[:foo]` for that semantic state.
         - `context[:tools]` is a Hash keyed by tool name; each value is tool metadata (purpose, methods, capabilities, stats).
         - For registry checks, prefer `context[:tools].key?("tool_name")` or `context[:tools].each do |tool_name, metadata| ... end`.
         - `context[:conversation_history]` is available as a structured Array of prior call records; prefer direct Ruby filtering/querying when needed.

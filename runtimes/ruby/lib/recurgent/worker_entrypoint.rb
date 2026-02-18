@@ -60,6 +60,7 @@ while (line = $stdin.gets)
     args = _deep_symbolize(request["args"] || [])
     kwargs = _deep_symbolize(request["kwargs"] || {})
     context = _deep_symbolize(request["context_snapshot"] || {})
+    memory = context
     result = nil
 
     previous_outcome_context = Thread.current[Agent::OUTCOME_CONTEXT_KEY]

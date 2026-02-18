@@ -26,6 +26,10 @@ puts "-> calc.multiply(4)"
 puts calc.multiply(4)
 puts
 
+puts "--> calc.sqrt(calc.memory)"
+puts calc.sqrt(calc.memory)
+puts
+
 puts "-> calc.memory"
 puts calc.memory
 puts
