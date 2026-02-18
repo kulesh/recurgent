@@ -4,6 +4,8 @@
 
 Recurgent doesn't produce code. It produces a tool-building organism that produces code. You give it a role and an environment. It discovers what tools it needs, builds them, and gets better over time.
 
+#### A Calculator
+
 ```ruby
 calc = Agent.for("calculator")
 
@@ -18,25 +20,7 @@ calc.history                                       # => [all of the above]
 
 You didn't define `add`, `sqrt`, `convert`, or `solve`. There's no spec, no schema, no tool registration. The runtime synthesized behavior at call time, tracked state across calls, validated the results, and persisted stable implementations for reuse. Next time you call `calc.add`, it doesn't regenerate — it reuses what worked.
 
-## What Happens Under the Hood
-
-1. You call an `Agent` method naturally.
-2. The runtime synthesizes behavior — code, contracts, even other agents.
-3. Recurgent executes in a sandbox, validates outcomes, and logs traces.
-4. Useful behavior is persisted and reused on future calls.
-5. Failures trigger repair and evolution — not silent drift.
-
-The output isn't a program. It's a living registry of capabilities, shaped by health metrics, contracts, failure histories, and evolutionary pressure. What works survives. What doesn't gets repaired or replaced.
-
-## Who This Is For
-
-Recurgent is for developers building agents where you **don't have a spec upfront**. You have a role — "research assistant," "personal assistant," "data pipeline manager" — and an environment. You want the system to discover what capabilities it needs through real work, and you want those capabilities to persist and improve across sessions.
-
-If you're tired of hand-wiring tool definitions for every agent, or if you want agents that get meaningfully better the more you use them, this is the runtime for that.
-
-## It Gets Wilder
-
-### Personal Assistant with Conversation Memory
+#### Personal Assistant with Conversation Memory
 
 ```ruby
 assistant = Agent.for(
@@ -53,6 +37,36 @@ puts src.value
 ```
 
 Conversation state persists across calls. Source follow-ups resolve from concrete references when available — when they're not, the agent returns an explicit unknown instead of fabricating provenance.
+
+#### Agents That Spawn Other Agents
+
+```ruby
+debate = Agent.for("philosophy_symposium_host", verbose: true)
+
+puts debate.host(
+  question: "What is the good life?",
+  thinkers: [
+    "Stoic philosopher in the tradition of Marcus Aurelius",
+    "Epicurean philosopher in the tradition of Epicurus",
+    "Existentialist in the tradition of Simone de Beauvoir"
+  ],
+  rounds: 3
+)
+
+puts debate.debate_takeaways(10)
+```
+
+You defined a host and a question. Recurgent created three philosopher agents, gave each a contract (take a position, engage the others' claims), ran three rounds of structured debate where arguments sharpened against each other's actual responses, and synthesized takeaways. You didn't orchestrate any of that. The runtime figured out the delegation pattern, the turn structure, and the accumulation of conversational history on its own.
+
+## What Happens Under the Hood
+
+1. You call an `Agent` method naturally.
+2. The runtime synthesizes behavior — code, contracts, even other agents.
+3. Recurgent executes in a sandbox, validates outcomes, and logs traces.
+4. Useful behavior is persisted and reused on future calls.
+5. Failures trigger repair and evolution — not silent drift.
+
+The output isn't a program. It's a living registry of capabilities, shaped by health metrics, contracts, failure histories, and evolutionary pressure. What works survives. What doesn't gets repaired or replaced.
 
 ### Agents That Build Their Own Tools
 
@@ -73,25 +87,15 @@ puts result.ok?
 
 The runtime decided it needed a specialized tool, wrote the contract (what it should accept, what it should return, how to handle failure), generated the implementation, and validated the results. The `web_fetcher` now exists in the registry — tested, typed, and available for reuse by any agent that needs it. Tools that meet their contracts survive. Tools that don't get repaired or replaced.
 
-### Agents That Spawn Other Agents
+_(Pardon the sensational writing below. I need to clean this up.)_
 
-```ruby
-debate = Agent.for("philosophy_symposium_host", verbose: true)
+---
 
-puts debate.host(
-  question: "What is the good life?",
-  thinkers: [
-    "Stoic philosopher in the tradition of Marcus Aurelius",
-    "Epicurean philosopher in the tradition of Epicurus",
-    "Existentialist in the tradition of Simone de Beauvoir"
-  ],
-  rounds: 3
-)
+## Who This Is For
 
-puts debate.debate_takeaways(10)
-```
+Recurgent is for developers building agents where you **don't have a spec upfront**. You have a role — "research assistant," "personal assistant," "data pipeline manager" — and an environment. You want the system to discover what capabilities it needs through real work, and you want those capabilities to persist and improve across sessions.
 
-You defined a host and a question. Recurgent created three philosopher agents, gave each a contract (take a position, engage the others' claims), ran three rounds of structured debate where arguments sharpened against each other's actual responses, and synthesized takeaways. You didn't orchestrate any of that. The runtime figured out the delegation pattern, the turn structure, and the accumulation of conversational history on its own.
+If you're tired of hand-wiring tool definitions for every agent, or if you want agents that get meaningfully better the more you use them, this is the runtime for that.
 
 ## Quickstart
 
@@ -172,3 +176,4 @@ specs/    # runtime-agnostic contract specs
 - RLMs - https://alexzhang13.github.io/blog/2025/rlm/
 - gremllm - https://github.com/awwaiid/gremllm
 - Agentica - https://github.com/symbolica-ai/arcgentica
+- SkillsBench: Benchmarking How Well Agent Skills Work Across Diverse Tasks - https://arxiv.org/abs/2602.12670
