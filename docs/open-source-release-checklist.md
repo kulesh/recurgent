@@ -1,6 +1,6 @@
 # Open Source Release Checklist
 
-Status date: 2026-02-14
+Status date: 2026-02-18
 Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua runtime scaffolded)
 
 ## 1. Product Positioning and Scope
@@ -19,7 +19,7 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 - [x] `SUPPORT.md` present.
 - [x] Verify copyright and year are correct everywhere.
 - [x] Confirm all example snippets are safe to distribute publicly (no proprietary content/API secrets).
-- [ ] Confirm repository has no trademark-sensitive or third-party restricted assets.
+- [x] Confirm repository has no trademark-sensitive or third-party restricted assets.
 
 ## 3. Repository Hygiene
 
@@ -72,7 +72,7 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 - [x] CI workflow present for tests/lint.
 - [x] Security workflow present (dependency review, bundler audit, secret scanning).
 - [x] Dependabot config present.
-- [ ] CI required checks are enforced via branch protection.
+- [x] CI required checks are enforced via branch protection.
 - [ ] Security scanning alerts are empty or triaged.
 - [x] Dependency update policy is documented and operational.
 
@@ -85,19 +85,19 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 - [x] Stale workflow present.
 - [x] Maintainer triage playbook includes bot/low-value PR handling criteria.
 - [x] PR compliance messaging clearly references `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
-- [ ] Labels are configured in repo (`ready-for-pr`, `accepted`, `good first issue`, `help wanted`).
+- [x] Labels are configured in repo (`ready-for-pr`, `accepted`, `good first issue`, `help wanted`).
 
 ## 9. GitHub Repository Settings (Manual)
 
-- [ ] Branch protection on `main`:
-  - [ ] require PR reviews
-  - [ ] require status checks (`CI`, `PR Compliance`, `Security`)
-  - [ ] dismiss stale approvals on new commits
-  - [ ] block force pushes and deletions
+- [x] Branch protection on `main`:
+  - [x] require PR reviews
+  - [x] require status checks (`CI`, `PR Compliance`, `Security`)
+  - [x] dismiss stale approvals on new commits
+  - [x] block force pushes and deletions
 - [ ] Enable private vulnerability reporting.
-- [ ] Set repository description and topics.
+- [x] Set repository description and topics.
 - [ ] Enable Discussions (optional, but recommended for usage questions).
-- [ ] Configure default issue/PR labels and triage permissions.
+- [x] Configure default issue/PR labels and triage permissions.
 
 ## 10. Release Artifact and Versioning
 
@@ -134,11 +134,11 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 
 ## Local Verification Notes
 
-Completed locally on 2026-02-14:
+Completed locally on 2026-02-18:
 
 - Runtime checks:
-  - `cd runtimes/ruby && mise exec -- bundle exec rspec` (`91 examples, 0 failures`)
-  - `cd runtimes/ruby && mise exec -- bundle exec rubocop` (clean)
+  - `cd runtimes/ruby && bundle exec rspec` (`238 examples, 0 failures`)
+  - `cd runtimes/ruby && bundle exec rubocop` (clean)
   - `cd runtimes/ruby && mise exec -- ruby examples/observability_demo.rb` (tolerant failure behavior validated)
 - Documentation/link checks:
   - `docs/index.md` file references resolved locally (no missing file paths)
@@ -146,8 +146,10 @@ Completed locally on 2026-02-14:
   - Purged local `.beads/` state.
   - Removed generated article artifacts from `runtimes/ruby/`.
   - Added ignore rules for generated article outputs in `.gitignore`.
-- Security scan note:
-  - `gitleaks` CLI not installed locally in this environment; workflow exists in CI but local gitleaks run remains pending.
+- Security automation notes:
+  - GitHub Dependabot vulnerability alerts enabled for the repository.
+  - Branch protection enforces required checks: `Ruby test and lint`, `Enforce PR template and issue-first policy`, `bundler-audit`, `gitleaks`.
+  - Secret scanning and code scanning still require repository visibility/licensing changes (tracked in Section 9 and Section 7).
 
 ## Suggested Operating Rule
 

@@ -235,6 +235,82 @@ RSpec.describe Agent do
       expect_ok_outcome(g.fetch, value: { status: 200, content: "ok" })
     end
 
+    it "merges kwargs into positional hash value in Agent::Outcome.ok" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          result = Agent::Outcome.ok(
+            { data: [{ title: "Story" }] },
+            provenance: {
+              sources: [
+                {
+                  uri: "https://example.com/feed",
+                  fetched_at: "2026-02-16T00:00:00Z",
+                  retrieval_tool: "web_fetcher",
+                  retrieval_mode: "live"
+                }
+              ]
+            }
+          )
+        RUBY
+      )
+
+      expect_ok_outcome(
+        g.fetch,
+        value: {
+          data: [{ title: "Story" }],
+          provenance: {
+            sources: [
+              {
+                uri: "https://example.com/feed",
+                fetched_at: "2026-02-16T00:00:00Z",
+                retrieval_tool: "web_fetcher",
+                retrieval_mode: "live"
+              }
+            ]
+          }
+        }
+      )
+    end
+
+    it "merges kwargs into value: hash in Agent::Outcome.ok" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          result = Agent::Outcome.ok(
+            value: { data: [{ title: "Story" }] },
+            provenance: {
+              sources: [
+                {
+                  uri: "https://example.com/feed",
+                  fetched_at: "2026-02-16T00:00:00Z",
+                  retrieval_tool: "web_fetcher",
+                  retrieval_mode: "live"
+                }
+              ]
+            }
+          )
+        RUBY
+      )
+
+      expect_ok_outcome(
+        g.fetch,
+        value: {
+          data: [{ title: "Story" }],
+          provenance: {
+            sources: [
+              {
+                uri: "https://example.com/feed",
+                fetched_at: "2026-02-16T00:00:00Z",
+                retrieval_tool: "web_fetcher",
+                retrieval_mode: "live"
+              }
+            ]
+          }
+        }
+      )
+    end
+
     it "fills tool context for Agent::Outcome.error when tool_role/method_name are omitted" do
       g = described_class.new("assistant")
       stub_llm_response(<<~RUBY)

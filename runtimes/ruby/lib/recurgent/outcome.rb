@@ -184,6 +184,7 @@ class Agent
     end
 
     def self._resolve_ok_value(value:, extra:)
+      return value.merge(extra) if value.is_a?(Hash) && !extra.empty?
       return value unless value.nil? && !extra.empty?
 
       extra
