@@ -17,6 +17,10 @@ This directory contains phased implementation plans that operationalize ADRs and
 - `contract-driven-utility-failures-implementation-plan.md` - utility semantics at contract boundary
 - `guardrail-exhaustion-boundary-normalization-implementation-plan.md` - top-level guardrail exhaustion normalization
 
+## Structural and Philosophy Adherence
+
+- `philosophy-adherence-implementation-plan.md` - module consolidation, test decomposition, prompt tightening, defect fixes
+
 ## Context, Execution, and Telemetry
 
 - `structured-conversation-history-implementation-plan.md` - structured history-first rollout
