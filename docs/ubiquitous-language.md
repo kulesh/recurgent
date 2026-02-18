@@ -68,4 +68,22 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - `Agent.for(...)`: bootstrap a top-level Tool Builder or an intentionally independent agent session.
 - `tool_builder.delegate(...)`: summon Tools during active solving while inheriting Tool Builder runtime contract.
 
+## Reserved Runtime Method Surface (Ruby)
+
+These method names are runtime primitives on `Agent` and do not flow through dynamic dispatch:
+
+- `tool`
+- `delegate`
+- `remember`
+- `runtime_context`
+- `to_s`
+- `inspect`
+- `define_singleton_method` (guardrail)
+
+Guidance:
+
+- Generated/runtime-evolving tool code should use `context[...]` for state, not host method names.
+- Treat `context` as working memory; if model priors prefer `memory`, use local aliasing (`memory = context`) inside generated execution scope only.
+- Avoid introducing new public `Agent` methods unless necessary; each new method name shrinks dynamic method namespace.
+
 See `docs/delegate-vs-for.md` for scenario-level guidance.

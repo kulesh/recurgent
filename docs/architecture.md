@@ -35,6 +35,29 @@ Recurgent is designed for reliable emergence:
 3. Validation before execution retries.
 4. Observability as a first-class runtime product.
 
+### Dynamic Dispatch Boundary (Ruby)
+
+`method_missing` is the dynamic call boundary. Calls bypass dynamic generation when method names are explicitly defined on `Agent`.
+
+Current explicit `Agent` method surface:
+
+- `tool`
+- `delegate`
+- `remember`
+- `runtime_context`
+- `to_s`
+- `inspect`
+- `define_singleton_method` (guardrail)
+
+Execution-wrapper locals for generated code:
+
+- `context` is the canonical mutable state surface.
+- `memory` is a local alias to `context` in execution wrappers (sandbox + worker) to absorb model priors without adding host method collisions.
+
+Design invariant:
+
+- Keep public `Agent` method surface narrow; preserve dynamic namespace for emergent domain methods.
+
 ## Component Map
 
 ```mermaid
@@ -244,4 +267,3 @@ For rationale and tradeoffs:
 For phased execution detail:
 
 - see `docs/plans/`.
-
