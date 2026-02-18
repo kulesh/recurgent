@@ -117,6 +117,7 @@ bundle install
 cd runtimes/ruby
 ./bin/recurgent
 ruby examples/assistant.rb
+ruby examples/debate.rb
 ```
 
 ### Verify
