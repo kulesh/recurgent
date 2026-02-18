@@ -165,6 +165,9 @@ class Agent
     input_sensitive = _input_baked_into_code?(code, args: args, kwargs: kwargs)
     return _cacheability(false, "input_baked_code", input_sensitive: true) if input_sensitive
 
+    arg_ignored = _input_args_ignored?(code, args: args, kwargs: kwargs)
+    return _cacheability(false, "arg_ignored_code", input_sensitive: true) if arg_ignored
+
     return _cacheability(true, "delegated_contract_tool", input_sensitive: false) unless @delegation_contract.nil?
 
     _cacheability(true, "stable_method_default", input_sensitive: false)
@@ -181,25 +184,42 @@ class Agent
     _input_literals(args: args, kwargs: kwargs).any? { |literal| !literal.empty? && code.include?(literal) }
   end
 
+  def _input_args_ignored?(code, args:, kwargs:)
+    return false if Array(args).empty? && kwargs.empty?
+    return false if code.match?(/\bargs\b|\bkwargs\b/)
+
+    code.match?(/(?:\bcontext\b|\bmemory\b)\s*\[/)
+  end
+
   def _input_literals(args:, kwargs:)
     values = Array(args) + kwargs.values
     values.flat_map { |value| _literal_candidates(value) }.reject(&:empty?).uniq
   end
 
   def _literal_candidates(value)
+    unwrapped = value.is_a?(Agent::Outcome) ? value.value : value
+    collection = _nested_literal_candidates(unwrapped)
+    return collection unless collection.nil?
+
+    literal = _scalar_literal(unwrapped)
+    return [] if literal.nil? || literal.empty?
+
+    [literal]
+  end
+
+  def _nested_literal_candidates(value)
+    return value.flat_map { |item| _literal_candidates(item) } if value.is_a?(Array)
+    return value.values.flat_map { |item| _literal_candidates(item) } if value.is_a?(Hash)
+
+    nil
+  end
+
+  def _scalar_literal(value)
     case value
-    when Agent::Outcome
-      _literal_candidates(value.value)
-    when Array
-      value.flat_map { |item| _literal_candidates(item) }
-    when Hash
-      value.values.flat_map { |item| _literal_candidates(item) }
     when String
-      [value.strip]
+      value.strip
     when Symbol, Integer, Float, TrueClass, FalseClass
-      [value.to_s]
-    else
-      []
+      value.to_s
     end
   end
 

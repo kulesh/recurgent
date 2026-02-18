@@ -19,19 +19,22 @@ calc.memory = 5
 puts
 
 puts "-> calc.add(3)"
-puts calc.add(3)
+add_outcome = calc.add(3)
+puts add_outcome
 puts
 
 puts "-> calc.multiply(4)"
-puts calc.multiply(4)
+multiply_outcome = calc.multiply(4)
+puts multiply_outcome
 puts
 
-puts "--> calc.sqrt(calc.memory)"
-puts calc.sqrt(calc.memory)
+puts "-> calc.sqrt(latest_result)"
+latest_result = multiply_outcome.value
+puts calc.sqrt(latest_result)
 puts
 
-puts "-> calc.memory"
-puts calc.memory
+puts "-> calc.runtime_context[:memory] || calc.runtime_context[:value]"
+puts(calc.runtime_context[:memory] || calc.runtime_context[:value])
 puts
 
 puts "-> calc.sqrt(144)"
@@ -51,4 +54,7 @@ puts calc.solve("2x + 5 = 17")
 puts
 
 puts "-> calc.history"
-puts calc.history.inspect
+history_outcome = calc.history
+history_value = history_outcome.ok? ? history_outcome.value : nil
+history_value ||= calc.runtime_context[:conversation_history]
+puts history_value.inspect
