@@ -174,7 +174,7 @@ scenarios:
   - id: introspection.respond_to_contract
     verifies:
       - respond_to true for setter-like names
-      - respond_to true for memory-backed reader after assignment
+      - respond_to true for runtime-context-backed reader after assignment
       - respond_to false for unknown dynamic methods
     steps:
       - op: construct
@@ -200,7 +200,7 @@ scenarios:
   - id: logging.default_and_debug_fields
     verifies:
       - default log entry fields exist
-      - debug mode adds prompt and memory snapshot fields
+      - debug mode adds prompt and runtime context snapshot fields
     provider_plan:
       increment: increment_value_by_arg0
     steps:

@@ -26,18 +26,18 @@ The keywords MUST, SHOULD, and MAY are normative.
 
 ## 4. Coordination Primitives
 
-1. `remember(**entries)` MUST write each entry into agent memory and return the same agent instance.
-2. `memory` MUST expose the current memory map for that instance.
+1. `remember(**entries)` MUST write each entry into agent runtime context and return the same agent instance.
+2. `runtime_context` MUST expose the current mutable runtime context map for that instance.
 3. `delegate(role, **opts)` MUST return a new agent for the given role.
 4. `delegate` MUST inherit runtime settings from parent unless overridden in `opts`.
 
 ## 5. Dynamic Dispatch
 
-1. Setter-like calls (`name=`) MUST write directly to memory for key `name`.
+1. Setter-like calls (`name=`) MUST write directly to runtime context key `name`.
 2. Setter-like calls MUST bypass provider code generation.
 3. Non-setter missing methods MUST route through provider generation + execution.
 4. Generated execution context MUST support:
-   - persistent memory access
+   - persistent runtime context access
    - positional args
    - keyword args (or runtime-equivalent named args)
    - recursive agent creation/delegation
@@ -45,7 +45,7 @@ The keywords MUST, SHOULD, and MAY are normative.
 ## 6. Introspection Semantics
 
 1. `respond_to?` (or runtime-equivalent) MUST report true for setter-like names.
-2. It MUST report true for memory-backed readers after assignment.
+2. It MUST report true for runtime-context-backed readers after assignment.
 3. It MUST report false for unknown dynamic methods not yet memory-backed.
 
 ## 7. Error Contract
@@ -79,7 +79,7 @@ When debug logging is enabled, entry MUST additionally include:
 
 - system prompt/instructions
 - user prompt/request
-- memory snapshot after execution attempt
+- runtime context snapshot after execution attempt
 
 Logging failures MUST NOT break user-facing execution flow.
 

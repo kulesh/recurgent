@@ -87,10 +87,6 @@ puts result.ok?
 
 The runtime decided it needed a specialized tool, wrote the contract (what it should accept, what it should return, how to handle failure), generated the implementation, and validated the results. The `web_fetcher` now exists in the registry — tested, typed, and available for reuse by any agent that needs it. Tools that meet their contracts survive. Tools that don't get repaired or replaced.
 
-_(Pardon the sensational writing below. I need to clean this up.)_
-
----
-
 ## Who This Is For
 
 Recurgent is for developers building agents where you **don't have a spec upfront**. You have a role — "research assistant," "personal assistant," "data pipeline manager" — and an environment. You want the system to discover what capabilities it needs through real work, and you want those capabilities to persist and improve across sessions.
@@ -163,6 +159,20 @@ specs/    # runtime-agnostic contract specs
 - `docs/adrs/README.md` - design decisions and rationale
 - `docs/plans/README.md` - implementation plan map
 - `runtimes/ruby/README.md` - Ruby runtime quick reference
+
+## FAQ
+
+### Why do examples use `runtime_context`?
+
+`runtime_context` is the canonical public state surface. Generated code may still use local `memory = context` aliases inside execution wrappers, but host-side read/write is standardized on `runtime_context`.
+
+### Where are logs and persisted tool artifacts stored?
+
+By default they are written under `$XDG_STATE_HOME/recurgent` (or `~/.local/state/recurgent` when `XDG_STATE_HOME` is unset). Set `XDG_STATE_HOME` to isolate runs per phase/environment.
+
+### Can I run this without committing to one model provider?
+
+Yes. Anthropic and OpenAI are both supported. Routing is automatic by model name prefix, or explicit via `provider:`.
 
 ## Community and Policy
 

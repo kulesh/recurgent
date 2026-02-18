@@ -7,15 +7,15 @@ Gem::Specification.new do |spec|
   spec.description = "LLM-powered objects that intercept all method calls, " \
                      "ask an LLM what Ruby code to execute, then eval the response."
   spec.authors = ["Kulesh Shanmugasundaram"]
-  spec.homepage = "https://github.com/kulesh/actuator"
+  spec.homepage = "https://github.com/kulesh/recurgent"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/kulesh/actuator"
-  spec.metadata["changelog_uri"] = "https://github.com/kulesh/actuator/blob/main/CHANGELOG.md"
-  spec.metadata["documentation_uri"] = "https://github.com/kulesh/actuator/blob/main/README.md"
-  spec.metadata["bug_tracker_uri"] = "https://github.com/kulesh/actuator/issues"
+  spec.metadata["source_code_uri"] = "https://github.com/kulesh/recurgent"
+  spec.metadata["changelog_uri"] = "https://github.com/kulesh/recurgent/blob/main/CHANGELOG.md"
+  spec.metadata["documentation_uri"] = "https://github.com/kulesh/recurgent/blob/main/README.md"
+  spec.metadata["bug_tracker_uri"] = "https://github.com/kulesh/recurgent/issues"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = Dir["lib/**/*.rb"]

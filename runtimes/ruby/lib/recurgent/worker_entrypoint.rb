@@ -70,9 +70,7 @@ while (line = $stdin.gets)
     }
 
     begin
-      # rubocop:disable Security/Eval
       eval(code, binding, "(recurgent-worker:#{method_name})")
-      # rubocop:enable Security/Eval
     ensure
       Thread.current[Agent::OUTCOME_CONTEXT_KEY] = previous_outcome_context
     end

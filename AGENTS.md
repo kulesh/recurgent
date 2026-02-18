@@ -204,7 +204,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-17T01:56:40Z
+Last Updated (UTC): 2026-02-18T07:01:21Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -279,7 +279,12 @@ Last Updated (UTC): 2026-02-17T01:56:40Z
 - `runtimes/ruby/lib/recurgent/call_execution.rb` - dynamic call orchestration and execution-path selection
 - `runtimes/ruby/lib/recurgent/outcome.rb` - Outcome envelope model and delegation-friendly value proxy behavior
 - `runtimes/ruby/lib/recurgent/providers.rb` - Anthropic/OpenAI provider adapters
-- `runtimes/ruby/spec/recurgent_spec.rb` - core behavior, provider, and logging tests
+- `runtimes/ruby/spec/recurgent_spec.rb` - core runtime behavior specs (initialization, coordination, persistence, contracts, delegation)
+- `runtimes/ruby/spec/agent/method_calls_spec.rb` - dynamic dispatch and method-call behavior specs
+- `runtimes/ruby/spec/agent/prompt_construction_spec.rb` - prompt composition and guardrail prompt contract specs
+- `runtimes/ruby/spec/agent/logging_spec.rb` - logging and observability field contract specs
+- `runtimes/ruby/spec/agent/providers_spec.rb` - Anthropic/OpenAI adapter specs
+- `runtimes/ruby/spec/support/agent_spec_shared_context.rb` - shared test setup/helpers used by agent spec files
 - `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb` - deterministic end-to-end acceptance scenarios
 - `runtimes/ruby/examples/` - executable domain demos for manual verification
 - `runtimes/ruby/examples/observability_demo.rb` - deterministic tolerant-flow demo with flaky tool for watcher testing
