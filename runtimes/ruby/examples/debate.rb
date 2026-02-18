@@ -39,3 +39,4 @@ puts debate.moderate(
   ],
   rounds: 3
 )
+puts debate.moderation_overview(format: :markdown)
