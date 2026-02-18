@@ -513,6 +513,26 @@ RSpec.describe Agent do
       end
     end
 
+    it "marks artifacts input-sensitive when generated code bakes values from outcome-wrapped args" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        calc = described_class.new("calculator")
+
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: "result = 32"),
+          program_payload(code: "result = Math.sqrt(32)")
+        )
+
+        expect_ok_outcome(calc.sqrt(calc.memory), value: Math.sqrt(32))
+
+        artifact_path = calc.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "sqrt")
+        artifact = JSON.parse(File.read(artifact_path))
+        expect(artifact["cacheable"]).to eq(false)
+        expect(artifact["cacheability_reason"]).to eq("input_baked_code")
+        expect(artifact["input_sensitive"]).to eq(true)
+      end
+    end
+
     it "tracks adaptive and extrinsic failure classes in artifact metrics" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
         Agent.configure_runtime(toolstore_root: tmpdir)
@@ -1035,13 +1055,13 @@ RSpec.describe Agent do
       expect_ok_outcome(g.set(amount: 10), value: 10)
     end
 
-    it "routes memory reader through dynamic dispatch instead of runtime introspection" do
+    it "returns context-backed readers without provider generation" do
       g = described_class.new("calculator")
       g.memory = 5
       stub_llm_response("result = context[:memory]")
 
       expect_ok_outcome(g.memory, value: 5)
-      expect(mock_provider).to have_received(:generate_program).once
+      expect(mock_provider).not_to have_received(:generate_program)
     end
 
     it "supports memory alias as a local reference to context in generated code" do
@@ -2226,7 +2246,7 @@ RSpec.describe Agent do
         code: "result = context[:value]",
         user_prompt: a_string_including("value")
       )
-      g.value
+      g.increment
     end
 
     it "includes conversation history count and access hint without preloading records in user prompt" do

@@ -183,14 +183,24 @@ class Agent
 
   def _input_literals(args:, kwargs:)
     values = Array(args) + kwargs.values
-    values.filter_map do |value|
-      case value
-      when String
-        value.strip
-      when Symbol, Integer, Float, TrueClass, FalseClass
-        value.to_s
-      end
-    end.reject(&:empty?).uniq
+    values.flat_map { |value| _literal_candidates(value) }.reject(&:empty?).uniq
+  end
+
+  def _literal_candidates(value)
+    case value
+    when Agent::Outcome
+      _literal_candidates(value.value)
+    when Array
+      value.flat_map { |item| _literal_candidates(item) }
+    when Hash
+      value.values.flat_map { |item| _literal_candidates(item) }
+    when String
+      [value.strip]
+    when Symbol, Integer, Float, TrueClass, FalseClass
+      [value.to_s]
+    else
+      []
+    end
   end
 
   def _cacheability(cacheable, reason, input_sensitive:)

@@ -292,7 +292,7 @@ class Agent
   #
   # The *, ** syntax captures both positional and keyword arguments, forwarding
   # them through to the LLM-generated code.
-  def method_missing(name, *args, **)
+  def method_missing(name, *args, **kwargs)
     method_name = name.to_s
 
     if method_name.end_with?("=")
@@ -300,8 +300,12 @@ class Agent
       # No LLM call needed. This also ensures child Agents reliably receive
       # data from parents (the parent's LLM code does `result.items = data`).
       @context[method_name.chomp("=").to_sym] = args[0]
+    elsif args.empty? && kwargs.empty? && @context.key?(name.to_sym)
+      # Context-backed readers are deterministic readback paths. If caller set
+      # obj.foo = x earlier, obj.foo should return x without regenerating code.
+      Outcome.ok(value: @context[name.to_sym], tool_role: @role, method_name: method_name)
     else
-      _dispatch_method_call(method_name, *args, **)
+      _dispatch_method_call(method_name, *args, **kwargs)
     end
   end
 
