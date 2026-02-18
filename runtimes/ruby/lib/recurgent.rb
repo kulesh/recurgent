@@ -339,7 +339,7 @@ class Agent
     self
   end
 
-  def memory
+  def runtime_context
     @context
   end
 
@@ -573,6 +573,7 @@ class Agent
     [
       "__recurgent_result_sentinel = Object.new",
       "context = __recurgent_context",
+      "memory = context",
       "args = __recurgent_args",
       "kwargs = __recurgent_kwargs",
       "result = __recurgent_result_sentinel",

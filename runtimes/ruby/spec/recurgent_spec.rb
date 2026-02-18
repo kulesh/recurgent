@@ -176,10 +176,10 @@ RSpec.describe Agent do
       expect(tool.instance_variable_get(:@delegation_contract_source)).to eq("merged")
     end
 
-    it "writes and returns memory via remember and memory" do
+    it "writes and returns runtime context via remember and runtime_context" do
       g = described_class.for("calculator")
       g.remember(current_value: 10, mode: "scientific")
-      expect(g.memory).to include(current_value: 10, mode: "scientific")
+      expect(g.runtime_context).to include(current_value: 10, mode: "scientific")
     end
 
     it "delegates with inherited runtime settings by default" do
@@ -207,8 +207,8 @@ RSpec.describe Agent do
       parent = described_class.for("planner")
       parent.delegate("web_fetcher", purpose: "fetch and extract content from urls")
 
-      expect(parent.memory).to include(:tools)
-      expect(parent.memory.dig(:tools, "web_fetcher", :purpose)).to eq("fetch and extract content from urls")
+      expect(parent.runtime_context).to include(:tools)
+      expect(parent.runtime_context.dig(:tools, "web_fetcher", :purpose)).to eq("fetch and extract content from urls")
     end
 
     it "materializes a registered tool via tool(name) using stored contract metadata" do
@@ -268,8 +268,8 @@ RSpec.describe Agent do
       expect(child.instance_variable_get(:@delegation_contract)).to include(
         intent_signature: "ask: movies currently in theaters"
       )
-      expect(parent.memory.dig(:tools, "movie_finder", :intent_signature)).to eq("ask: movies currently in theaters")
-      expect(parent.memory.dig(:tools, "movie_finder", :intent_signatures)).to include("ask: movies currently in theaters")
+      expect(parent.runtime_context.dig(:tools, "movie_finder", :intent_signature)).to eq("ask: movies currently in theaters")
+      expect(parent.runtime_context.dig(:tools, "movie_finder", :intent_signatures)).to include("ask: movies currently in theaters")
     end
 
     it "ignores non-runtime delegate options instead of raising unknown option errors" do
@@ -383,7 +383,7 @@ RSpec.describe Agent do
         )
 
         agent = described_class.for("planner")
-        expect(agent.memory.dig(:tools, "rss_parser", :purpose)).to eq("parse RSS/XML feed strings into structured article data")
+        expect(agent.runtime_context.dig(:tools, "rss_parser", :purpose)).to eq("parse RSS/XML feed strings into structured article data")
       end
     end
 
@@ -395,7 +395,7 @@ RSpec.describe Agent do
         File.write(registry_path, "{this-is-invalid-json")
 
         agent = described_class.for("planner")
-        expect(agent.memory[:tools]).to be_nil
+        expect(agent.runtime_context[:tools]).to be_nil
         expect(Dir.glob("#{registry_path}.corrupt-*")).not_to be_empty
       end
     end
@@ -1004,14 +1004,14 @@ RSpec.describe Agent do
       g = described_class.new("calculator")
       stub_llm_response("result = nil")
       g.value = 5
-      expect(g.memory[:value]).to eq(5)
+      expect(g.runtime_context[:value]).to eq(5)
       expect(mock_provider).not_to have_received(:generate_program)
     end
 
     it "handles complex values" do
       g = described_class.new("csv_explorer")
       g.rows = [{ name: "apple", price: 1.50 }]
-      expect(g.memory[:rows]).to eq([{ name: "apple", price: 1.50 }])
+      expect(g.runtime_context[:rows]).to eq([{ name: "apple", price: 1.50 }])
     end
   end
 
@@ -1033,6 +1033,23 @@ RSpec.describe Agent do
       g = described_class.new("calculator")
       stub_llm_response("context[:value] = kwargs[:amount]; result = context[:value]")
       expect_ok_outcome(g.set(amount: 10), value: 10)
+    end
+
+    it "routes memory reader through dynamic dispatch instead of runtime introspection" do
+      g = described_class.new("calculator")
+      g.memory = 5
+      stub_llm_response("result = context[:memory]")
+
+      expect_ok_outcome(g.memory, value: 5)
+      expect(mock_provider).to have_received(:generate_program).once
+    end
+
+    it "supports memory alias as a local reference to context in generated code" do
+      g = described_class.new("calculator")
+      stub_llm_response("memory[:value] = memory.fetch(:value, 0) + 2; result = memory[:value]")
+
+      expect_ok_outcome(g.bump, value: 2)
+      expect(g.runtime_context[:value]).to eq(2)
     end
 
     it "returns execution error outcome on execution failure" do
@@ -1561,7 +1578,7 @@ RSpec.describe Agent do
       )
 
       expect_ok_outcome(g.ask("latest news"), value: 42)
-      history = g.memory[:conversation_history]
+      history = g.runtime_context[:conversation_history]
       expect(history).to be_a(Array)
       expect(history.size).to eq(1)
       expect(history.first).to include(
@@ -1598,7 +1615,7 @@ RSpec.describe Agent do
       stub_llm_response("result = args.first")
 
       expect_ok_outcome(g.echo("hello"), value: "hello")
-      history = g.memory[:conversation_history]
+      history = g.runtime_context[:conversation_history]
       expect(history).to be_a(Array)
       expect(history.size).to eq(1)
       expect(history.first).to include(
@@ -1666,7 +1683,7 @@ RSpec.describe Agent do
           }
         }
       )
-      summary = g.memory.fetch(:conversation_history).last.fetch(:outcome_summary)
+      summary = g.runtime_context.fetch(:conversation_history).last.fetch(:outcome_summary)
       expect(summary).to include(
         status: "ok",
         source_count: 2,
@@ -1953,7 +1970,7 @@ RSpec.describe Agent do
 
       outcome = g.increment
       expect_ok_outcome(outcome, value: 1)
-      expect(g.memory[:value]).to eq(1)
+      expect(g.runtime_context[:value]).to eq(1)
       expect(worker_supervisor).to have_received(:execute).once
     end
 
@@ -2130,6 +2147,12 @@ RSpec.describe Agent do
       g = described_class.new("calculator")
       expect(g).not_to respond_to(:increment)
     end
+
+    it "keeps explicit Agent method surface narrow to protect dynamic dispatch" do
+      expect(described_class.instance_methods(false).map(&:to_s).sort).to eq(
+        %w[define_singleton_method delegate inspect method_missing remember runtime_context to_s tool]
+      )
+    end
   end
 
   describe "capability pattern extraction and memory" do
@@ -2189,6 +2212,8 @@ RSpec.describe Agent do
         system_prompt: a_string_including("Set `result` or use `return`")
                        .and(including("Avoid `redo` unless in a clearly bounded loop"))
                        .and(including("context[:conversation_history]"))
+                       .and(including("State-key continuity rule"))
+                       .and(including("default to `context[:value]`"))
                        .and(including("External-data success invariant"))
       )
       g.read("README.md")
@@ -2354,8 +2379,8 @@ RSpec.describe Agent do
 
       snapshot = g.send(:_known_tools_snapshot)
       snapshot_capabilities = snapshot.dig("web_fetcher", :capabilities) || snapshot.dig("web_fetcher", "capabilities")
-      memory_capabilities = g.memory.dig(:tools, "web_fetcher", :capabilities) ||
-                            g.memory.dig(:tools, "web_fetcher", "capabilities")
+      memory_capabilities = g.runtime_context.dig(:tools, "web_fetcher", :capabilities) ||
+                            g.runtime_context.dig(:tools, "web_fetcher", "capabilities")
       expect(snapshot_capabilities).to include("http_fetch")
       expect(memory_capabilities).to include("http_fetch")
     end
@@ -2973,7 +2998,7 @@ RSpec.describe Agent do
         expect(entries.last["user_correction_signal"]).to eq("temporal_reask_no_tooling")
         expect(entries.last["user_correction_reference_call_id"]).to eq(entries.first["call_id"])
 
-        history = g.memory[:conversation_history]
+        history = g.runtime_context[:conversation_history]
         expect(history).to all(
           include(
             :method_name,
