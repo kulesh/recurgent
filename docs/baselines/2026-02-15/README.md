@@ -37,4 +37,5 @@ bundle exec ruby examples/philosophy_debate.rb
 ## Notes
 
 - Trace slices are extracted by line-offset windows from the append-only JSONL log.
+- Trace slices in this directory are sanitized metadata fixtures (no raw fetched payloads, prompts, or generated code) so they are safe to redistribute.
 - These files are intended for before/after comparison once artifact read/selection/repair paths are implemented.

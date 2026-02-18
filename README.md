@@ -174,6 +174,12 @@ By default they are written under `$XDG_STATE_HOME/recurgent` (or `~/.local/stat
 
 Yes. Anthropic and OpenAI are both supported. Routing is automatic by model name prefix, or explicit via `provider:`.
 
+## Known Limitations
+
+- Generated code is limited to Ruby stdlib unless dependencies are explicitly declared and allowed by runtime policy.
+- Provider outputs can be invalid or low-utility; runtime retries and guardrails reduce this but do not eliminate it.
+- Tolerant Outcome handling improves interoperability, but callers should still validate domain-specific quality.
+
 ## Community and Policy
 
 - `CONTRIBUTING.md`
