@@ -6,7 +6,7 @@ Planned contract parity with Ruby runtime:
 
 - `Agent.for(role, **opts)` constructor equivalent, including contract fields (`purpose`, `deliverable`, `acceptance`, `failure_policy`)
 - emergent domain methods via dynamic dispatch
-- coordination primitives: `remember`, `memory`, `delegate`
+- coordination primitives: `remember`, `runtime_context`, `delegate`
 - structured provider output -> executable code path
 
 Canonical contract source:
