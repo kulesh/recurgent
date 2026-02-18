@@ -1,9 +1,27 @@
 # frozen_string_literal: true
 
 class Agent
-  # Agent::DelegationIntent — infers and validates delegation intent signatures.
-  module DelegationIntent
+  # Agent::Delegation — delegation intent inference, validation, and option filtering.
+  module Delegation
+    AGENT_RUNTIME_OPTION_KEYS = %i[
+      model
+      provider
+      verbose
+      log
+      debug
+      max_generation_attempts
+      guardrail_recovery_budget
+      fresh_outcome_repair_budget
+      provider_timeout_seconds
+      delegation_budget
+      delegation_contract
+      delegation_contract_source
+      trace_id
+    ].freeze
+
     private
+
+    # -- Intent inference & validation -----------------------------------------
 
     def _validate_delegation_contract_intent_signature!(value)
       return if value.nil?
@@ -50,6 +68,30 @@ class Agent
       return "" if text.empty?
 
       text[0, 120]
+    end
+
+    # -- Option filtering ------------------------------------------------------
+
+    def _partition_delegate_runtime_options(options)
+      runtime_options = {}
+      ignored_options = {}
+      options.each do |key, value|
+        if AGENT_RUNTIME_OPTION_KEYS.include?(key.to_sym)
+          runtime_options[key] = value
+        else
+          ignored_options[key] = value
+        end
+      end
+      [runtime_options, ignored_options]
+    end
+
+    def _warn_ignored_delegate_options(role:, ignored_options:)
+      return unless @debug
+
+      warn(
+        "[AGENT DELEGATE OPTION IGNORE #{@role}->#{role}] " \
+        "ignored non-runtime options: #{ignored_options.keys.map(&:to_s).sort.join(", ")}"
+      )
     end
   end
 end

@@ -14,6 +14,16 @@ Metrics/ClassLength:
 
 Metrics/ModuleLength:
   Max: 160
+  Exclude:
+    - "lib/recurgent/artifact_store.rb"
+    - "lib/recurgent/pattern_memory.rb"
+    - "lib/recurgent/guardrail_policy.rb"
+    - "lib/recurgent/outcome_contract.rb"
+    - "lib/recurgent/tool_store.rb"
+    - "lib/recurgent/observability.rb"
+    - "lib/recurgent/conversation_history.rb"
+    - "lib/recurgent/fresh_generation.rb"
+    - "lib/recurgent/prompting.rb"
 
 Metrics/AbcSize:
   Max: 25

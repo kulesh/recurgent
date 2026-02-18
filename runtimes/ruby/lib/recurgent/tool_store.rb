@@ -1,11 +1,123 @@
 # frozen_string_literal: true
 
+require "digest"
+
 class Agent
   # Agent::ToolStore — JSON-backed persistence for delegated tool registry metadata.
+  #
+  # Consolidates filesystem paths, intent-signature merge helpers, and
+  # registry integrity guardrails into a single module.
   module ToolStore
-    include ToolStoreIntentMetadata
-
     private
+
+    # -- Filesystem paths ------------------------------------------------------
+
+    def _toolstore_root
+      root = @runtime_config[:toolstore_root]
+      root = Agent.default_toolstore_root if root.nil? || root.to_s.strip.empty?
+      root.to_s
+    end
+
+    def _toolstore_registry_path
+      File.join(_toolstore_root, "registry.json")
+    end
+
+    def _toolstore_patterns_path
+      File.join(_toolstore_root, "patterns.json")
+    end
+
+    def _toolstore_artifacts_root
+      File.join(_toolstore_root, "artifacts")
+    end
+
+    def _toolstore_artifact_path(role_name:, method_name:)
+      role_segment = _toolstore_safe_segment(role_name)
+      method_segment = _toolstore_safe_segment(method_name)
+      File.join(_toolstore_artifacts_root, role_segment, "#{method_segment}.json")
+    end
+
+    def _toolstore_safe_segment(value)
+      raw = value.to_s
+      normalized = raw.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_+|_+\z/, "")
+      normalized = "item" if normalized.empty?
+      digest = Digest::SHA256.hexdigest(raw)[0, 8]
+      "#{normalized[0, 48]}-#{digest}"
+    end
+
+    # -- Intent-signature merge helpers ----------------------------------------
+
+    def _toolstore_apply_intent_metadata!(merged, existing, incoming)
+      signatures = (_toolstore_intent_signatures(existing) + _toolstore_intent_signatures(incoming)).uniq.last(6)
+      merged[:intent_signatures] = signatures
+      merged[:intent_signature] = signatures.last unless signatures.empty?
+    end
+
+    def _toolstore_intent_signatures(metadata)
+      return [] unless metadata.is_a?(Hash)
+
+      signatures = Array(metadata[:intent_signatures] || metadata["intent_signatures"])
+      signatures << metadata[:intent_signature] if metadata.key?(:intent_signature)
+      signatures << metadata["intent_signature"] if metadata.key?("intent_signature")
+      signatures.map { |value| value.to_s.strip }.reject(&:empty?).uniq
+    end
+
+    # -- Registry integrity guardrails -----------------------------------------
+
+    def _enforce_tool_registry_integrity!(method_name:, phase:)
+      registry = @context[:tools]
+      return if registry.nil?
+      raise ToolRegistryViolationError, "context[:tools] must be a Hash" unless registry.is_a?(Hash)
+
+      executable_paths = _tool_registry_executable_paths(registry, path: "context[:tools]")
+      return if executable_paths.empty?
+
+      raise ToolRegistryViolationError,
+            "Tool registry metadata cannot store executable objects " \
+            "(#{phase} #{@role}.#{method_name}): #{executable_paths.join(", ")}"
+    end
+
+    def _tool_registry_executable_paths(value, path:)
+      return [path] if _tool_registry_executable_value?(value)
+      return _tool_registry_array_executable_paths(value, path: path) if value.is_a?(Array)
+      return _tool_registry_hash_executable_paths(value, path: path) if value.is_a?(Hash)
+
+      []
+    end
+
+    def _tool_registry_array_executable_paths(array, path:)
+      array.each_with_index.flat_map do |entry, index|
+        _tool_registry_executable_paths(entry, path: "#{path}[#{index}]")
+      end
+    end
+
+    def _tool_registry_hash_executable_paths(hash, path:)
+      hash.flat_map do |key, entry|
+        child_path = "#{path}[#{key.inspect}]"
+        _tool_registry_executable_paths(entry, path: child_path)
+      end
+    end
+
+    def _tool_registry_executable_value?(value)
+      return true if _tool_registry_explicit_executable_type?(value)
+      return false if _tool_registry_plain_metadata_value?(value)
+
+      value.respond_to?(:call)
+    end
+
+    def _tool_registry_explicit_executable_type?(value)
+      value.is_a?(Proc) || value.is_a?(Method) || value.is_a?(UnboundMethod) || value.is_a?(Agent)
+    end
+
+    def _tool_registry_plain_metadata_value?(value)
+      case value
+      when nil, String, Numeric, Symbol, TrueClass, FalseClass
+        true
+      else
+        false
+      end
+    end
+
+    # -- Hydration and persistence ---------------------------------------------
 
     def _hydrate_tool_registry!
       persisted_tools = _toolstore_load_registry_tools
@@ -85,6 +197,8 @@ class Agent
       warn "[AGENT TOOLSTORE #{@role}] failed to quarantine corrupt registry: #{e.message}" if @debug
     end
 
+    # -- Metadata normalization ------------------------------------------------
+
     def _normalize_loaded_tool_metadata(metadata)
       case metadata
       when Hash
@@ -107,6 +221,8 @@ class Agent
     def _toolstore_timestamp
       Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S.%3NZ")
     end
+
+    # -- Registry entry merging ------------------------------------------------
 
     def _toolstore_merged_registry_entry(existing, metadata)
       normalized_existing = existing.is_a?(Hash) ? existing : {}

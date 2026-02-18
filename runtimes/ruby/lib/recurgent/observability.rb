@@ -4,10 +4,76 @@ class Agent
   # Agent::Observability — log entry building, JSON safety, UTF-8 normalization, trace linkage.
   # Reads: @role, @model_name, @delegation_contract, @delegation_contract_source, @context, @debug
   module Observability
-    include ObservabilityHistoryFields
-    include ObservabilityAttemptFields
-
     private
+
+    # -- JSON / UTF-8 normalization (formerly Agent::JsonNormalization) --------
+
+    def _json_safe(value)
+      case value
+      when String
+        _normalize_utf8(value)
+      when Array
+        value.map { |item| _json_safe(item) }
+      when Hash
+        value.each_with_object({}) do |(key, item), normalized|
+          normalized[_json_safe_hash_key(key)] = _json_safe(item)
+        end
+      else
+        value
+      end
+    end
+
+    def _normalize_utf8(value)
+      normalized = value.dup
+      normalized.force_encoding(Encoding::UTF_8)
+      return normalized if normalized.valid_encoding?
+
+      normalized.encode(Encoding::UTF_8, invalid: :replace, undef: :replace, replace: "\uFFFD")
+    end
+
+    def _json_safe_hash_key(key)
+      return _normalize_utf8(key) if key.is_a?(String)
+      return key if key.is_a?(Symbol)
+
+      key
+    end
+
+    # -- Conversation-history observability fields (formerly Agent::ObservabilityHistoryFields) --
+
+    def _core_history_fields(log_context)
+      {
+        history_record_appended: log_context[:history_record_appended],
+        conversation_history_size: log_context[:conversation_history_size],
+        history_access_detected: log_context[:history_access_detected],
+        history_query_patterns: log_context[:history_query_patterns]
+      }
+    end
+
+    # -- Attempt-lifecycle observability fields (formerly Agent::ObservabilityAttemptFields) --
+
+    def _core_attempt_fields(log_context)
+      {
+        attempt_id: log_context[:attempt_id],
+        attempt_stage: log_context[:attempt_stage],
+        validation_failure_type: log_context[:validation_failure_type],
+        rollback_applied: log_context[:rollback_applied],
+        retry_feedback_injected: log_context[:retry_feedback_injected],
+        attempt_failures: log_context[:attempt_failures],
+        latest_failure_stage: log_context[:latest_failure_stage],
+        latest_failure_class: log_context[:latest_failure_class],
+        latest_failure_message: log_context[:latest_failure_message],
+        execution_receiver: log_context[:execution_receiver],
+        guardrail_violation_subtype: log_context[:guardrail_violation_subtype],
+        guardrail_recovery_attempts: log_context[:guardrail_recovery_attempts],
+        execution_repair_attempts: log_context[:execution_repair_attempts],
+        outcome_repair_attempts: log_context[:outcome_repair_attempts],
+        outcome_repair_triggered: log_context[:outcome_repair_triggered],
+        guardrail_retry_exhausted: log_context[:guardrail_retry_exhausted],
+        outcome_repair_retry_exhausted: log_context[:outcome_repair_retry_exhausted]
+      }
+    end
+
+    # -- Log entry building ----------------------------------------------------
 
     def _build_log_entry(log_context)
       entry = _base_log_entry(log_context)

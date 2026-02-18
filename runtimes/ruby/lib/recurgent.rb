@@ -6,47 +6,24 @@ require "securerandom"
 require_relative "recurgent/dependency_manifest"
 require_relative "recurgent/environment_manager"
 require_relative "recurgent/generated_program"
-require_relative "recurgent/json_normalization"
 require_relative "recurgent/outcome"
-require_relative "recurgent/conversation_history_normalization"
 require_relative "recurgent/conversation_history"
-require_relative "recurgent/outcome_contract_constraints"
-require_relative "recurgent/outcome_contract_shapes"
-require_relative "recurgent/outcome_contract_validator"
+require_relative "recurgent/outcome_contract"
 require_relative "recurgent/providers"
 require_relative "recurgent/prompting"
-require_relative "recurgent/observability_history_fields"
-require_relative "recurgent/observability_attempt_fields"
 require_relative "recurgent/observability"
 require_relative "recurgent/dependencies"
 require_relative "recurgent/runtime_config"
 require_relative "recurgent/known_tool_ranker"
-require_relative "recurgent/tool_store_paths"
-require_relative "recurgent/tool_store_intent_metadata"
 require_relative "recurgent/tool_store"
-require_relative "recurgent/capability_pattern_extractor"
-require_relative "recurgent/user_correction_signals"
-require_relative "recurgent/pattern_memory_store"
-require_relative "recurgent/pattern_prompting"
-require_relative "recurgent/artifact_metrics"
-require_relative "recurgent/artifact_trigger_metadata"
+require_relative "recurgent/pattern_memory"
 require_relative "recurgent/artifact_store"
-require_relative "recurgent/artifact_selector"
-require_relative "recurgent/artifact_repair"
-require_relative "recurgent/persisted_execution"
 require_relative "recurgent/tool_maintenance"
 require_relative "recurgent/call_state"
-require_relative "recurgent/attempt_isolation"
-require_relative "recurgent/attempt_failure_telemetry"
-require_relative "recurgent/guardrail_outcome_feedback"
-require_relative "recurgent/guardrail_code_checks"
+require_relative "recurgent/attempt_tracking"
 require_relative "recurgent/guardrail_policy"
-require_relative "recurgent/guardrail_boundary_normalization"
-require_relative "recurgent/tool_registry_integrity"
 require_relative "recurgent/execution_sandbox"
-require_relative "recurgent/delegation_intent"
-require_relative "recurgent/delegation_options"
-require_relative "recurgent/fresh_outcome_repair"
+require_relative "recurgent/delegation"
 require_relative "recurgent/fresh_generation"
 require_relative "recurgent/call_execution"
 require_relative "recurgent/worker_executor"
@@ -176,30 +153,16 @@ class Agent
 
   include Prompting
   include Observability
-  include JsonNormalization
   include ConversationHistory
   include OutcomeContractValidator
   include Dependencies
   include KnownToolRanker
-  include ToolStorePaths
   include ToolStore
-  include CapabilityPatternExtractor
-  include UserCorrectionSignals
   include PatternMemoryStore
-  include PatternPrompting
-  include ArtifactMetrics
   include ArtifactStore
-  include ArtifactSelector
-  include ArtifactRepair
-  include PersistedExecution
-  include AttemptIsolation
-  include AttemptFailureTelemetry
+  include AttemptTracking
   include GuardrailPolicy
-  include GuardrailBoundaryNormalization
-  include ToolRegistryIntegrity
-  include DelegationIntent
-  include DelegationOptions
-  include FreshOutcomeRepair
+  include Delegation
   include FreshGeneration
   include CallExecution
   include WorkerExecution

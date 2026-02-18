@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Agent
-  # rubocop:disable Metrics/ModuleLength
   module Prompting
     private
 
@@ -890,5 +889,4 @@ class Agent
       PROMPT
     end
   end
-  # rubocop:enable Metrics/ModuleLength
 end
