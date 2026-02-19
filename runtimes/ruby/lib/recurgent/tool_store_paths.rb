@@ -21,6 +21,10 @@ class Agent
       File.join(_toolstore_root, "patterns.json")
     end
 
+    def _toolstore_proposals_path
+      File.join(_toolstore_root, "proposals.json")
+    end
+
     def _toolstore_artifacts_root
       File.join(_toolstore_root, "artifacts")
     end

@@ -44,6 +44,28 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - `Low Utility`: typed signal that output was structurally valid but semantically weak for intent.
 - `User Correction`: high-confidence utility signal from short-window same-topic re-ask behavior.
 
+## Role Continuity Terms
+
+- `Role Profile`: explicit, opt-in contract that defines coherence/correctness expectations for a role with sibling methods.
+- `Coordination Constraint`: profile constraint that requires sibling methods to converge on one convention (state key or return shape family) without prescribing the exact value.
+- `Prescriptive Constraint`: profile constraint that pins an explicit required value (for example `canonical_key: :value`).
+- `Canonical State Key`: explicit key required by a prescriptive constraint for a given semantic slot.
+- `State Continuity`: property that sibling methods in one role agree on compatible state and return conventions.
+- `State Continuity Guard`: validation guard that checks profile-enabled calls for continuity drift and routes violations through recoverable repair lanes.
+- `Active Profile Version`: explicit role-profile version bound to a call and used for continuity evaluation.
+- `Profile Compliance`: observed pass/fail evidence showing whether generated role behavior matches the active role profile and its constraint modes.
+- `Profile Drift`: observed divergence between generated role behavior and declared role profile (for example `:memory` vs `:value` key usage).
+
+## Awareness Substrate Terms
+
+- `Awareness Level`: bounded self-awareness tier (`L1` observational, `L2` contract-aware, `L3` evolution-aware, `L4` autonomous mutation excluded by default).
+- `Authority Boundary`: explicit separation between what an Agent can observe/propose and what it can enact.
+- `Agent Self Model`: read-only runtime envelope that exposes awareness level, authority state, and active contract/profile versions.
+- `Context Substrate`: canonical model for runtime state surfaces and their scope semantics (`attempt`, `role`, `session`, `durable`).
+- `Role State Channel`: role-scoped shared state surface used by sibling methods to maintain continuity.
+- `Active Contract Version`: explicit contract/profile version bound to a call and used for validation/evolution interpretation.
+- `Namespace Pressure`: observable drift signal from flat context usage (key collisions, mixed inferred lifetimes, ambiguity-linked continuity violations).
+
 ## Why These Terms
 
 - They encode intent (problem solving) rather than mechanism (orchestration).
@@ -62,6 +84,11 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - Use `recoverable_guardrail` by default unless explicitly terminal.
 - Use `guardrail_recovery_budget` distinctly from provider generation retries.
 - Use `commit on success`/`rollback` language for attempt-local transaction semantics.
+- Use `Role Profile` only for explicit role contracts; do not imply runtime inference.
+- Default to `Coordination Constraint` when profile needs coherence but not fixed naming/shape.
+- Use `Prescriptive Constraint` only when deterministic pinning is required.
+- Use `State Continuity` when discussing sibling-method contract coherence.
+- Separate awareness from authority: allow observe/propose by default, require explicit approval for enact.
 
 ## Primitive Usage
 

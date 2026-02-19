@@ -39,6 +39,10 @@ class Agent
     def _execute_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
       started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       state = _initial_call_state
+      if @runtime_config.fetch(:solver_shape_capture_enabled, true)
+        _capture_solver_shape_state!(state, method_name: name, args: args, kwargs: kwargs, call_context: call_context)
+      end
+      _capture_awareness_state!(state, method_name: name, call_context: call_context) if @runtime_config.fetch(:self_model_capture_enabled, true)
 
       state.outcome = _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
       state.outcome
@@ -61,6 +65,10 @@ class Agent
       state.conversation_history_size = history_append[:size]
       _record_pattern_memory_event(method_name: name, state: state, call_context: call_context)
       _persist_method_artifact_for_call(method_name: name, state: state, duration_ms: duration_ms)
+      _finalize_solver_shape_state!(state) if @runtime_config.fetch(:solver_shape_capture_enabled, true)
+      _finalize_awareness_state!(state, method_name: name, call_context: call_context) if @runtime_config.fetch(
+        :self_model_capture_enabled, true
+      )
       _log_dynamic_call(
         method_name: name,
         args: args,

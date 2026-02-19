@@ -46,6 +46,9 @@ This index is organized for fast retrieval:
 - `docs/adrs/0020-generated-code-execution-sandbox-isolation.md`
 - `docs/adrs/0021-external-data-provenance-invariant.md`
 - `docs/adrs/0022-guardrail-exhaustion-boundary-normalization.md`
+- `docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md`
+- `docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`
+- `docs/adrs/0025-awareness-substrate-and-authority-boundary.md`
 
 ## Implementation Plans
 
@@ -63,6 +66,8 @@ This index is organized for fast retrieval:
 - `docs/plans/external-data-provenance-implementation-plan.md`
 - `docs/plans/guardrail-exhaustion-boundary-normalization-implementation-plan.md`
 - `docs/plans/failed-attempt-exception-telemetry-implementation-plan.md`
+- `docs/plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md`
+- `docs/plans/awareness-substrate-authority-boundary-implementation-plan.md`
 
 ## Baselines and Operations
 
@@ -86,4 +91,3 @@ This index is organized for fast retrieval:
 - `specs/contract/v1/scenarios.yaml` - shared conformance scenarios
 - `runtimes/ruby/README.md` - Ruby runtime quick reference
 - `runtimes/lua/README.md` - Lua runtime placeholder
-

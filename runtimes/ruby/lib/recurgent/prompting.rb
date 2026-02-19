@@ -459,10 +459,20 @@ class Agent
         methods = _extract_tool_methods(metadata)
         capabilities = _extract_tool_capabilities(metadata)
         intent_signatures = _extract_tool_intent_signatures(metadata)
+        lifecycle_state = _extract_tool_lifecycle_state(metadata)
+        policy_version = _extract_tool_policy_version(metadata)
+        reliability_summary = _extract_tool_reliability_summary(metadata)
         suffix = +""
         suffix << "\n  methods: [#{methods.join(", ")}]" unless methods.empty?
         suffix << "\n  capabilities: [#{capabilities.join(", ")}]" unless capabilities.empty?
         suffix << "\n  intent_signatures: [#{intent_signatures.join(", ")}]" unless intent_signatures.empty?
+        unless lifecycle_state.nil?
+          lifecycle_line = "lifecycle: #{lifecycle_state}"
+          lifecycle_line += " (policy: #{policy_version})" unless policy_version.nil?
+          suffix << "\n  #{lifecycle_line}"
+        end
+        suffix << "\n  reliability: #{reliability_summary}" unless reliability_summary.nil?
+        suffix << "\n  caution: #{_extract_tool_degraded_caution(metadata)}" if lifecycle_state == "degraded"
         "- #{name}: #{purpose}#{suffix}"
       end
 
@@ -518,6 +528,99 @@ class Agent
         .map { |value| value.to_s.strip }
         .reject(&:empty?)
         .uniq
+    end
+
+    def _extract_tool_lifecycle_state(metadata)
+      value = _known_tool_lifecycle_state(metadata)
+      return nil if value.nil? || value.to_s.strip.empty?
+
+      value
+    end
+
+    def _extract_tool_policy_version(metadata)
+      return nil unless metadata.is_a?(Hash)
+
+      explicit = metadata[:promotion_policy_version] || metadata["promotion_policy_version"]
+      explicit = explicit.to_s.strip
+      return explicit unless explicit.empty?
+
+      scorecards = metadata[:version_scorecards] || metadata["version_scorecards"]
+      return nil unless scorecards.is_a?(Hash)
+
+      scorecards.each_value do |entry|
+        next unless entry.is_a?(Hash)
+
+        version = entry[:policy_version] || entry["policy_version"]
+        normalized = version.to_s.strip
+        return normalized unless normalized.empty?
+      end
+
+      nil
+    end
+
+    def _extract_tool_reliability_summary(metadata)
+      return nil unless metadata.is_a?(Hash)
+
+      scorecards = metadata[:version_scorecards] || metadata["version_scorecards"]
+      if scorecards.is_a?(Hash) && !scorecards.empty?
+        totals = scorecards.values.each_with_object(
+          calls: 0,
+          successes: 0,
+          failures: 0,
+          wrong_boundary: 0,
+          retries_exhausted: 0
+        ) do |entry, acc|
+          next unless entry.is_a?(Hash)
+
+          acc[:calls] += (entry[:calls] || entry["calls"]).to_i
+          acc[:successes] += (entry[:successes] || entry["successes"]).to_i
+          acc[:failures] += (entry[:failures] || entry["failures"]).to_i
+          acc[:wrong_boundary] += (entry[:wrong_boundary_count] || entry["wrong_boundary_count"]).to_i
+          guardrail = (entry[:guardrail_retry_exhausted_count] || entry["guardrail_retry_exhausted_count"]).to_i
+          outcome = (entry[:outcome_retry_exhausted_count] || entry["outcome_retry_exhausted_count"]).to_i
+          acc[:retries_exhausted] += guardrail + outcome
+        end
+        return nil if totals[:calls].zero?
+
+        success_rate = totals[:successes].to_f.fdiv(totals[:calls]).round(2)
+        return [
+          "calls=#{totals[:calls]}",
+          "success_rate=#{success_rate}",
+          "wrong_boundary=#{totals[:wrong_boundary]}",
+          "retries_exhausted=#{totals[:retries_exhausted]}"
+        ].join(", ")
+      end
+
+      success_count = (metadata[:success_count] || metadata["success_count"]).to_i
+      failure_count = (metadata[:failure_count] || metadata["failure_count"]).to_i
+      calls = success_count + failure_count
+      return nil if calls.zero?
+
+      "calls=#{calls}, success_rate=#{success_count.to_f.fdiv(calls).round(2)}"
+    end
+
+    def _extract_tool_degraded_caution(metadata)
+      decision = nil
+      if metadata.is_a?(Hash)
+        decision = metadata[:lifecycle_decision] || metadata["lifecycle_decision"]
+        if decision.nil?
+          scorecards = metadata[:version_scorecards] || metadata["version_scorecards"]
+          if scorecards.is_a?(Hash)
+            scorecards.each_value do |entry|
+              next unless entry.is_a?(Hash)
+
+              candidate = entry[:last_decision] || entry["last_decision"]
+              next if candidate.nil? || candidate.to_s.strip.empty?
+
+              decision = candidate
+              break
+            end
+          end
+        end
+      end
+
+      base = "degraded by promotion policy"
+      decision.nil? ? base : "#{base} (last_decision=#{decision})"
     end
 
     def _known_tool_interface_overlap_prompt

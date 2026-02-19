@@ -42,6 +42,30 @@ RSpec.describe Agent do
       expect(entry["timestamp"]).to match(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\z/)
       expect(entry["duration_ms"]).to be_a(Numeric)
       expect(entry["capability_patterns"]).to eq([])
+      expect(entry["solver_shape"]).to be_a(Hash)
+      expect(entry["solver_shape_complete"]).to eq(true)
+      expect(entry["solver_shape_stance"]).to be_a(String)
+      expect(entry["solver_shape_promotion_intent"]).to be_a(String)
+      expect(entry["self_model"]).to be_a(Hash)
+      expect(entry["awareness_level"]).to eq("l3")
+      expect(entry["authority"]).to eq(
+        "observe" => true,
+        "propose" => true,
+        "enact" => false
+      )
+      expect(entry["active_contract_version"]).to be_nil
+      expect(entry["active_role_profile_version"]).to be_nil
+      expect(entry["execution_snapshot_ref"]).to include("calculator.increment")
+      expect(entry["evolution_snapshot_ref"]).to include("calculator.increment@sha256:")
+      expect(entry["namespace_key_collision_count"]).to eq(0)
+      expect(entry["namespace_multi_lifetime_key_count"]).to eq(0)
+      expect(entry["namespace_continuity_violation_count"]).to eq(0)
+      expect(entry["promotion_policy_version"]).to eq(Agent::PROMOTION_POLICY_VERSION)
+      expect(entry["promotion_shadow_mode"]).to eq(true)
+      expect(entry["promotion_enforced"]).to eq(false)
+      expect(entry["lifecycle_state"]).to be_a(String)
+      expect(entry["lifecycle_decision"]).to be_a(String)
+      expect(entry["promotion_decision_rationale"]).to be_a(Hash)
       expect(entry).not_to have_key("system_prompt")
       expect(entry).not_to have_key("user_prompt")
       expect(entry).not_to have_key("context")
