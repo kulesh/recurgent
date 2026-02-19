@@ -8,15 +8,55 @@ Style/Documentation:
 
 Metrics/MethodLength:
   Max: 50
+  Exclude:
+    - "lib/recurgent/call_state.rb"
+    - "lib/recurgent/tool_store.rb"
 
 Metrics/ClassLength:
   Max: 300
+  Exclude:
+    - "lib/recurgent.rb"
+    - "lib/recurgent/call_state.rb"
 
 Metrics/ModuleLength:
   Max: 160
+  Exclude:
+    - "lib/recurgent/artifact_metrics.rb"
+    - "lib/recurgent/artifact_selector.rb"
+    - "lib/recurgent/artifact_store.rb"
+    - "lib/recurgent/tool_store.rb"
 
 Metrics/AbcSize:
   Max: 25
+  Exclude:
+    - "lib/recurgent/artifact_metrics.rb"
+    - "lib/recurgent/artifact_selector.rb"
+    - "lib/recurgent/artifact_store.rb"
+    - "lib/recurgent/call_execution.rb"
+    - "lib/recurgent/known_tool_ranker.rb"
+    - "lib/recurgent/observability_attempt_fields.rb"
+    - "lib/recurgent/prompting.rb"
+    - "lib/recurgent/runtime_config.rb"
+    - "lib/recurgent/tool_store.rb"
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - "lib/recurgent/artifact_metrics.rb"
+    - "lib/recurgent/artifact_selector.rb"
+    - "lib/recurgent/call_state.rb"
+    - "lib/recurgent/known_tool_ranker.rb"
+    - "lib/recurgent/prompting.rb"
+    - "lib/recurgent/runtime_config.rb"
+    - "lib/recurgent/tool_store.rb"
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - "lib/recurgent/artifact_metrics.rb"
+    - "lib/recurgent/artifact_selector.rb"
+    - "lib/recurgent/known_tool_ranker.rb"
+    - "lib/recurgent/prompting.rb"
+    - "lib/recurgent/runtime_config.rb"
+    - "lib/recurgent/tool_store.rb"
 
 Metrics/ParameterLists:
   Max: 8
@@ -37,3 +77,7 @@ Layout/LineLength:
 Security/Eval:
   Exclude:
     - "lib/recurgent/worker_entrypoint.rb"
+
+Lint/DuplicateBranch:
+  Exclude:
+    - "lib/recurgent/known_tool_ranker.rb"

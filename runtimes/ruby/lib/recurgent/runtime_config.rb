@@ -77,9 +77,7 @@ class Agent
     if options.key?(:solver_shape_capture_enabled)
       config[:solver_shape_capture_enabled] = _normalize_runtime_bool(options[:solver_shape_capture_enabled])
     end
-    if options.key?(:self_model_capture_enabled)
-      config[:self_model_capture_enabled] = _normalize_runtime_bool(options[:self_model_capture_enabled])
-    end
+    config[:self_model_capture_enabled] = _normalize_runtime_bool(options[:self_model_capture_enabled]) if options.key?(:self_model_capture_enabled)
     if options.key?(:promotion_shadow_mode_enabled)
       config[:promotion_shadow_mode_enabled] = _normalize_runtime_bool(options[:promotion_shadow_mode_enabled])
     end
@@ -89,9 +87,9 @@ class Agent
     if options.key?(:authority_enforcement_enabled)
       config[:authority_enforcement_enabled] = _normalize_runtime_bool(options[:authority_enforcement_enabled])
     end
-    if options.key?(:authority_maintainers)
-      config[:authority_maintainers] = _normalize_runtime_maintainers(options[:authority_maintainers])
-    end
+    return unless options.key?(:authority_maintainers)
+
+    config[:authority_maintainers] = _normalize_runtime_maintainers(options[:authority_maintainers])
   end
 
   def self._normalize_runtime_maintainers(value)
@@ -102,7 +100,7 @@ class Agent
   end
 
   def self._normalize_runtime_bool(value)
-    return value if value == true || value == false
+    return value if [true, false].include?(value)
 
     normalized = value.to_s.strip.downcase
     return true if %w[1 true yes on].include?(normalized)

@@ -9,6 +9,7 @@ class Agent
       artifact = _artifact_load(method_name)
       return nil unless artifact
       return nil unless _artifact_cacheable_for_execution?(artifact, method_name: method_name)
+
       selected_artifact = _artifact_selected_for_execution(artifact)
       return nil unless _artifact_compatible_for_execution?(selected_artifact)
       return nil if _artifact_degraded?(selected_artifact)
@@ -106,9 +107,7 @@ class Agent
       return nil if available.empty?
 
       incumbent = lifecycle["incumbent_durable_checksum"].to_s
-      if !incumbent.empty? && available[incumbent] == "durable"
-        return [incumbent, "durable"]
-      end
+      return [incumbent, "durable"] if !incumbent.empty? && available[incumbent] == "durable"
 
       durable_checksum = available.find { |_checksum, state| state == "durable" }&.first
       return [durable_checksum, "durable"] unless durable_checksum.nil?

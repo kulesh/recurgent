@@ -379,7 +379,10 @@ class Agent
 
   def approve_proposal(proposal_id, actor: nil, note: nil)
     resolved_actor = _proposal_actor(actor)
-    return _authority_denied_outcome(method_name: "approve_proposal", actor: resolved_actor, action: "approve") unless _proposal_mutation_allowed?(actor: resolved_actor)
+    unless _proposal_mutation_allowed?(actor: resolved_actor)
+      return _authority_denied_outcome(method_name: "approve_proposal", actor: resolved_actor,
+                                       action: "approve")
+    end
 
     proposal = _proposal_update_status(
       proposal_id: proposal_id,
@@ -394,7 +397,10 @@ class Agent
 
   def reject_proposal(proposal_id, actor: nil, note: nil)
     resolved_actor = _proposal_actor(actor)
-    return _authority_denied_outcome(method_name: "reject_proposal", actor: resolved_actor, action: "reject") unless _proposal_mutation_allowed?(actor: resolved_actor)
+    unless _proposal_mutation_allowed?(actor: resolved_actor)
+      return _authority_denied_outcome(method_name: "reject_proposal", actor: resolved_actor,
+                                       action: "reject")
+    end
 
     proposal = _proposal_update_status(
       proposal_id: proposal_id,
@@ -409,10 +415,14 @@ class Agent
 
   def apply_proposal(proposal_id, actor: nil, note: nil)
     resolved_actor = _proposal_actor(actor)
-    return _authority_denied_outcome(method_name: "apply_proposal", actor: resolved_actor, action: "apply") unless _proposal_mutation_allowed?(actor: resolved_actor)
+    unless _proposal_mutation_allowed?(actor: resolved_actor)
+      return _authority_denied_outcome(method_name: "apply_proposal", actor: resolved_actor,
+                                       action: "apply")
+    end
 
     proposal = _proposal_find(proposal_id)
     return Outcome.error(error_type: "not_found", error_message: "Proposal '#{proposal_id}' not found", retriable: false) if proposal.nil?
+
     status = proposal["status"].to_s
     if status != "approved"
       return Outcome.error(

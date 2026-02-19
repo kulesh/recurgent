@@ -187,11 +187,11 @@ class Agent
       }
 
       # Keep recent versions bounded to avoid unbounded artifact growth.
-      if versions.length > 8
-        sorted = versions.sort_by { |_, payload| payload.is_a?(Hash) ? payload["last_used_at"].to_s : "" }
-        keep = sorted.last(8).to_h
-        artifact["versions"] = keep
-      end
+      return unless versions.length > 8
+
+      sorted = versions.sort_by { |_, payload| payload.is_a?(Hash) ? payload["last_used_at"].to_s : "" }
+      keep = sorted.last(8).to_h
+      artifact["versions"] = keep
     end
 
     def _artifact_update_generation_history!(artifact, state:, previous_checksum:, new_checksum:, timestamp:)

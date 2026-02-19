@@ -208,7 +208,7 @@ class Agent
       profiles = _toolstore_method_state_key_profiles(metadata)
       return metadata[:state_key_consistency_ratio] = 1.0 if profiles.empty?
 
-      primary_keys = profiles.values.filter_map { |keys| Array(keys).map(&:to_s).sort.first }
+      primary_keys = profiles.values.filter_map { |keys| Array(keys).map(&:to_s).min }
       return metadata[:state_key_consistency_ratio] = 1.0 if primary_keys.empty?
 
       metadata[:state_key_consistency_ratio] = primary_keys.tally.values.max.to_f.fdiv(primary_keys.length).round(4)
@@ -216,7 +216,7 @@ class Agent
 
     def _toolstore_update_namespace_pressure!(metadata, method_name:, state:)
       profiles = _toolstore_method_state_key_profiles(metadata)
-      primary_keys = profiles.values.filter_map { |keys| Array(keys).map(&:to_s).sort.first }
+      primary_keys = profiles.values.filter_map { |keys| Array(keys).map(&:to_s).min }
       metadata[:namespace_key_collision_count] = _toolstore_namespace_key_collision_count(primary_keys)
 
       lifetime_profiles = _toolstore_merge_state_key_lifetimes(metadata, state)
@@ -266,23 +266,19 @@ class Agent
         key_pattern = Regexp.escape(key)
         lifetimes = []
         lifetimes << "durable" if %w[tools patterns role_profile proposals].include?(key)
-        if code.match?(/context\[(?::|["'])#{key_pattern}["']?\]\s*(?:<<|\.push\(|\.append\()/)
-          lifetimes << "session"
-        end
+        lifetimes << "session" if code.match?(/context\[(?::|["'])#{key_pattern}["']?\]\s*(?:<<|\.push\(|\.append\()/)
         if code.match?(/context\[(?::|["'])#{key_pattern}["']?\]\s*=.*context\.fetch\((?::|["'])#{key_pattern}/m) ||
-           code.match?(/context\[(?::|["'])#{key_pattern}["']?\]\s*[+\-*\/%]=/m)
+           code.match?(%r{context\[(?::|["'])#{key_pattern}["']?\]\s*[+\-*/%]=}m)
           lifetimes << "role"
         end
-        if key.match?(/\A(?:tmp|temp|scratch|attempt|working)_?/)
-          lifetimes << "attempt"
-        end
+        lifetimes << "attempt" if key.match?(/\A(?:tmp|temp|scratch|attempt|working)_?/)
         lifetimes << "role" if lifetimes.empty?
         profiles[key] = lifetimes.uniq.sort
       end
     end
 
     def _toolstore_namespace_continuity_violation?(profiles:, method_name:, state:)
-      primary_keys = profiles.values.filter_map { |keys| Array(keys).map(&:to_s).sort.first }
+      primary_keys = profiles.values.filter_map { |keys| Array(keys).map(&:to_s).min }
       return true if state&.guardrail_violation_subtype.to_s.include?("continuity")
       return false if primary_keys.uniq.length <= 1
 
@@ -341,9 +337,7 @@ class Agent
       if state&.outcome_repair_retry_exhausted == true
         scorecard[:outcome_retry_exhausted_count] = scorecard.fetch(:outcome_retry_exhausted_count, 0).to_i + 1
       end
-      if outcome&.error_type.to_s == "wrong_tool_boundary"
-        scorecard[:wrong_boundary_count] = scorecard.fetch(:wrong_boundary_count, 0).to_i + 1
-      end
+      scorecard[:wrong_boundary_count] = scorecard.fetch(:wrong_boundary_count, 0).to_i + 1 if outcome&.error_type.to_s == "wrong_tool_boundary"
       if outcome&.error_type.to_s == "tool_registry_violation" && outcome&.error_message.to_s.match?(/provenance/i)
         scorecard[:provenance_violation_count] = scorecard.fetch(:provenance_violation_count, 0).to_i + 1
       end

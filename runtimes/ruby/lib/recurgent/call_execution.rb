@@ -42,9 +42,7 @@ class Agent
       if @runtime_config.fetch(:solver_shape_capture_enabled, true)
         _capture_solver_shape_state!(state, method_name: name, args: args, kwargs: kwargs, call_context: call_context)
       end
-      if @runtime_config.fetch(:self_model_capture_enabled, true)
-        _capture_awareness_state!(state, method_name: name, call_context: call_context)
-      end
+      _capture_awareness_state!(state, method_name: name, call_context: call_context) if @runtime_config.fetch(:self_model_capture_enabled, true)
 
       state.outcome = _generate_and_execute(name, args, kwargs, system_prompt, user_prompt, state)
       state.outcome

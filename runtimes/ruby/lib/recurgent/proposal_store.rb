@@ -35,9 +35,7 @@ class Agent
     def _proposal_list(status: nil, limit: nil)
       proposals = _proposal_load_all
       normalized_status = status.to_s.strip
-      unless normalized_status.empty?
-        proposals = proposals.select { |proposal| proposal["status"].to_s == normalized_status }
-      end
+      proposals = proposals.select { |proposal| proposal["status"].to_s == normalized_status } unless normalized_status.empty?
       return proposals unless limit
 
       proposals.last(limit.to_i)

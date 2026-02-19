@@ -547,7 +547,7 @@ class Agent
       scorecards = metadata[:version_scorecards] || metadata["version_scorecards"]
       return nil unless scorecards.is_a?(Hash)
 
-      scorecards.values.each do |entry|
+      scorecards.each_value do |entry|
         next unless entry.is_a?(Hash)
 
         version = entry[:policy_version] || entry["policy_version"]
@@ -596,7 +596,7 @@ class Agent
       calls = success_count + failure_count
       return nil if calls.zero?
 
-      "calls=#{calls}, success_rate=#{(success_count.to_f.fdiv(calls)).round(2)}"
+      "calls=#{calls}, success_rate=#{success_count.to_f.fdiv(calls).round(2)}"
     end
 
     def _extract_tool_degraded_caution(metadata)
@@ -606,7 +606,7 @@ class Agent
         if decision.nil?
           scorecards = metadata[:version_scorecards] || metadata["version_scorecards"]
           if scorecards.is_a?(Hash)
-            scorecards.values.each do |entry|
+            scorecards.each_value do |entry|
               next unless entry.is_a?(Hash)
 
               candidate = entry[:last_decision] || entry["last_decision"]

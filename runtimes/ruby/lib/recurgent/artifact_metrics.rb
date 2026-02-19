@@ -138,9 +138,7 @@ class Agent
 
       _artifact_update_contract_scorecard!(scorecard, state)
       scorecard["guardrail_retry_exhausted_count"] = scorecard["guardrail_retry_exhausted_count"].to_i + 1 if state.guardrail_retry_exhausted == true
-      if state.outcome_repair_retry_exhausted == true
-        scorecard["outcome_retry_exhausted_count"] = scorecard["outcome_retry_exhausted_count"].to_i + 1
-      end
+      scorecard["outcome_retry_exhausted_count"] = scorecard["outcome_retry_exhausted_count"].to_i + 1 if state.outcome_repair_retry_exhausted == true
       scorecard["wrong_boundary_count"] = scorecard["wrong_boundary_count"].to_i + 1 if error_type == "wrong_tool_boundary"
       if _artifact_provenance_violation?(error_type: error_type, error_message: state.outcome&.error_message.to_s)
         scorecard["provenance_violation_count"] = scorecard["provenance_violation_count"].to_i + 1
