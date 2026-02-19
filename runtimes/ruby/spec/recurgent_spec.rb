@@ -87,6 +87,107 @@ RSpec.describe Agent do
   end
 
   describe "coordination primitives" do
+    it "exposes a default self_model before calls" do
+      g = described_class.new("calculator")
+      expect(g.self_model).to eq(
+        awareness_level: "l1",
+        authority: {
+          observe: true,
+          propose: true,
+          enact: false
+        },
+        active_contract_version: nil,
+        active_role_profile_version: nil,
+        execution_snapshot_ref: nil,
+        evolution_snapshot_ref: nil
+      )
+    end
+
+    it "updates self_model after a call with execution and evolution references" do
+      g = described_class.new("calculator")
+      stub_llm_response("context[:value] = 1; result = context[:value]")
+
+      expect_ok_outcome(g.increment, value: 1)
+      self_model = g.self_model
+      expect(self_model[:awareness_level]).to eq("l3")
+      expect(self_model[:authority]).to eq(observe: true, propose: true, enact: false)
+      expect(self_model[:execution_snapshot_ref]).to include("calculator.increment")
+      expect(self_model[:evolution_snapshot_ref]).to include("calculator.increment@sha256:")
+    end
+
+    it "persists proposal artifacts without applying runtime mutations" do
+      g = described_class.new("planner")
+      proposal = g.propose(
+        proposal_type: "role_profile_update",
+        target: { role: "calculator", version: 2 },
+        proposed_diff_summary: "align accumulator slot across sibling methods",
+        evidence_refs: ["trace:abc123", "scorecard:calculator.add@sha256:deadbeef"]
+      )
+
+      expect(proposal).to include(
+        proposal_type: "role_profile_update",
+        status: "proposed",
+        proposed_diff_summary: "align accumulator slot across sibling methods"
+      )
+      expect(proposal[:id]).to match(/\Aprop-[0-9a-f]{16}\z/)
+      expect(proposal[:target]).to eq(role: "calculator", version: 2)
+      expect(proposal[:evidence_refs]).to eq(["trace:abc123", "scorecard:calculator.add@sha256:deadbeef"])
+
+      proposals = g.proposals
+      expect(proposals.length).to eq(1)
+      stored = g.proposal(proposal[:id])
+      expect(stored).to include(
+        "proposal_type" => "role_profile_update",
+        "status" => "proposed"
+      )
+      expect(g.runtime_context).to eq({})
+    end
+
+    it "returns authority_denied for unauthorized proposal mutation" do
+      Agent.configure_runtime(
+        toolstore_root: runtime_toolstore_root,
+        authority_enforcement_enabled: true,
+        authority_maintainers: ["maintainer"]
+      )
+      g = described_class.new("planner")
+      proposal = g.propose(
+        proposal_type: "policy_tuning_suggestion",
+        target: { policy: "solver_promotion_v1" },
+        proposed_diff_summary: "raise min_contract_pass_rate to 0.97",
+        evidence_refs: ["trace:def456"]
+      )
+
+      outcome = g.apply_proposal(proposal[:id], actor: "intruder")
+      expect_error_outcome(outcome, type: "authority_denied", retriable: false)
+      expect(outcome.metadata).to include(action: "apply", actor: "intruder")
+    end
+
+    it "requires approval before apply and allows maintainer-controlled transitions" do
+      Agent.configure_runtime(
+        toolstore_root: runtime_toolstore_root,
+        authority_enforcement_enabled: true,
+        authority_maintainers: ["maintainer"]
+      )
+      g = described_class.new("planner")
+      proposal = g.propose(
+        proposal_type: "role_profile_update",
+        target: { role: "calculator", version: 3 },
+        proposed_diff_summary: "tighten coordination constraint for accumulator slot",
+        evidence_refs: ["trace:ghi789"]
+      )
+
+      blocked = g.apply_proposal(proposal[:id], actor: "maintainer")
+      expect_error_outcome(blocked, type: "invalid_proposal_state", retriable: false)
+
+      approved = g.approve_proposal(proposal[:id], actor: "maintainer", note: "evidence reviewed")
+      expect_ok_outcome(approved, value: approved.value)
+      expect(approved.value["status"]).to eq("approved")
+
+      applied = g.apply_proposal(proposal[:id], actor: "maintainer", note: "apply approved proposal")
+      expect_ok_outcome(applied, value: applied.value)
+      expect(applied.value["status"]).to eq("applied")
+    end
+
     it "builds agents via Agent.for" do
       g = described_class.for("calculator")
       expect(g).to be_a(described_class)
@@ -389,6 +490,56 @@ RSpec.describe Agent do
         expect(metadata["last_used_at"]).not_to be_nil
       end
     end
+
+    it "persists method coherence and version scorecards in registry metadata" do
+      Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        parent = described_class.for("planner")
+        calc = parent.delegate("calculator_tool", purpose: "perform calculator operations")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: "context[:value] = context.fetch(:value, 0) + args[0]; result = context[:value]"),
+          program_payload(code: "context[:value] = context.fetch(:value, 0) * args[0]; result = context[:value]")
+        )
+
+        expect_ok_outcome(calc.add(2), value: 2)
+        expect_ok_outcome(calc.multiply(3), value: 6)
+
+        registry = JSON.parse(File.read(File.join(tmpdir, "registry.json")))
+        metadata = registry.dig("tools", "calculator_tool")
+        expect(metadata["method_state_keys"]).to include("add" => ["value"], "multiply" => ["value"])
+        expect(metadata["state_key_consistency_ratio"]).to eq(1.0)
+        expect(metadata["namespace_key_collision_count"]).to eq(0)
+        expect(metadata["namespace_multi_lifetime_key_count"]).to eq(0)
+        expect(metadata["namespace_continuity_violation_count"]).to eq(0)
+        expect(metadata["state_key_lifetimes"]).to include("value" => include("role"))
+        scorecards = metadata.fetch("version_scorecards")
+        expect(scorecards.keys).to include(a_string_matching(/\Aadd@sha256:/), a_string_matching(/\Amultiply@sha256:/))
+      end
+    end
+
+    it "tracks namespace pressure metrics for state-key drift and mixed inferred lifetimes" do
+      Dir.mktmpdir("recurgent-toolstore-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        parent = described_class.for("planner")
+        calc = parent.delegate("calculator_tool", purpose: "perform calculator operations")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: "context[:value] = context.fetch(:value, 0) + args[0]; result = context[:value]"),
+          program_payload(code: "context[:memory] = context.fetch(:memory, 0) + args[0]; result = context[:memory]"),
+          program_payload(code: "context[:value] = Array(context[:value]); context[:value] << args[0]; result = context[:value]")
+        )
+
+        expect_ok_outcome(calc.add(2), value: 2)
+        expect_ok_outcome(calc.increment(3), value: 3)
+        expect_ok_outcome(calc.record("note"), value: [2, "note"])
+
+        registry = JSON.parse(File.read(File.join(tmpdir, "registry.json")))
+        metadata = registry.dig("tools", "calculator_tool")
+        expect(metadata["namespace_key_collision_count"]).to eq(2)
+        expect(metadata["namespace_multi_lifetime_key_count"]).to eq(1)
+        expect(metadata["namespace_continuity_violation_count"]).to be >= 1
+        expect(metadata.dig("state_key_lifetimes", "value")).to include("role", "session")
+      end
+    end
   end
 
   describe "artifact persistence" do
@@ -414,8 +565,74 @@ RSpec.describe Agent do
         expect(artifact["input_sensitive"]).to eq(false)
         expect(artifact["success_count"]).to eq(1)
         expect(artifact["failure_count"]).to eq(0)
+        scorecards = artifact.fetch("scorecards")
+        expect(scorecards).to be_a(Hash)
+        expect(scorecards).to have_key(artifact["code_checksum"])
+        scorecard = scorecards.fetch(artifact["code_checksum"])
+        expect(scorecard["calls"]).to eq(1)
+        expect(scorecard["successes"]).to eq(1)
+        expect(scorecard["failures"]).to eq(0)
+        expect(scorecard["short_window"]).to be_an(Array)
+        expect(scorecard["medium_window"]).to be_an(Array)
+        expect(scorecard["sessions"]).to be_an(Array)
+        expect(scorecard["state_key_consistency_ratio"]).to be_a(Numeric)
         expect(artifact["history"].size).to eq(1)
         expect(artifact.dig("history", 0, "trigger")).to eq("initial_forge")
+      end
+    end
+
+    it "persists shadow lifecycle state and decision ledger for artifact versions" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        g = described_class.new("calculator")
+        stub_llm_response("result = 42")
+
+        expect_ok_outcome(g.answer, value: 42)
+
+        artifact_path = g.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "answer")
+        artifact = JSON.parse(File.read(artifact_path))
+        checksum = artifact.fetch("code_checksum")
+        lifecycle = artifact.fetch("lifecycle")
+        version_entry = lifecycle.fetch("versions").fetch(checksum)
+        expect(lifecycle["policy_version"]).to eq(Agent::PROMOTION_POLICY_VERSION)
+        expect(version_entry["lifecycle_state"]).to eq("probation")
+        expect(version_entry["last_decision"]).to eq("continue_probation")
+        expect(lifecycle.dig("shadow_ledger", "evaluations")).to be_an(Array)
+        expect(lifecycle.dig("shadow_ledger", "evaluations")).not_to be_empty
+      end
+    end
+
+    it "promotes probation artifact to durable in shadow mode when gate passes" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        g = described_class.new("calculator")
+        allow(g).to receive(:_promotion_policy_contract).and_return(
+          {
+            version: Agent::PROMOTION_POLICY_VERSION,
+            min_calls: 1,
+            min_sessions: 1,
+            min_contract_pass_rate: 0.0,
+            max_guardrail_retry_exhausted: 100,
+            max_outcome_retry_exhausted: 100,
+            max_wrong_boundary_count: 100,
+            max_provenance_violations: 100,
+            min_state_key_consistency_ratio: 0.0
+          }
+        )
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: "result = 1"),
+          program_payload(code: "result = 1")
+        )
+
+        expect_ok_outcome(g.answer, value: 1)
+        expect_ok_outcome(g.answer, value: 1)
+
+        artifact_path = g.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "answer")
+        artifact = JSON.parse(File.read(artifact_path))
+        checksum = artifact.fetch("code_checksum")
+        version_entry = artifact.dig("lifecycle", "versions", checksum)
+        expect(version_entry["lifecycle_state"]).to eq("durable")
+        expect(version_entry["last_decision"]).to eq("promote")
       end
     end
 
@@ -559,6 +776,8 @@ RSpec.describe Agent do
         expect(artifact["intrinsic_failure_count"]).to eq(0)
         expect(artifact["last_failure_class"]).to eq("extrinsic")
         expect(artifact["last_failure_reason"]).to include("upstream timeout")
+        version_failures = artifact.fetch("scorecards", {}).values.sum { |entry| entry.fetch("failures", 0).to_i }
+        expect(version_failures).to eq(2)
       end
     end
 
@@ -643,6 +862,49 @@ RSpec.describe Agent do
         expect(mock_provider).not_to receive(:generate_program)
 
         expect_ok_outcome(warm.answer, value: 42)
+      end
+    end
+
+    it "enforces durable-over-probation artifact selection when promotion enforcement is enabled" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir, promotion_enforcement_enabled: false)
+        seeder = described_class.new("calculator")
+        stub_llm_response("result = 1")
+        expect_ok_outcome(seeder.answer, value: 1)
+
+        artifact_path = seeder.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "answer")
+        artifact = JSON.parse(File.read(artifact_path))
+        durable_checksum = artifact.fetch("code_checksum")
+        durable_code = artifact.fetch("code")
+        candidate_code = "result = 99"
+        candidate_checksum = seeder.send(:_artifact_code_checksum, candidate_code)
+
+        artifact["code"] = candidate_code
+        artifact["code_checksum"] = candidate_checksum
+        artifact["versions"] = {
+          durable_checksum => { "code" => durable_code, "dependencies" => [] },
+          candidate_checksum => { "code" => candidate_code, "dependencies" => [] }
+        }
+        artifact["lifecycle"] = {
+          "policy_version" => Agent::PROMOTION_POLICY_VERSION,
+          "incumbent_durable_checksum" => durable_checksum,
+          "versions" => {
+            durable_checksum => { "lifecycle_state" => "durable", "last_decision" => "promote" },
+            candidate_checksum => { "lifecycle_state" => "probation", "last_decision" => "continue_probation" }
+          },
+          "shadow_ledger" => { "false_promotion_count" => 0, "false_hold_count" => 0, "evaluations" => [] }
+        }
+        File.write(artifact_path, JSON.generate(artifact))
+
+        Agent.configure_runtime(toolstore_root: tmpdir, promotion_enforcement_enabled: false)
+        no_enforcement = described_class.new("calculator")
+        expect(mock_provider).not_to receive(:generate_program)
+        expect_ok_outcome(no_enforcement.answer, value: 99)
+
+        Agent.configure_runtime(toolstore_root: tmpdir, promotion_enforcement_enabled: true)
+        enforced = described_class.new("calculator")
+        expect(mock_provider).not_to receive(:generate_program)
+        expect_ok_outcome(enforced.answer, value: 1)
       end
     end
 
@@ -1385,7 +1647,10 @@ RSpec.describe Agent do
 
     it "keeps explicit Agent method surface narrow to protect dynamic dispatch" do
       expect(described_class.instance_methods(false).map(&:to_s).sort).to eq(
-        %w[define_singleton_method delegate inspect method_missing remember runtime_context to_s tool]
+        %w[
+          apply_proposal approve_proposal define_singleton_method delegate inspect method_missing
+          proposal proposals propose reject_proposal remember runtime_context self_model to_s tool
+        ]
       )
     end
   end

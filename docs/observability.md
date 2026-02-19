@@ -75,6 +75,30 @@ Lifecycle repair fields (recommended for fresh-path retries):
 - `guardrail_retry_exhausted`
 - `outcome_repair_retry_exhausted`
 
+Solver-shape fields (recommended for decision introspection):
+
+- `solver_shape`
+- `solver_shape_complete`
+- `solver_shape_stance`
+- `solver_shape_promotion_intent`
+
+Promotion lifecycle fields (recommended for shadow/enforcement audits):
+
+- `promotion_policy_version`
+- `lifecycle_state` (`candidate`, `probation`, `durable`, `degraded`)
+- `lifecycle_decision` (`promote`, `continue_probation`, `degrade`, `hold`)
+- `promotion_decision_rationale`
+- `promotion_shadow_mode`
+- `promotion_enforced`
+- `artifact_selected_checksum`
+- `artifact_selected_lifecycle_state`
+
+Context-scope pressure fields (recommended for ADR 0025 evidence gate):
+
+- `namespace_key_collision_count` (pairwise sibling-method key collisions for active role)
+- `namespace_multi_lifetime_key_count` (keys observed with more than one inferred lifetime profile)
+- `namespace_continuity_violation_count` (count of continuity drifts linked to namespace ambiguity)
+
 Failed-attempt diagnostics (internal-only):
 
 - `latest_failure_stage` (`validation`, `execution`, `outcome_policy`)
@@ -101,3 +125,30 @@ These fields are for logs/artifacts and repair analysis only. User-facing bounda
 
 - Ruby runtime currently emits the full recommended traceability fields.
 - Lua runtime should emit the same keys to reuse the watcher unchanged.
+
+## Operator Queries
+
+Use `bin/recurgent-tools` to inspect scorecards and decision traces for specific interfaces:
+
+```bash
+# View version-scoped scorecards + lifecycle summary for one role/method
+bin/recurgent-tools scorecards "news_aggregator" "get_headlines"
+
+# View recent promotion decisions from shadow ledger
+bin/recurgent-tools decisions "news_aggregator" "get_headlines" --limit 20
+
+# View namespace-pressure metrics for one role
+bin/recurgent-tools namespace-pressure "calculator"
+```
+
+## Context Scope Evidence Gate (ADR 0025 Phase 5)
+
+Use namespace-pressure metrics to decide whether a follow-up context-scope migration ADR is justified.
+
+Trigger a follow-up ADR when, for the same role, all conditions hold over a meaningful sample window:
+
+1. `namespace_key_collision_count >= 3` across at least 2 distinct sessions.
+2. `namespace_multi_lifetime_key_count >= 1` sustained across at least 2 sessions.
+3. `namespace_continuity_violation_count >= 2` and increasing over recent calls.
+
+If these thresholds are not met, document a no-trigger decision and continue collecting telemetry.

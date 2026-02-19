@@ -33,11 +33,19 @@ class Agent
         new_checksum: new_checksum,
         timestamp: timestamp
       )
+      legacy_mode = !previous_checksum.nil? && !artifact.key?("lifecycle")
+      _artifact_evaluate_promotion_shadow!(artifact, state: state, timestamp: timestamp, legacy_mode: legacy_mode)
 
       artifact["last_used_at"] = timestamp
       artifact["last_duration_ms"] = duration_ms.round(1)
       _artifact_write(method_name, artifact)
-      _toolstore_touch_tool_usage(@role, method_name: method_name, outcome: state.outcome)
+      _toolstore_touch_tool_usage(
+        @role,
+        method_name: method_name,
+        outcome: state.outcome,
+        state: state,
+        artifact_checksum: new_checksum
+      )
     rescue StandardError => e
       warn "[AGENT ARTIFACT #{@role}.#{method_name}] failed to persist artifact: #{e.class}: #{e.message}" if @debug
     end
@@ -56,6 +64,7 @@ class Agent
         "input_sensitive" => false,
         "code_checksum" => nil,
         "code" => "",
+        "versions" => {},
         "dependencies" => [],
         "success_count" => 0,
         "failure_count" => 0,
@@ -63,6 +72,7 @@ class Agent
         "adaptive_failure_count" => 0,
         "extrinsic_failure_count" => 0,
         "recent_failure_rate" => 0.0,
+        "scorecards" => {},
         "last_failure_reason" => nil,
         "last_failure_class" => nil,
         "repair_count_since_regen" => 0,
@@ -96,6 +106,26 @@ class Agent
       File.rename(temp_path, path)
     ensure
       File.delete(temp_path) if defined?(temp_path) && temp_path && File.exist?(temp_path)
+    end
+
+    def _artifact_scorecards(method_name)
+      artifact = _artifact_load(method_name)
+      return {} unless artifact.is_a?(Hash)
+
+      scorecards = artifact["scorecards"]
+      scorecards.is_a?(Hash) ? scorecards : {}
+    end
+
+    def _artifact_scorecard_for(artifact, artifact_checksum: nil)
+      return nil unless artifact.is_a?(Hash)
+
+      scorecards = artifact["scorecards"]
+      return nil unless scorecards.is_a?(Hash)
+
+      checksum = artifact_checksum.to_s
+      checksum = artifact["code_checksum"].to_s if checksum.empty?
+      candidate = scorecards[checksum]
+      candidate.is_a?(Hash) ? candidate : nil
     end
 
     def _artifact_schema_supported?(schema_version)
@@ -133,7 +163,35 @@ class Agent
       artifact["code_checksum"] = checksum
       artifact["code"] = code
       artifact["dependencies"] = state.program_dependencies || []
+      _artifact_update_version_payload!(
+        artifact,
+        checksum: checksum,
+        code: code,
+        dependencies: artifact["dependencies"],
+        timestamp: timestamp
+      )
       artifact["created_at"] ||= timestamp
+    end
+
+    def _artifact_update_version_payload!(artifact, checksum:, code:, dependencies:, timestamp:)
+      versions = artifact["versions"]
+      versions = artifact["versions"] = {} unless versions.is_a?(Hash)
+
+      existing = versions[checksum]
+      created_at = existing.is_a?(Hash) ? existing["created_at"] : timestamp
+      versions[checksum] = {
+        "code" => code,
+        "dependencies" => dependencies || [],
+        "created_at" => created_at,
+        "last_used_at" => timestamp
+      }
+
+      # Keep recent versions bounded to avoid unbounded artifact growth.
+      if versions.length > 8
+        sorted = versions.sort_by { |_, payload| payload.is_a?(Hash) ? payload["last_used_at"].to_s : "" }
+        keep = sorted.last(8).to_h
+        artifact["versions"] = keep
+      end
     end
 
     def _artifact_update_generation_history!(artifact, state:, previous_checksum:, new_checksum:, timestamp:)

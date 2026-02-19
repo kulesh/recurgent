@@ -143,6 +143,58 @@ RSpec.describe Agent do
       expect(noisy_index).to be < stale_index
     end
 
+    it "prioritizes durable tools and renders lifecycle reliability hints" do
+      g = described_class.new("planner")
+      g.remember(
+        tools: {
+          "candidate_tool" => {
+            purpose: "candidate",
+            lifecycle_state: "candidate",
+            promotion_policy_version: Agent::PROMOTION_POLICY_VERSION,
+            version_scorecards: {
+              "run@sha256:candidate" => { calls: 4, successes: 3, failures: 1 }
+            }
+          },
+          "durable_tool" => {
+            purpose: "durable",
+            lifecycle_state: "durable",
+            promotion_policy_version: Agent::PROMOTION_POLICY_VERSION,
+            version_scorecards: {
+              "run@sha256:durable" => {
+                calls: 10,
+                successes: 10,
+                failures: 0,
+                wrong_boundary_count: 0,
+                guardrail_retry_exhausted_count: 0,
+                outcome_retry_exhausted_count: 0,
+                policy_version: Agent::PROMOTION_POLICY_VERSION
+              }
+            }
+          },
+          "degraded_tool" => {
+            purpose: "degraded",
+            lifecycle_state: "degraded",
+            lifecycle_decision: "degrade",
+            promotion_policy_version: Agent::PROMOTION_POLICY_VERSION,
+            version_scorecards: {
+              "run@sha256:degraded" => { calls: 8, successes: 2, failures: 6, last_decision: "degrade" }
+            }
+          }
+        }
+      )
+
+      prompt = g.send(:_known_tools_prompt)
+      durable_index = prompt.index("- durable_tool: durable")
+      candidate_index = prompt.index("- candidate_tool: candidate")
+      degraded_index = prompt.index("- degraded_tool: degraded")
+
+      expect(durable_index).to be < candidate_index
+      expect(candidate_index).to be < degraded_index
+      expect(prompt).to include("lifecycle: durable (policy: #{Agent::PROMOTION_POLICY_VERSION})")
+      expect(prompt).to include("reliability: calls=10, success_rate=1.0")
+      expect(prompt).to include("caution: degraded by promotion policy")
+    end
+
     it "includes known tool method names in known-tools prompt rendering" do
       g = described_class.new("planner")
       g.remember(

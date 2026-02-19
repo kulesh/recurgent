@@ -28,6 +28,8 @@ require_relative "recurgent/capability_pattern_extractor"
 require_relative "recurgent/user_correction_signals"
 require_relative "recurgent/pattern_memory_store"
 require_relative "recurgent/pattern_prompting"
+require_relative "recurgent/proposal_store"
+require_relative "recurgent/authority"
 require_relative "recurgent/artifact_metrics"
 require_relative "recurgent/artifact_trigger_metadata"
 require_relative "recurgent/artifact_store"
@@ -95,6 +97,7 @@ class Agent
   TOOLSTORE_SCHEMA_VERSION = 1
   PROMPT_VERSION = "2026-02-15.depth-aware.v3"
   MAX_REPAIRS_BEFORE_REGEN = 3
+  PROMOTION_POLICY_VERSION = "solver_promotion_v1"
   KNOWN_TOOLS_PROMPT_LIMIT = 12
   CONVERSATION_HISTORY_PROMPT_PREVIEW_LIMIT = 3
   DYNAMIC_DISPATCH_METHODS = %w[ask chat discuss host].freeze
@@ -187,6 +190,8 @@ class Agent
   include UserCorrectionSignals
   include PatternMemoryStore
   include PatternPrompting
+  include ProposalStore
+  include Authority
   include ArtifactMetrics
   include ArtifactStore
   include ArtifactSelector
@@ -347,6 +352,85 @@ class Agent
     @context
   end
 
+  def self_model
+    model = @self_model
+    return _json_safe(_default_self_model_snapshot) if model.nil?
+
+    _json_safe(model.dup)
+  end
+
+  def propose(proposal_type:, target:, proposed_diff_summary:, evidence_refs: [], metadata: {})
+    _proposal_create(
+      proposal_type: proposal_type,
+      target: target,
+      proposed_diff_summary: proposed_diff_summary,
+      evidence_refs: evidence_refs,
+      metadata: metadata
+    )
+  end
+
+  def proposals(status: nil, limit: nil)
+    _proposal_list(status: status, limit: limit)
+  end
+
+  def proposal(proposal_id)
+    _proposal_find(proposal_id)
+  end
+
+  def approve_proposal(proposal_id, actor: nil, note: nil)
+    resolved_actor = _proposal_actor(actor)
+    return _authority_denied_outcome(method_name: "approve_proposal", actor: resolved_actor, action: "approve") unless _proposal_mutation_allowed?(actor: resolved_actor)
+
+    proposal = _proposal_update_status(
+      proposal_id: proposal_id,
+      status: "approved",
+      actor: resolved_actor,
+      note: note
+    )
+    return Outcome.error(error_type: "not_found", error_message: "Proposal '#{proposal_id}' not found", retriable: false) if proposal.nil?
+
+    Outcome.ok(value: proposal, tool_role: @role, method_name: "approve_proposal")
+  end
+
+  def reject_proposal(proposal_id, actor: nil, note: nil)
+    resolved_actor = _proposal_actor(actor)
+    return _authority_denied_outcome(method_name: "reject_proposal", actor: resolved_actor, action: "reject") unless _proposal_mutation_allowed?(actor: resolved_actor)
+
+    proposal = _proposal_update_status(
+      proposal_id: proposal_id,
+      status: "rejected",
+      actor: resolved_actor,
+      note: note
+    )
+    return Outcome.error(error_type: "not_found", error_message: "Proposal '#{proposal_id}' not found", retriable: false) if proposal.nil?
+
+    Outcome.ok(value: proposal, tool_role: @role, method_name: "reject_proposal")
+  end
+
+  def apply_proposal(proposal_id, actor: nil, note: nil)
+    resolved_actor = _proposal_actor(actor)
+    return _authority_denied_outcome(method_name: "apply_proposal", actor: resolved_actor, action: "apply") unless _proposal_mutation_allowed?(actor: resolved_actor)
+
+    proposal = _proposal_find(proposal_id)
+    return Outcome.error(error_type: "not_found", error_message: "Proposal '#{proposal_id}' not found", retriable: false) if proposal.nil?
+    status = proposal["status"].to_s
+    if status != "approved"
+      return Outcome.error(
+        error_type: "invalid_proposal_state",
+        error_message: "Proposal '#{proposal_id}' must be approved before apply (current: #{status}).",
+        retriable: false
+      )
+    end
+
+    applied = _proposal_update_status(
+      proposal_id: proposal_id,
+      status: "applied",
+      actor: resolved_actor,
+      note: note
+    )
+    Outcome.ok(value: applied, tool_role: @role, method_name: "apply_proposal")
+  end
+
   def tool(role, **options)
     role_name = role.to_s
     metadata = _registered_tool_metadata(role_name)
@@ -490,6 +574,21 @@ class Agent
     when :anthropic then Providers::Anthropic.new
     else raise ArgumentError, "Unknown provider: #{kind}"
     end
+  end
+
+  def _default_self_model_snapshot
+    {
+      awareness_level: "l1",
+      authority: {
+        observe: true,
+        propose: true,
+        enact: false
+      },
+      active_contract_version: nil,
+      active_role_profile_version: nil,
+      execution_snapshot_ref: nil,
+      evolution_snapshot_ref: nil
+    }
   end
 
   # Executes LLM-generated code on an ephemeral sandbox receiver.

@@ -85,6 +85,8 @@ class Agent
         artifact_hit: log_context[:artifact_hit],
         artifact_prompt_version: log_context[:artifact_prompt_version],
         artifact_contract_fingerprint: log_context[:artifact_contract_fingerprint],
+        artifact_selected_checksum: log_context[:artifact_selected_checksum],
+        artifact_selected_lifecycle_state: log_context[:artifact_selected_lifecycle_state],
         cacheable: log_context[:cacheable],
         cacheability_reason: log_context[:cacheability_reason],
         input_sensitive: log_context[:input_sensitive]

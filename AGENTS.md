@@ -124,6 +124,8 @@ Occasionally refer to your programming buddy by their name.
 - Ubiquitous language of the project, therefore, should be in distribution of the backing models of the agents.
 - Runtime ergonomics are designed for introspection, prescription, and evolution not process.
 - Tolerant interfaces by default.
+- Separate awareness from authority: Agents may observe context/contracts/telemetry and propose changes, but agents must not mutate policies, profiles, or governance rules without explicit maintainer approval.
+  Example: an agent can propose `RoleProfile v2` from continuity drift evidence; it cannot activate `RoleProfile v2` unilaterally.
 
 This is a multi-runtime repository for Recurgent:
 
@@ -204,7 +206,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-18T07:01:21Z
+Last Updated (UTC): 2026-02-19T21:04:42Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -236,7 +238,10 @@ Last Updated (UTC): 2026-02-18T07:01:21Z
 - `docs/plans/external-data-provenance-implementation-plan.md` - phased implementation plan for ADR 0021 external-data provenance invariant across contracts, guardrails, history, and telemetry
 - `docs/plans/guardrail-exhaustion-boundary-normalization-implementation-plan.md` - phased implementation plan for ADR 0022 generic guardrail exhaustion boundary normalization with top-level-only user-facing message stabilization
 - `docs/plans/failed-attempt-exception-telemetry-implementation-plan.md` - phased implementation plan for ADR 0016 augmentation to persist failed-attempt exception diagnostics for repaired fresh calls
+- `docs/plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md` - phased implementation plan for ADR 0023 solver-shape evidence capture and reliability-gated lifecycle evolution
+- `docs/plans/awareness-substrate-authority-boundary-implementation-plan.md` - phased implementation plan for ADR 0025 bounded awareness substrate, proposal artifacts, and explicit authority gate enforcement
 - `docs/baselines/2026-02-15/README.md` - baseline trace capture instructions and fixtures before artifact persistence rollout
+- `docs/reports/adr-0023-phase-validation-report.md` - per-phase validation transcript for tests, examples, logs, and diagnostics during ADR 0023 implementation
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
 - `docs/support.md` - support scope and triage expectations
@@ -266,6 +271,9 @@ Last Updated (UTC): 2026-02-18T07:01:21Z
 - `docs/adrs/0020-generated-code-execution-sandbox-isolation.md` - proposed per-attempt sandbox execution receiver for generated code to prevent cross-call method leakage and preserve dynamic-dispatch lifecycle integrity
 - `docs/adrs/0021-external-data-provenance-invariant.md` - accepted global invariant requiring provenance on external-data successes with guardrail enforcement and provenance-aware history/telemetry
 - `docs/adrs/0022-guardrail-exhaustion-boundary-normalization.md` - proposed generic boundary policy for normalizing exhausted guardrail failures while preserving full internal diagnostics
+- `docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md` - proposed first-class solver-shape evidence model and reliability-gated lifecycle policy for tool evolution
+- `docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md` - proposed opt-in role-profile contract and continuity guard to separate semantic correctness from reliability ranking
+- `docs/adrs/0025-awareness-substrate-and-authority-boundary.md` - proposed bounded self-awareness substrate (L1-L3) with explicit authority boundary (observe/propose/enact) and governance-safe evolution semantics
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog

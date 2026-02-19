@@ -26,6 +26,9 @@ This directory captures architecture decisions that shape Recurgent's runtime be
 - `0020-generated-code-execution-sandbox-isolation.md`
 - `0021-external-data-provenance-invariant.md`
 - `0022-guardrail-exhaustion-boundary-normalization.md`
+- `0023-solver-shape-and-reliability-gated-tool-evolution.md`
+- `0024-contract-first-role-profiles-and-state-continuity-guard.md`
+- `0025-awareness-substrate-and-authority-boundary.md`
 
 ## Status Values
 

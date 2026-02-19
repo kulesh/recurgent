@@ -3,6 +3,7 @@
 
 require "optparse"
 require "json"
+require "digest"
 require_relative "../runtimes/ruby/lib/recurgent"
 
 def usage!
@@ -10,6 +11,14 @@ def usage!
     Usage:
       bin/recurgent-tools list-stale [--days N] [--limit N] [--root PATH]
       bin/recurgent-tools prune [--days N] [--mode archive|delete] [--dry-run|--apply] [--root PATH]
+      bin/recurgent-tools scorecards <role> <method> [--root PATH]
+      bin/recurgent-tools decisions <role> <method> [--limit N] [--root PATH]
+      bin/recurgent-tools namespace-pressure <role> [--root PATH]
+      bin/recurgent-tools set-lifecycle <role> <method> <checksum> <state> [--reason TEXT] [--root PATH] [--dry-run|--apply]
+      bin/recurgent-tools proposals [--status STATUS] [--limit N] [--root PATH]
+      bin/recurgent-tools approve-proposal <proposal_id> [--actor NAME] [--note TEXT] [--root PATH]
+      bin/recurgent-tools reject-proposal <proposal_id> [--actor NAME] [--note TEXT] [--root PATH]
+      bin/recurgent-tools apply-proposal <proposal_id> [--actor NAME] [--note TEXT] [--root PATH]
   USAGE
   exit 1
 end
@@ -22,7 +31,11 @@ options = {
   limit: nil,
   root: Agent.default_toolstore_root,
   mode: "archive",
-  dry_run: true
+  dry_run: true,
+  reason: "manual override",
+  status: nil,
+  actor: ENV.fetch("USER", "unknown"),
+  note: nil
 }
 
 parser = OptionParser.new do |opts|
@@ -30,12 +43,76 @@ parser = OptionParser.new do |opts|
   opts.on("--limit N", Integer, "max rows for list-stale") { |value| options[:limit] = value }
   opts.on("--root PATH", String, "toolstore root path") { |value| options[:root] = value }
   opts.on("--mode MODE", String, "prune mode: archive|delete (default: archive)") { |value| options[:mode] = value }
+  opts.on("--reason TEXT", String, "manual lifecycle override reason") { |value| options[:reason] = value }
+  opts.on("--status STATUS", String, "filter proposals by status") { |value| options[:status] = value }
+  opts.on("--actor NAME", String, "actor identity for proposal mutation commands") { |value| options[:actor] = value }
+  opts.on("--note TEXT", String, "optional proposal mutation note") { |value| options[:note] = value }
   opts.on("--dry-run", "preview prune changes (default)") { options[:dry_run] = true }
   opts.on("--apply", "apply prune changes") { options[:dry_run] = false }
 end
 parser.parse!(ARGV)
 
 maintenance = Agent::ToolMaintenance.new(toolstore_root: options[:root])
+
+def safe_segment(value)
+  raw = value.to_s
+  normalized = raw.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_+|_+\z/, "")
+  normalized = "item" if normalized.empty?
+  digest = Digest::SHA256.hexdigest(raw)[0, 8]
+  "#{normalized[0, 48]}-#{digest}"
+end
+
+def artifact_path(root:, role:, method:)
+  File.join(root, "artifacts", safe_segment(role), "#{safe_segment(method)}.json")
+end
+
+def load_artifact(path)
+  raise "artifact not found: #{path}" unless File.exist?(path)
+
+  JSON.parse(File.read(path))
+end
+
+def load_registry(root)
+  path = File.join(root, "registry.json")
+  return {} unless File.exist?(path)
+
+  payload = JSON.parse(File.read(path))
+  tools = payload["tools"]
+  return {} unless tools.is_a?(Hash)
+
+  tools
+end
+
+def write_artifact(path, artifact)
+  tmp = "#{path}.tmp-#{Process.pid}"
+  File.write(tmp, JSON.generate(artifact))
+  File.rename(tmp, path)
+ensure
+  File.delete(tmp) if defined?(tmp) && File.exist?(tmp)
+end
+
+def build_proposal_agent(root)
+  Agent.configure_runtime(toolstore_root: root)
+  Agent.for("proposal_operator", log: false, debug: false)
+end
+
+def proposal_mutation_payload(command, outcome)
+  if outcome.ok?
+    {
+      command: command,
+      status: "ok",
+      proposal: outcome.value
+    }
+  else
+    {
+      command: command,
+      status: "error",
+      error_type: outcome.error_type,
+      error_message: outcome.error_message,
+      metadata: outcome.metadata
+    }
+  end
+end
 
 case command
 when "list-stale"
@@ -48,6 +125,156 @@ when "prune"
     mode: options[:mode]
   )
   puts JSON.pretty_generate(result)
+when "scorecards"
+  role = ARGV.shift
+  method = ARGV.shift
+  usage! if role.nil? || method.nil?
+
+  path = artifact_path(root: options[:root], role: role, method: method)
+  artifact = load_artifact(path)
+  lifecycle = artifact.fetch("lifecycle", {})
+  payload = {
+    role: role,
+    method: method,
+    artifact_path: path,
+    current_checksum: artifact["code_checksum"],
+    scorecards: artifact.fetch("scorecards", {}),
+    lifecycle: {
+      policy_version: lifecycle["policy_version"],
+      incumbent_durable_checksum: lifecycle["incumbent_durable_checksum"],
+      versions: lifecycle.fetch("versions", {}),
+      shadow_ledger_summary: {
+        evaluations: Array(lifecycle.dig("shadow_ledger", "evaluations")).size,
+        false_promotion_count: lifecycle.dig("shadow_ledger", "false_promotion_count"),
+        false_hold_count: lifecycle.dig("shadow_ledger", "false_hold_count")
+      }
+    }
+  }
+  puts JSON.pretty_generate(payload)
+when "decisions"
+  role = ARGV.shift
+  method = ARGV.shift
+  usage! if role.nil? || method.nil?
+
+  path = artifact_path(root: options[:root], role: role, method: method)
+  artifact = load_artifact(path)
+  evaluations = Array(artifact.dig("lifecycle", "shadow_ledger", "evaluations"))
+  evaluations = evaluations.last(options[:limit]) if options[:limit]
+  puts JSON.pretty_generate(
+    role: role,
+    method: method,
+    artifact_path: path,
+    decision_count: evaluations.size,
+    decisions: evaluations
+  )
+when "namespace-pressure"
+  role = ARGV.shift
+  usage! if role.nil? || role.strip.empty?
+
+  registry = load_registry(options[:root])
+  metadata = registry[role.to_s]
+  raise "role not found in registry: #{role}" unless metadata.is_a?(Hash)
+
+  puts JSON.pretty_generate(
+    role: role,
+    namespace_key_collision_count: metadata.fetch("namespace_key_collision_count", 0),
+    namespace_multi_lifetime_key_count: metadata.fetch("namespace_multi_lifetime_key_count", 0),
+    namespace_continuity_violation_count: metadata.fetch("namespace_continuity_violation_count", 0),
+    state_key_consistency_ratio: metadata.fetch("state_key_consistency_ratio", 1.0),
+    method_state_keys: metadata.fetch("method_state_keys", {}),
+    state_key_lifetimes: metadata.fetch("state_key_lifetimes", {})
+  )
+when "set-lifecycle"
+  role = ARGV.shift
+  method = ARGV.shift
+  checksum = ARGV.shift
+  state = ARGV.shift
+  usage! if role.nil? || method.nil? || checksum.nil? || state.nil?
+  valid_states = %w[candidate probation durable degraded]
+  raise ArgumentError, "invalid lifecycle state: #{state}" unless valid_states.include?(state)
+
+  path = artifact_path(root: options[:root], role: role, method: method)
+  artifact = load_artifact(path)
+  lifecycle = artifact["lifecycle"] ||= {
+    "policy_version" => Agent::PROMOTION_POLICY_VERSION,
+    "incumbent_durable_checksum" => nil,
+    "versions" => {},
+    "shadow_ledger" => { "false_promotion_count" => 0, "false_hold_count" => 0, "evaluations" => [] }
+  }
+  lifecycle["versions"] ||= {}
+  now = Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S.%3NZ")
+
+  entry = lifecycle["versions"][checksum] ||= {
+    "artifact_checksum" => checksum,
+    "policy_version" => lifecycle["policy_version"] || Agent::PROMOTION_POLICY_VERSION,
+    "first_seen_at" => now
+  }
+  entry["lifecycle_state"] = state
+  entry["last_decision"] = "manual_override"
+  entry["last_decision_at"] = now
+
+  lifecycle["incumbent_durable_checksum"] = checksum if state == "durable"
+  if state == "degraded" && lifecycle["incumbent_durable_checksum"] == checksum
+    lifecycle["incumbent_durable_checksum"] = nil
+  end
+
+  lifecycle["manual_overrides"] ||= []
+  lifecycle["manual_overrides"] << {
+    "at" => now,
+    "actor" => ENV.fetch("USER", "unknown"),
+    "role" => role,
+    "method" => method,
+    "artifact_checksum" => checksum,
+    "state" => state,
+    "reason" => options[:reason]
+  }
+  lifecycle["manual_overrides"] = lifecycle["manual_overrides"].last(200)
+
+  if options[:dry_run]
+    puts JSON.pretty_generate(
+      dry_run: true,
+      artifact_path: path,
+      updated_entry: entry,
+      incumbent_durable_checksum: lifecycle["incumbent_durable_checksum"]
+    )
+  else
+    write_artifact(path, artifact)
+    puts JSON.pretty_generate(
+      dry_run: false,
+      artifact_path: path,
+      updated_entry: entry,
+      incumbent_durable_checksum: lifecycle["incumbent_durable_checksum"]
+    )
+  end
+when "proposals"
+  agent = build_proposal_agent(options[:root])
+  proposals = agent.proposals(status: options[:status], limit: options[:limit])
+  puts JSON.pretty_generate(
+    proposal_count: proposals.length,
+    status_filter: options[:status],
+    proposals: proposals
+  )
+when "approve-proposal"
+  proposal_id = ARGV.shift
+  usage! if proposal_id.nil? || proposal_id.strip.empty?
+  agent = build_proposal_agent(options[:root])
+  outcome = agent.approve_proposal(proposal_id, actor: options[:actor], note: options[:note])
+  puts JSON.pretty_generate(proposal_mutation_payload(command, outcome))
+  exit 1 unless outcome.ok?
+when "reject-proposal"
+  proposal_id = ARGV.shift
+  usage! if proposal_id.nil? || proposal_id.strip.empty?
+  agent = build_proposal_agent(options[:root])
+  outcome = agent.reject_proposal(proposal_id, actor: options[:actor], note: options[:note])
+  puts JSON.pretty_generate(proposal_mutation_payload(command, outcome))
+  exit 1 unless outcome.ok?
+when "apply-proposal"
+  proposal_id = ARGV.shift
+  usage! if proposal_id.nil? || proposal_id.strip.empty?
+  agent = build_proposal_agent(options[:root])
+  outcome = agent.apply_proposal(proposal_id, actor: options[:actor], note: options[:note])
+  puts JSON.pretty_generate(proposal_mutation_payload(command, outcome))
+  exit 1 unless outcome.ok?
 else
   usage!
 end
