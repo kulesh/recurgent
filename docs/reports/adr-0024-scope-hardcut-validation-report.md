@@ -6,12 +6,12 @@ Date: 2026-02-20
 Validation after scope-first role-profile hard cut (`scope: all_methods|explicit_methods`, `all_methods` default) and continuity observation fix.
 
 Evidence root:
-- `tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/`
-- `tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/rspec.txt`
-- `tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/calculator.txt`
-- `tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/assistant.txt`
+- [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun)
+- [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/rspec.txt`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/rspec.txt)
+- [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/calculator.txt`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/calculator.txt)
+- [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/assistant.txt`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/assistant.txt)
 - `tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/xdg/recurgent/recurgent.jsonl`
-- `tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/log_summary.txt`
+- [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/log_summary.txt`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/log_summary.txt)
 
 ## 1) Full Test Suite
 - Command: `cd runtimes/ruby && mise exec -- env XDG_STATE_HOME=<phase-xdg> bundle exec rspec`

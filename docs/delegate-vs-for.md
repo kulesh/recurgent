@@ -16,12 +16,12 @@ That keeps Tool behavior inside one coherent solve session instead of creating a
 
 ## Concrete Scenarios
 
-1. Philosophy symposium (`runtimes/ruby/examples/philosophy_debate.rb`)
+1. Philosophy symposium ([`runtimes/ruby/examples/philosophy_debate.rb`](../runtimes/ruby/examples/philosophy_debate.rb))
 - Tool Builder: symposium host.
 - Tools: Stoic, Epicurean, Existentialist.
 - Better with `delegate`: each philosopher should inherit the same runtime envelope for comparable outcomes and traceability.
 
-2. Debate panel with persona branches (`runtimes/ruby/examples/debate.rb`)
+2. Debate panel with persona branches ([`runtimes/ruby/examples/debate.rb`](../runtimes/ruby/examples/debate.rb))
 - Tool Builder: panel host/panelist.
 - Tools: persona-specific debaters (for example Dennis Ritchie branch).
 - Better with `delegate`: avoids contract drift across nested delegation chains and makes budget/timeout controls enforceable.

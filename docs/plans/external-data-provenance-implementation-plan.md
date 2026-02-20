@@ -77,9 +77,9 @@ Implementation:
 
 Suggested files:
 
-1. `docs/adrs/0021-external-data-provenance-invariant.md`
-2. `docs/product-specs/delegation-contracts.md`
-3. `docs/tolerant-delegation-interfaces.md`
+1. [`docs/adrs/0021-external-data-provenance-invariant.md`](../adrs/0021-external-data-provenance-invariant.md)
+2. [`docs/product-specs/delegation-contracts.md`](../product-specs/delegation-contracts.md)
+3. [`docs/tolerant-delegation-interfaces.md`](../tolerant-delegation-interfaces.md)
 
 Exit criteria:
 
@@ -107,8 +107,8 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/prompting.rb`
-2. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+2. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -135,11 +135,11 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/guardrail_policy.rb`
-2. `runtimes/ruby/lib/recurgent/guardrail_code_checks.rb`
-3. `runtimes/ruby/lib/recurgent/call_execution.rb`
-4. `runtimes/ruby/lib/recurgent/persisted_execution.rb`
-5. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/guardrail_policy.rb`](../../runtimes/ruby/lib/recurgent/guardrail_policy.rb)
+2. [`runtimes/ruby/lib/recurgent/guardrail_code_checks.rb`](../../runtimes/ruby/lib/recurgent/guardrail_code_checks.rb)
+3. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+4. [`runtimes/ruby/lib/recurgent/persisted_execution.rb`](../../runtimes/ruby/lib/recurgent/persisted_execution.rb)
+5. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -165,10 +165,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`
-2. `runtimes/ruby/lib/recurgent/outcome_contract_shapes.rb`
-3. `runtimes/ruby/lib/recurgent/outcome_contract_constraints.rb`
-4. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`](../../runtimes/ruby/lib/recurgent/outcome_contract_validator.rb)
+2. [`runtimes/ruby/lib/recurgent/outcome_contract_shapes.rb`](../../runtimes/ruby/lib/recurgent/outcome_contract_shapes.rb)
+3. [`runtimes/ruby/lib/recurgent/outcome_contract_constraints.rb`](../../runtimes/ruby/lib/recurgent/outcome_contract_constraints.rb)
+4. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -194,10 +194,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/conversation_history.rb`
-2. `runtimes/ruby/lib/recurgent/conversation_history_normalization.rb`
-3. `runtimes/ruby/lib/recurgent/prompting.rb`
-4. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/conversation_history.rb`](../../runtimes/ruby/lib/recurgent/conversation_history.rb)
+2. [`runtimes/ruby/lib/recurgent/conversation_history_normalization.rb`](../../runtimes/ruby/lib/recurgent/conversation_history_normalization.rb)
+3. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+4. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -222,10 +222,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/observability.rb`
-2. `runtimes/ruby/lib/recurgent/artifact_metrics.rb`
-3. `runtimes/ruby/lib/recurgent/tool_maintenance.rb`
-4. `docs/observability.md`
+1. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+2. [`runtimes/ruby/lib/recurgent/artifact_metrics.rb`](../../runtimes/ruby/lib/recurgent/artifact_metrics.rb)
+3. [`runtimes/ruby/lib/recurgent/tool_maintenance.rb`](../../runtimes/ruby/lib/recurgent/tool_maintenance.rb)
+4. [`docs/observability.md`](../observability.md)
 
 Exit criteria:
 
@@ -255,9 +255,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`
+1. [`runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`](../../runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb)
 2. `docs/baselines/<date>/` fixtures
-3. `docs/architecture.md` (flow update)
+3. [`docs/architecture.md`](../architecture.md) (flow update)
 
 Exit criteria:
 

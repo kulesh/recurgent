@@ -160,11 +160,11 @@ Detection strategy (v1):
 
 ### Runtime core
 
-1. `runtimes/ruby/lib/recurgent/call_execution.rb`
+1. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
    - append canonical conversation history record in call finalization path.
-2. `runtimes/ruby/lib/recurgent/call_state.rb`
+2. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
    - add state fields needed for history append and history-usage observability.
-3. `runtimes/ruby/lib/recurgent.rb`
+3. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb)
    - add private helpers for:
      - history storage normalization,
      - record construction,
@@ -173,31 +173,31 @@ Detection strategy (v1):
 
 ### Prompting
 
-1. `runtimes/ruby/lib/recurgent/prompting.rb`
+1. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
    - system/user prompt updates for structured history guidance,
    - history preview block generation.
 
 ### Observability
 
-1. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
    - include new history fields.
-2. `runtimes/ruby/lib/recurgent/capability_pattern_extractor.rb` (or dedicated helper)
+2. [`runtimes/ruby/lib/recurgent/capability_pattern_extractor.rb`](../../runtimes/ruby/lib/recurgent/capability_pattern_extractor.rb) (or dedicated helper)
    - add lightweight history-access pattern extraction.
 
 ### Tests
 
-1. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
    - new unit/integration tests for history schema, append behavior, malformed context coercion, prompt inclusion, and log fields.
-2. `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`
+2. [`runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`](../../runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb)
    - scenario proving generated code can read/use structured history reliably.
 
 ### Documentation
 
-1. `docs/product-specs/delegation-contracts.md`
+1. [`docs/product-specs/delegation-contracts.md`](../product-specs/delegation-contracts.md)
    - clarify interaction with conversation history (adjacent, not contract payload).
-2. `docs/observability.md`
+2. [`docs/observability.md`](../observability.md)
    - document new history telemetry fields and interpretation.
-3. `docs/index.md`
+3. [`docs/index.md`](../index.md)
    - add this implementation plan entry.
 
 ## Delivery Phases

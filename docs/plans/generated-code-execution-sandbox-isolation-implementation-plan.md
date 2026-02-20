@@ -119,15 +119,15 @@ Goals:
 
 Tasks:
 
-1. Add `runtimes/ruby/lib/recurgent/execution_sandbox.rb`.
+1. Add [`runtimes/ruby/lib/recurgent/execution_sandbox.rb`](../../runtimes/ruby/lib/recurgent/execution_sandbox.rb).
 2. Refactor `_execute_code` to construct sandbox and execute wrapped code there.
 3. Keep `result` contract unchanged (raw domain value returned to caller pipeline).
 4. Keep pre/post tool-registry integrity checks around sandbox execution.
 
 Primary files:
 
-1. `runtimes/ruby/lib/recurgent/execution_sandbox.rb`
-2. `runtimes/ruby/lib/recurgent.rb`
+1. [`runtimes/ruby/lib/recurgent/execution_sandbox.rb`](../../runtimes/ruby/lib/recurgent/execution_sandbox.rb)
+2. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb)
 
 Exit criteria:
 
@@ -149,8 +149,8 @@ Tasks:
 
 Primary files:
 
-1. `runtimes/ruby/lib/recurgent/execution_sandbox.rb`
-2. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/execution_sandbox.rb`](../../runtimes/ruby/lib/recurgent/execution_sandbox.rb)
+2. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -172,10 +172,10 @@ Tasks:
 
 Primary files:
 
-1. `runtimes/ruby/lib/recurgent/call_state.rb`
-2. `runtimes/ruby/lib/recurgent/observability.rb`
-3. `runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`
-4. `docs/observability.md`
+1. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+2. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+3. [`runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`](../../runtimes/ruby/lib/recurgent/observability_attempt_fields.rb)
+4. [`docs/observability.md`](../observability.md)
 
 Exit criteria:
 
@@ -197,8 +197,8 @@ Tasks:
 
 Primary files:
 
-1. `runtimes/ruby/spec/recurgent_spec.rb`
-2. `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`
+1. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
+2. [`runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`](../../runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb)
 
 Exit criteria:
 

@@ -18,7 +18,7 @@ Adopt an issue-first contribution gate enforced by repository policy and automat
    - test/lint verification
    - line-level review responsibility
    - code of conduct agreement
-4. Non-compliant PRs fail CI via `.github/workflows/pr-compliance.yml`.
+4. Non-compliant PRs fail CI via [`.github/workflows/pr-compliance.yml`](../../.github/workflows/pr-compliance.yml).
 
 ## Consequences
 

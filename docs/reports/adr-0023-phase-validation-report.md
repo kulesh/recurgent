@@ -1,11 +1,11 @@
 # ADR 0023 Phase Validation Report
 
 - Date: 2026-02-19
-- Scope: `docs/plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md`
+- Scope: [`docs/plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md`](../plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md)
 - Required checks per phase:
   1. Full Ruby test suite (`bundle exec rspec`)
-  2. Calculator example (`runtimes/ruby/examples/calculator.rb`)
-  3. Assistant example (`runtimes/ruby/examples/assistant.rb`) with three requests:
+  2. Calculator example ([`runtimes/ruby/examples/calculator.rb`](../../runtimes/ruby/examples/calculator.rb))
+  3. Assistant example ([`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb)) with three requests:
      - What's the top news items in Google News, Yahoo! News, and NY Times
      - What's are the action adventure movies playing in theaters
      - What's a good recipe for Jaffna Kool
@@ -24,7 +24,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-0/xdg bundle exec rspec`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-0/rspec.txt`
+- Evidence: [`tmp/phase-validation/phase-0/rspec.txt`](../../tmp/phase-validation/phase-0/rspec.txt)
 - Summary:
   - `238 examples, 0 failures`
 
@@ -32,7 +32,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-0/xdg ruby examples/calculator.rb`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-0/calculator.txt`
+- Evidence: [`tmp/phase-validation/phase-0/calculator.txt`](../../tmp/phase-validation/phase-0/calculator.txt)
 - Output checks:
   - `add(3) => 8`
   - `multiply(4) => 32`
@@ -47,7 +47,7 @@
 
 - Command: `cd runtimes/ruby && printf ... | XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-0/xdg ruby examples/assistant.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-0/assistant.txt`
+- Evidence: [`tmp/phase-validation/phase-0/assistant.txt`](../../tmp/phase-validation/phase-0/assistant.txt)
 - Request 1 (top news from Google/Yahoo/NYT):
   - Returned 15 items (5 per source) with provenance entries for all 3 source feeds.
   - Accuracy: Structurally correct with source coverage and provenance present.
@@ -96,7 +96,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-1/xdg bundle exec rspec`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-1/rspec.txt`
+- Evidence: [`tmp/phase-validation/phase-1/rspec.txt`](../../tmp/phase-validation/phase-1/rspec.txt)
 - Summary:
   - `238 examples, 0 failures`
 
@@ -104,7 +104,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-1/xdg ruby examples/calculator.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-1/calculator.txt`
+- Evidence: [`tmp/phase-validation/phase-1/calculator.txt`](../../tmp/phase-validation/phase-1/calculator.txt)
 - Output checks:
   - `add(3) => 3`
   - `multiply(4) => 12`
@@ -121,7 +121,7 @@
 
 - Command: `cd runtimes/ruby && printf ... | XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-1/xdg ruby examples/assistant.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-1/assistant.txt`
+- Evidence: [`tmp/phase-validation/phase-1/assistant.txt`](../../tmp/phase-validation/phase-1/assistant.txt)
 - Request 1 (top news):
   - Returned multi-source payload with Google/Yahoo/NYT and provenance.
   - Accuracy: Good overall source coverage and structure.
@@ -175,7 +175,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-2/xdg bundle exec rspec`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-2/rspec.txt`
+- Evidence: [`tmp/phase-validation/phase-2/rspec.txt`](../../tmp/phase-validation/phase-2/rspec.txt)
 - Summary:
   - `239 examples, 0 failures`
 
@@ -183,7 +183,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-2/xdg ruby examples/calculator.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-2/calculator.txt`
+- Evidence: [`tmp/phase-validation/phase-2/calculator.txt`](../../tmp/phase-validation/phase-2/calculator.txt)
 - Output checks:
   - `add(3) => 8`, `multiply(4) => 32`, `sqrt(32) => 5.656854249492381`
   - `sqrt(144) => 12.0`, `factorial(10) => 3628800`, `convert(...) => 212.0`
@@ -196,7 +196,7 @@
 
 - Command: `cd runtimes/ruby && printf ... | XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-2/xdg ruby examples/assistant.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-2/assistant.txt`
+- Evidence: [`tmp/phase-validation/phase-2/assistant.txt`](../../tmp/phase-validation/phase-2/assistant.txt)
 - Request 1 (top news):
   - Returned 15 items across Google News / Yahoo! / NYT with provenance.
   - Accuracy: Good source and item coverage.
@@ -257,7 +257,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-3/xdg bundle exec rspec`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-3/rspec.txt`
+- Evidence: [`tmp/phase-validation/phase-3/rspec.txt`](../../tmp/phase-validation/phase-3/rspec.txt)
 - Summary:
   - `241 examples, 0 failures`
 
@@ -265,7 +265,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-3/xdg ruby examples/calculator.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-3/calculator.txt`
+- Evidence: [`tmp/phase-validation/phase-3/calculator.txt`](../../tmp/phase-validation/phase-3/calculator.txt)
 - Output checks:
   - `add(3) => 8`
   - `multiply(4) => 0` (unexpected)
@@ -278,7 +278,7 @@
 
 - Command: `cd runtimes/ruby && printf ... | XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-3/xdg ruby examples/assistant.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-3/assistant.txt`
+- Evidence: [`tmp/phase-validation/phase-3/assistant.txt`](../../tmp/phase-validation/phase-3/assistant.txt)
 - Request 1 (top news):
   - Returned large payload, but Google News parse failed (`parse_failed`) while Yahoo/NYT succeeded.
   - Accuracy: Partial; source completeness is degraded.
@@ -324,7 +324,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-4/xdg bundle exec rspec`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-4/rspec.txt`
+- Evidence: [`tmp/phase-validation/phase-4/rspec.txt`](../../tmp/phase-validation/phase-4/rspec.txt)
 - Summary:
   - `242 examples, 0 failures`
 
@@ -332,7 +332,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-4/xdg ruby examples/calculator.rb`
 - Result: PASS (for observed flow)
-- Evidence: `tmp/phase-validation/phase-4/calculator.txt`
+- Evidence: [`tmp/phase-validation/phase-4/calculator.txt`](../../tmp/phase-validation/phase-4/calculator.txt)
 - Output checks:
   - `add(3) => 8`
   - `multiply(4) => 32`
@@ -347,7 +347,7 @@
 
 - Command: `cd runtimes/ruby && printf ... | XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-4/xdg ruby examples/assistant.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-4/assistant.txt`
+- Evidence: [`tmp/phase-validation/phase-4/assistant.txt`](../../tmp/phase-validation/phase-4/assistant.txt)
 - Request 1 (top news):
   - Returned 10 headlines from Google + NYT; Yahoo branch failed with URI parsing error.
   - Accuracy: Partial source coverage only (requested 3 sources, returned 2 with explicit error).
@@ -394,7 +394,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-5/xdg bundle exec rspec`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-5/rspec.txt`
+- Evidence: [`tmp/phase-validation/phase-5/rspec.txt`](../../tmp/phase-validation/phase-5/rspec.txt)
 - Summary:
   - `243 examples, 0 failures`
 
@@ -402,7 +402,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-5/xdg ruby examples/calculator.rb`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-5/calculator.txt`
+- Evidence: [`tmp/phase-validation/phase-5/calculator.txt`](../../tmp/phase-validation/phase-5/calculator.txt)
 - Output checks:
   - `add(3) => 8`, `multiply(4) => 32`, `sqrt(32) => 5.656854249492381`
   - `sqrt(144) => 12.0`, `factorial(10) => 3628800`, `convert(...) => 212.0`
@@ -413,7 +413,7 @@
 
 - Command: `cd runtimes/ruby && printf ... | XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-5/xdg ruby examples/assistant.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-5/assistant.txt`
+- Evidence: [`tmp/phase-validation/phase-5/assistant.txt`](../../tmp/phase-validation/phase-5/assistant.txt)
 - Request 1 (top news):
   - Returned all 3 sources with 5 sampled headlines each and provenance.
   - Accuracy: Good source coverage and structured output.
@@ -447,10 +447,10 @@
 ### Changes
 
 - Added operations/governance documentation for lifecycle migration, tuning, rollback, and policy-version governance:
-  - `docs/observability.md`
-  - `docs/maintenance.md`
-  - `docs/governance.md`
-- Extended operator command surface in `bin/recurgent-tools`:
+  - [`docs/observability.md`](../observability.md)
+  - [`docs/maintenance.md`](../maintenance.md)
+  - [`docs/governance.md`](../governance.md)
+- Extended operator command surface in [`bin/recurgent-tools`](../../bin/recurgent-tools):
   - `scorecards <role> <method>`
   - `decisions <role> <method>`
   - `set-lifecycle <role> <method> <checksum> <state> [--reason ...] [--apply]`
@@ -465,7 +465,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-6/xdg bundle exec rspec`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-6/rspec.txt`
+- Evidence: [`tmp/phase-validation/phase-6/rspec.txt`](../../tmp/phase-validation/phase-6/rspec.txt)
 - Summary:
   - `243 examples, 0 failures`
 
@@ -473,7 +473,7 @@
 
 - Command: `cd runtimes/ruby && XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-6/xdg ruby examples/calculator.rb`
 - Result: PASS
-- Evidence: `tmp/phase-validation/phase-6/calculator.txt`
+- Evidence: [`tmp/phase-validation/phase-6/calculator.txt`](../../tmp/phase-validation/phase-6/calculator.txt)
 - Output checks:
   - `add(3) => 8`, `multiply(4) => 32`, `sqrt(32) => 5.656854249492381`
   - `sqrt(144) => 12.0`, `factorial(10) => 3628800`
@@ -485,7 +485,7 @@
 
 - Command: `cd runtimes/ruby && printf ... | XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation/phase-6/xdg ruby examples/assistant.rb`
 - Result: PARTIAL
-- Evidence: `tmp/phase-validation/phase-6/assistant.txt`
+- Evidence: [`tmp/phase-validation/phase-6/assistant.txt`](../../tmp/phase-validation/phase-6/assistant.txt)
 - Request 1 (top news):
   - Returned all three requested sources with concrete headline lists and provenance.
   - Accuracy: Good source coverage.
@@ -506,8 +506,8 @@
   - `bin/recurgent-tools scorecards "personal assistant that remembers conversation history" "ask" --root <phase-6 tools root>` succeeded and returned version-scoped scorecards.
   - `bin/recurgent-tools decisions ... --limit 5` succeeded and returned shadow decision rationale entries.
   - Evidence files:
-    - `tmp/phase-validation/phase-6/operator-scorecards.json`
-    - `tmp/phase-validation/phase-6/operator-decisions.json`
+    - [`tmp/phase-validation/phase-6/operator-scorecards.json`](../../tmp/phase-validation/phase-6/operator-scorecards.json)
+    - [`tmp/phase-validation/phase-6/operator-decisions.json`](../../tmp/phase-validation/phase-6/operator-decisions.json)
 - Diagnosis:
   - What went well:
     - Final lifecycle operations/governance surfaces are documented and executable.

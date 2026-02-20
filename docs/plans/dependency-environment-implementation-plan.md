@@ -35,31 +35,31 @@ Out of scope:
 ## Deliverable Map
 
 1. Phase 1 deliverables:
-   - `runtimes/ruby/lib/recurgent/generated_program.rb`
-   - `runtimes/ruby/lib/recurgent/dependency_manifest.rb`
-   - updates to `runtimes/ruby/lib/recurgent/providers.rb`
-   - updates to `runtimes/ruby/lib/recurgent/prompting.rb`
-   - updates to `runtimes/ruby/lib/recurgent.rb`
+   - [`runtimes/ruby/lib/recurgent/generated_program.rb`](../../runtimes/ruby/lib/recurgent/generated_program.rb)
+   - [`runtimes/ruby/lib/recurgent/dependency_manifest.rb`](../../runtimes/ruby/lib/recurgent/dependency_manifest.rb)
+   - updates to [`runtimes/ruby/lib/recurgent/providers.rb`](../../runtimes/ruby/lib/recurgent/providers.rb)
+   - updates to [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+   - updates to [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb)
    - tests:
-     - `runtimes/ruby/spec/dependency_manifest_spec.rb`
-     - updates to `runtimes/ruby/spec/recurgent_spec.rb`
+     - [`runtimes/ruby/spec/dependency_manifest_spec.rb`](../../runtimes/ruby/spec/dependency_manifest_spec.rb)
+     - updates to [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 2. Phase 2 deliverables:
-   - `runtimes/ruby/lib/recurgent/environment_manager.rb`
-   - updates to `runtimes/ruby/lib/recurgent.rb`
+   - [`runtimes/ruby/lib/recurgent/environment_manager.rb`](../../runtimes/ruby/lib/recurgent/environment_manager.rb)
+   - updates to [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb)
    - tests:
-     - `runtimes/ruby/spec/environment_manager_spec.rb`
-     - updates to `runtimes/ruby/spec/recurgent_spec.rb`
-     - updates to `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`
+     - [`runtimes/ruby/spec/environment_manager_spec.rb`](../../runtimes/ruby/spec/environment_manager_spec.rb)
+     - updates to [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
+     - updates to [`runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`](../../runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb)
 3. Phase 3 deliverables:
-   - `runtimes/ruby/lib/recurgent/worker_executor.rb`
-   - `runtimes/ruby/lib/recurgent/worker_supervisor.rb`
-   - `runtimes/ruby/lib/recurgent/preparation_ticket.rb`
-   - updates to `runtimes/ruby/lib/recurgent.rb`
+   - [`runtimes/ruby/lib/recurgent/worker_executor.rb`](../../runtimes/ruby/lib/recurgent/worker_executor.rb)
+   - [`runtimes/ruby/lib/recurgent/worker_supervisor.rb`](../../runtimes/ruby/lib/recurgent/worker_supervisor.rb)
+   - [`runtimes/ruby/lib/recurgent/preparation_ticket.rb`](../../runtimes/ruby/lib/recurgent/preparation_ticket.rb)
+   - updates to [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb)
    - tests:
-     - `runtimes/ruby/spec/worker_executor_spec.rb`
-     - `runtimes/ruby/spec/worker_supervisor_spec.rb`
-     - `runtimes/ruby/spec/preparation_ticket_spec.rb`
-     - updates to `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`
+     - [`runtimes/ruby/spec/worker_executor_spec.rb`](../../runtimes/ruby/spec/worker_executor_spec.rb)
+     - [`runtimes/ruby/spec/worker_supervisor_spec.rb`](../../runtimes/ruby/spec/worker_supervisor_spec.rb)
+     - [`runtimes/ruby/spec/preparation_ticket_spec.rb`](../../runtimes/ruby/spec/preparation_ticket_spec.rb)
+     - updates to [`runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`](../../runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb)
 
 ## Phase Plan
 
@@ -237,7 +237,7 @@ Out of scope:
 
 ### Documentation and Contracts
 
-1. Update `specs/contract/v1/agent-contract.md` after Phase 1 completion.
+1. Update [`specs/contract/v1/agent-contract.md`](../../specs/contract/v1/agent-contract.md) after Phase 1 completion.
 2. Add contract scenarios for dependency errors and environment-preparing flow.
 3. Keep ADR 0010 as `proposed` until Phase 1 lands; promote status to `accepted` after Phase 2 stability.
 

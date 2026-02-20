@@ -9,7 +9,7 @@ Recurgent now targets multiple runtimes (Ruby and planned Lua). Without a shared
 
 ## Decision
 
-Define a versioned contract package under `specs/contract/`:
+Define a versioned contract package under [`specs/contract/`](../../specs/contract):
 
 1. `agent-contract.md` for normative behavior requirements.
 2. `programs.yaml` for abstract generated-program semantics.

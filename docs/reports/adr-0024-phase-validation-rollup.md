@@ -1,7 +1,7 @@
 # ADR 0024 Validation Rollup (Phases 0-6)
 
 - Date: 2026-02-20
-- Source artifacts: `docs/baselines/2026-02-20/adr-0024/phase-*-validation.md`, `docs/baselines/2026-02-20/adr-0024/phase-rollup.json`
+- Source artifacts: `docs/baselines/2026-02-20/adr-0024/phase-*-validation.md`, [`docs/baselines/2026-02-20/adr-0024/phase-rollup.json`](../baselines/2026-02-20/adr-0024/phase-rollup.json)
 
 ## Scope
 

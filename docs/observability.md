@@ -128,7 +128,7 @@ These fields are for logs/artifacts and repair analysis only. User-facing bounda
 
 ## Operator Queries
 
-Use `bin/recurgent-tools` to inspect scorecards and decision traces for specific interfaces:
+Use [`bin/recurgent-tools`](../bin/recurgent-tools) to inspect scorecards and decision traces for specific interfaces:
 
 ```bash
 # View version-scoped scorecards + lifecycle summary for one role/method

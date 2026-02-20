@@ -113,4 +113,4 @@ Guidance:
 - Treat `context` as working memory; if model priors prefer `memory`, use local aliasing (`memory = context`) inside generated execution scope only.
 - Avoid introducing new public `Agent` methods unless necessary; each new method name shrinks dynamic method namespace.
 
-See `docs/delegate-vs-for.md` for scenario-level guidance.
+See [`docs/delegate-vs-for.md`](delegate-vs-for.md) for scenario-level guidance.

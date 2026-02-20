@@ -226,7 +226,7 @@ Out of scope:
 
 ## Ubiquitous Language Additions
 
-This ADR introduces canonical terms to add to `docs/ubiquitous-language.md`:
+This ADR introduces canonical terms to add to [`docs/ubiquitous-language.md`](../ubiquitous-language.md):
 
 1. `Awareness Level`
 2. `Authority Boundary`

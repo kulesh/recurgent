@@ -96,8 +96,8 @@ Implementation:
 
 Suggested files:
 
-1. `docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md` (reference)
-2. `docs/observability.md`
+1. [`docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md`](../adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md) (reference)
+2. [`docs/observability.md`](../observability.md)
 3. `docs/baselines/<date>/...`
 
 Exit criteria:
@@ -127,10 +127,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/call_state.rb`
-2. `runtimes/ruby/lib/recurgent/call_execution.rb`
-3. `runtimes/ruby/lib/recurgent/observability.rb`
-4. `runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`
+1. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+2. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+3. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+4. [`runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`](../../runtimes/ruby/lib/recurgent/observability_attempt_fields.rb)
 
 Exit criteria:
 
@@ -168,9 +168,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/artifact_metrics.rb`
-2. `runtimes/ruby/lib/recurgent/artifact_store.rb`
-3. `runtimes/ruby/lib/recurgent/tool_store.rb`
+1. [`runtimes/ruby/lib/recurgent/artifact_metrics.rb`](../../runtimes/ruby/lib/recurgent/artifact_metrics.rb)
+2. [`runtimes/ruby/lib/recurgent/artifact_store.rb`](../../runtimes/ruby/lib/recurgent/artifact_store.rb)
+3. [`runtimes/ruby/lib/recurgent/tool_store.rb`](../../runtimes/ruby/lib/recurgent/tool_store.rb)
 
 Exit criteria:
 
@@ -214,10 +214,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/artifact_selector.rb`
-2. `runtimes/ruby/lib/recurgent/artifact_metrics.rb`
-3. `runtimes/ruby/lib/recurgent/tool_store.rb`
-4. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/artifact_selector.rb`](../../runtimes/ruby/lib/recurgent/artifact_selector.rb)
+2. [`runtimes/ruby/lib/recurgent/artifact_metrics.rb`](../../runtimes/ruby/lib/recurgent/artifact_metrics.rb)
+3. [`runtimes/ruby/lib/recurgent/tool_store.rb`](../../runtimes/ruby/lib/recurgent/tool_store.rb)
+4. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
 
 Exit criteria:
 
@@ -248,9 +248,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/artifact_selector.rb`
-2. `runtimes/ruby/lib/recurgent.rb` (runtime config surface)
-3. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/artifact_selector.rb`](../../runtimes/ruby/lib/recurgent/artifact_selector.rb)
+2. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb) (runtime config surface)
+3. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
 
 Exit criteria:
 
@@ -280,8 +280,8 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/prompting.rb`
-2. `runtimes/ruby/lib/recurgent/known_tool_ranker.rb`
+1. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+2. [`runtimes/ruby/lib/recurgent/known_tool_ranker.rb`](../../runtimes/ruby/lib/recurgent/known_tool_ranker.rb)
 
 Exit criteria:
 
@@ -311,10 +311,10 @@ Implementation:
 
 Suggested files:
 
-1. `docs/observability.md`
-2. `docs/maintenance.md`
-3. `docs/governance.md`
-4. `bin/recurgent-tools` (optional operator command surface)
+1. [`docs/observability.md`](../observability.md)
+2. [`docs/maintenance.md`](../maintenance.md)
+3. [`docs/governance.md`](../governance.md)
+4. [`bin/recurgent-tools`](../../bin/recurgent-tools) (optional operator command surface)
 
 Exit criteria:
 

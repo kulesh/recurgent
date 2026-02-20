@@ -52,6 +52,6 @@ Validation design is intentionally deferred to a later phase.
 
 ## Example References
 
-- `runtimes/ruby/examples/observability_demo.rb`
-- `runtimes/ruby/examples/debate.rb`
-- `runtimes/ruby/examples/philosophy_debate.rb`
+- [`runtimes/ruby/examples/observability_demo.rb`](../../runtimes/ruby/examples/observability_demo.rb)
+- [`runtimes/ruby/examples/debate.rb`](../../runtimes/ruby/examples/debate.rb)
+- [`runtimes/ruby/examples/philosophy_debate.rb`](../../runtimes/ruby/examples/philosophy_debate.rb)

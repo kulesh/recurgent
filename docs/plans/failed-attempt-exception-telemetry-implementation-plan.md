@@ -53,7 +53,7 @@ Acceptance:
 
 ## Phase 1: Runtime State Wiring
 
-1. Extend call state struct/default in `runtimes/ruby/lib/recurgent/call_state.rb`:
+1. Extend call state struct/default in [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb):
    - `attempt_failures`
    - `latest_failure_stage`
    - `latest_failure_class`
@@ -76,10 +76,10 @@ Capture failures at all three lifecycle stages:
 
 Touchpoints (expected):
 
-1. `runtimes/ruby/lib/recurgent/fresh_generation.rb`
-2. `runtimes/ruby/lib/recurgent/guardrail_policy.rb`
-3. `runtimes/ruby/lib/recurgent/fresh_outcome_repair.rb`
-4. `runtimes/ruby/lib/recurgent/call_execution.rb` (ensure/final aggregation path)
+1. [`runtimes/ruby/lib/recurgent/fresh_generation.rb`](../../runtimes/ruby/lib/recurgent/fresh_generation.rb)
+2. [`runtimes/ruby/lib/recurgent/guardrail_policy.rb`](../../runtimes/ruby/lib/recurgent/guardrail_policy.rb)
+3. [`runtimes/ruby/lib/recurgent/fresh_outcome_repair.rb`](../../runtimes/ruby/lib/recurgent/fresh_outcome_repair.rb)
+4. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb) (ensure/final aggregation path)
 
 Rules:
 
@@ -95,7 +95,7 @@ Acceptance:
 ## Phase 3: Log and Artifact Emission
 
 1. Add fields to log entry mapping in:
-   - `runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`
+   - [`runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`](../../runtimes/ruby/lib/recurgent/observability_attempt_fields.rb)
 2. Ensure top-level JSONL includes:
    - `attempt_failures`
    - `latest_failure_*`
@@ -112,7 +112,7 @@ Acceptance:
 
 ## Phase 4: Tests
 
-Add/extend specs in `runtimes/ruby/spec/recurgent_spec.rb`:
+Add/extend specs in [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb):
 
 1. Validation-first retry test:
    - provoke recoverable guardrail violation on attempt 1;
@@ -133,9 +133,9 @@ Add/extend specs in `runtimes/ruby/spec/recurgent_spec.rb`:
 
 ## Phase 5: Docs and Trace Verification
 
-1. Update `docs/observability.md` examples with `attempt_failures` fields.
+1. Update [`docs/observability.md`](../observability.md) examples with `attempt_failures` fields.
 2. Capture one fresh repaired trace and include a short snippet in docs (or baseline note).
-3. Verify `bin/recurgent-watch` remains functional with new fields.
+3. Verify [`bin/recurgent-watch`](../../bin/recurgent-watch) remains functional with new fields.
 
 Acceptance:
 

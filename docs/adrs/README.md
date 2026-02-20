@@ -12,7 +12,7 @@ Every new ADR must include these sections to make expected impact testable:
 4. `Validation Signals` (tests/traces/log fields and thresholds)
 5. `Rollback or Adjustment Triggers`
 
-Use `docs/adrs/TEMPLATE.md` for new ADRs.
+Use [`docs/adrs/TEMPLATE.md`](TEMPLATE.md) for new ADRs.
 
 ## Index
 

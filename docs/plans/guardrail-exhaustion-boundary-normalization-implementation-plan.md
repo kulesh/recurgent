@@ -55,8 +55,8 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/guardrail_policy.rb`
-2. `runtimes/ruby/lib/recurgent/guardrail_code_checks.rb`
+1. [`runtimes/ruby/lib/recurgent/guardrail_policy.rb`](../../runtimes/ruby/lib/recurgent/guardrail_policy.rb)
+2. [`runtimes/ruby/lib/recurgent/guardrail_code_checks.rb`](../../runtimes/ruby/lib/recurgent/guardrail_code_checks.rb)
 
 Exit criteria:
 
@@ -80,8 +80,8 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent.rb`
-2. `runtimes/ruby/lib/recurgent/call_execution.rb`
+1. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb)
+2. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
 
 Exit criteria:
 
@@ -106,9 +106,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/observability.rb`
-2. `runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`
-3. `runtimes/ruby/lib/recurgent/artifact_metrics.rb`
+1. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+2. [`runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`](../../runtimes/ruby/lib/recurgent/observability_attempt_fields.rb)
+3. [`runtimes/ruby/lib/recurgent/artifact_metrics.rb`](../../runtimes/ruby/lib/recurgent/artifact_metrics.rb)
 
 Exit criteria:
 
@@ -142,8 +142,8 @@ Integration tests:
 
 Suggested files:
 
-1. `runtimes/ruby/spec/recurgent_spec.rb`
-2. `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`
+1. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
+2. [`runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`](../../runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb)
 
 Exit criteria:
 
@@ -169,7 +169,7 @@ For each scenario verify:
 
 Artifacts:
 
-1. Save console traces under `tmp/` or baseline fixture directory.
+1. Save console traces under [`tmp/`](../../tmp) or baseline fixture directory.
 2. Record call IDs and relevant JSONL snippets in a short validation note.
 
 Exit criteria:

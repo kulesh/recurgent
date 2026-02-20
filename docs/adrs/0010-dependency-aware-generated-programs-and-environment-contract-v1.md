@@ -353,22 +353,22 @@ Example (enterprise policy):
 
 #### 14.1 New Files
 
-1. `runtimes/ruby/lib/recurgent/generated_program.rb`
-2. `runtimes/ruby/lib/recurgent/dependency_manifest.rb`
-3. `runtimes/ruby/lib/recurgent/environment_manager.rb`
-4. `runtimes/ruby/lib/recurgent/worker_executor.rb`
-5. `runtimes/ruby/lib/recurgent/preparation_ticket.rb`
-6. `runtimes/ruby/lib/recurgent/worker_supervisor.rb`
+1. [`runtimes/ruby/lib/recurgent/generated_program.rb`](../../runtimes/ruby/lib/recurgent/generated_program.rb)
+2. [`runtimes/ruby/lib/recurgent/dependency_manifest.rb`](../../runtimes/ruby/lib/recurgent/dependency_manifest.rb)
+3. [`runtimes/ruby/lib/recurgent/environment_manager.rb`](../../runtimes/ruby/lib/recurgent/environment_manager.rb)
+4. [`runtimes/ruby/lib/recurgent/worker_executor.rb`](../../runtimes/ruby/lib/recurgent/worker_executor.rb)
+5. [`runtimes/ruby/lib/recurgent/preparation_ticket.rb`](../../runtimes/ruby/lib/recurgent/preparation_ticket.rb)
+6. [`runtimes/ruby/lib/recurgent/worker_supervisor.rb`](../../runtimes/ruby/lib/recurgent/worker_supervisor.rb)
 
 #### 14.2 File Changes
 
-1. `runtimes/ruby/lib/recurgent/providers.rb`
+1. [`runtimes/ruby/lib/recurgent/providers.rb`](../../runtimes/ruby/lib/recurgent/providers.rb)
    - Introduce `generate_program`.
    - Keep compatibility shim so older adapters returning String still function.
-2. `runtimes/ruby/lib/recurgent/prompting.rb`
+2. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
    - Update provider tool schema to include `dependencies`.
    - Add prompt instructions requiring non-stdlib dependencies be declared in payload.
-3. `runtimes/ruby/lib/recurgent.rb`
+3. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb)
    - Parse `GeneratedProgram`.
    - Implement monotonic manifest growth checks.
    - Implement `Agent.prepare` API and ticket lifecycle.
@@ -377,9 +377,9 @@ Example (enterprise policy):
    - Phase 2: route execution through `EnvironmentManager` + in-process activation.
    - Phase 3: route execution through `WorkerSupervisor`/`WorkerExecutor`.
    - Extend `_error_outcome_for` and logging fields.
-4. `runtimes/ruby/lib/recurgent/outcome.rb`
+4. [`runtimes/ruby/lib/recurgent/outcome.rb`](../../runtimes/ruby/lib/recurgent/outcome.rb)
    - No structural change required.
-5. `runtimes/ruby/lib/recurgent/environment_manager.rb`
+5. [`runtimes/ruby/lib/recurgent/environment_manager.rb`](../../runtimes/ruby/lib/recurgent/environment_manager.rb)
    - Generate Gemfile with configured `gem_sources` and source mode behavior.
 
 #### 14.3 Test Additions

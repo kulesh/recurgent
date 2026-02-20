@@ -45,13 +45,13 @@ Goals:
 Implementation:
 
 1. Run baseline scenarios with current tip:
-   - `runtimes/ruby/examples/assistant.rb` (Google News + Yahoo News flow)
-   - `runtimes/ruby/examples/philosophy_debate.rb`
+   - [`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb) (Google News + Yahoo News flow)
+   - [`runtimes/ruby/examples/philosophy_debate.rb`](../../runtimes/ruby/examples/philosophy_debate.rb)
 2. Extract correlated JSONL traces from `~/.local/state/recurgent/recurgent.jsonl`.
 3. Store fixtures under `docs/baselines/<YYYY-MM-DD>/`:
    - `assistant-google-yahoo.jsonl`
    - `philosophy-debate.jsonl`
-   - `README.md` with exact commands, model, and timestamp.
+   - [`README.md`](../../README.md) with exact commands, model, and timestamp.
 4. Reference these fixtures in acceptance tests as before/after evidence.
 
 Exit criteria:
@@ -109,10 +109,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/tool_store.rb`
-2. `runtimes/ruby/lib/recurgent/tool_store_paths.rb`
-3. `runtimes/ruby/lib/recurgent.rb` (init/load + delegate hooks)
-4. `runtimes/ruby/lib/recurgent/prompting.rb` (known-tool rendering already present; ensure disk-backed source)
+1. [`runtimes/ruby/lib/recurgent/tool_store.rb`](../../runtimes/ruby/lib/recurgent/tool_store.rb)
+2. [`runtimes/ruby/lib/recurgent/tool_store_paths.rb`](../../runtimes/ruby/lib/recurgent/tool_store_paths.rb)
+3. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb) (init/load + delegate hooks)
+4. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb) (known-tool rendering already present; ensure disk-backed source)
 
 Exit criteria:
 
@@ -142,9 +142,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/artifact_store.rb`
-2. `runtimes/ruby/lib/recurgent/artifact_metrics.rb`
-3. `runtimes/ruby/lib/recurgent/call_execution.rb` (write-through hook)
+1. [`runtimes/ruby/lib/recurgent/artifact_store.rb`](../../runtimes/ruby/lib/recurgent/artifact_store.rb)
+2. [`runtimes/ruby/lib/recurgent/artifact_metrics.rb`](../../runtimes/ruby/lib/recurgent/artifact_metrics.rb)
+3. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb) (write-through hook)
 
 Exit criteria:
 
@@ -176,9 +176,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/artifact_selector.rb`
-2. `runtimes/ruby/lib/recurgent.rb` (`_generate_and_execute` orchestration)
-3. `runtimes/ruby/lib/recurgent/observability.rb` (source fields)
+1. [`runtimes/ruby/lib/recurgent/artifact_selector.rb`](../../runtimes/ruby/lib/recurgent/artifact_selector.rb)
+2. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb) (`_generate_and_execute` orchestration)
+3. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb) (source fields)
 
 Exit criteria:
 
@@ -214,9 +214,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/artifact_repair.rb`
+1. [`runtimes/ruby/lib/recurgent/artifact_repair.rb`](../../runtimes/ruby/lib/recurgent/artifact_repair.rb)
 2. `runtimes/ruby/lib/recurgent/failure_classifier.rb`
-3. `runtimes/ruby/lib/recurgent.rb` retry/generation orchestration
+3. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb) retry/generation orchestration
 
 Exit criteria:
 
@@ -246,9 +246,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/known_tool_ranker.rb`
-2. `runtimes/ruby/lib/recurgent/tool_maintenance.rb`
-3. `bin/recurgent-tools` (optional CLI helper)
+1. [`runtimes/ruby/lib/recurgent/known_tool_ranker.rb`](../../runtimes/ruby/lib/recurgent/known_tool_ranker.rb)
+2. [`runtimes/ruby/lib/recurgent/tool_maintenance.rb`](../../runtimes/ruby/lib/recurgent/tool_maintenance.rb)
+3. [`bin/recurgent-tools`](../../bin/recurgent-tools) (optional CLI helper)
 
 Exit criteria:
 
@@ -449,4 +449,4 @@ Defaults (adopt in this implementation):
 Remaining open decisions:
 
 1. Maintenance command placement:
-   - extend `bin/recurgent-watch` vs dedicated `bin/recurgent-tools` CLI.
+   - extend [`bin/recurgent-watch`](../../bin/recurgent-watch) vs dedicated [`bin/recurgent-tools`](../../bin/recurgent-tools) CLI.

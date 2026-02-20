@@ -106,10 +106,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`
-2. `runtimes/ruby/lib/recurgent/call_execution.rb`
-3. `runtimes/ruby/lib/recurgent/call_state.rb`
-4. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`](../../runtimes/ruby/lib/recurgent/outcome_contract_validator.rb)
+2. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+3. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+4. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
 
 Exit criteria:
 
@@ -132,8 +132,8 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`
-2. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`](../../runtimes/ruby/lib/recurgent/outcome_contract_validator.rb)
+2. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -159,10 +159,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/tool_store.rb`
-2. `runtimes/ruby/lib/recurgent/prompting.rb`
-3. `runtimes/ruby/lib/recurgent/known_tool_ranker.rb`
-4. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/tool_store.rb`](../../runtimes/ruby/lib/recurgent/tool_store.rb)
+2. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+3. [`runtimes/ruby/lib/recurgent/known_tool_ranker.rb`](../../runtimes/ruby/lib/recurgent/known_tool_ranker.rb)
+4. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -184,9 +184,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/pattern_prompting.rb` (or dedicated prompt helper)
-2. `runtimes/ruby/lib/recurgent/tool_store.rb`
-3. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/pattern_prompting.rb`](../../runtimes/ruby/lib/recurgent/pattern_prompting.rb) (or dedicated prompt helper)
+2. [`runtimes/ruby/lib/recurgent/tool_store.rb`](../../runtimes/ruby/lib/recurgent/tool_store.rb)
+3. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -210,9 +210,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/prompting.rb`
-2. `runtimes/ruby/spec/recurgent_spec.rb`
-3. `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+2. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
+3. [`runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`](../../runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb)
 
 Exit criteria:
 

@@ -4,7 +4,7 @@ Captured before cross-session artifact persistence implementation (ADR 0012) to 
 
 ## Environment
 
-- Runtime: Ruby (`runtimes/ruby`)
+- Runtime: Ruby ([`runtimes/ruby`](../../../runtimes/ruby))
 - Model: `claude-sonnet-4-5-20250929`
 - Log source: `~/.local/state/recurgent/recurgent.jsonl`
 
@@ -18,8 +18,8 @@ printf "What's the latest on Google News?\nWhat's the latest on Yahoo! News?\nex
 ```
 
 - UTC window: `2026-02-15T04:55:03Z` to `2026-02-15T04:55:59Z`
-- Console transcript: `docs/baselines/2026-02-15/assistant-session.txt`
-- Extracted trace slice: `docs/baselines/2026-02-15/assistant-google-yahoo.jsonl`
+- Console transcript: [`docs/baselines/2026-02-15/assistant-session.txt`](assistant-session.txt)
+- Extracted trace slice: [`docs/baselines/2026-02-15/assistant-google-yahoo.jsonl`](assistant-google-yahoo.jsonl)
 
 ## Scenario 2: Philosophy Debate
 
@@ -31,8 +31,8 @@ bundle exec ruby examples/philosophy_debate.rb
 ```
 
 - UTC window: `2026-02-15T04:55:59Z` to `2026-02-15T04:56:29Z`
-- Console transcript: `docs/baselines/2026-02-15/philosophy-debate-session.txt`
-- Extracted trace slice: `docs/baselines/2026-02-15/philosophy-debate.jsonl`
+- Console transcript: [`docs/baselines/2026-02-15/philosophy-debate-session.txt`](philosophy-debate-session.txt)
+- Extracted trace slice: [`docs/baselines/2026-02-15/philosophy-debate.jsonl`](philosophy-debate.jsonl)
 
 ## Notes
 
