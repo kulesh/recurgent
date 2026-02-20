@@ -19,7 +19,7 @@ Primary outcomes:
 
 ## Status Quo Baseline
 
-Baseline observations before ADR 0024 enforcement (from `docs/reports/adr-0025-phase-validation-report.md` and recent trace runs):
+Baseline observations before ADR 0024 enforcement (from [`docs/reports/adr-0025-phase-validation-report.md`](../reports/adr-0025-phase-validation-report.md) and recent trace runs):
 
 1. Reliability and awareness evidence can look healthy while role semantics drift (for example, calculator produced an incorrect algebra result in reruns).
 2. Tool-level guardrail and retry mechanisms are active, but they do not guarantee sibling-method state continuity for role-style interfaces.
@@ -95,7 +95,7 @@ Dependency rule:
 
 ## Ubiquitous Language Deliverables
 
-Add/confirm these UL terms in `docs/ubiquitous-language.md` and use them consistently in code/docs/logs:
+Add/confirm these UL terms in [`docs/ubiquitous-language.md`](../ubiquitous-language.md) and use them consistently in code/docs/logs:
 
 1. `Role Profile`
 2. `State Continuity`
@@ -137,9 +137,9 @@ Implementation:
 
 Suggested files:
 
-1. `docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`
-2. `docs/ubiquitous-language.md`
-3. `docs/observability.md`
+1. [`docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md)
+2. [`docs/ubiquitous-language.md`](../ubiquitous-language.md)
+3. [`docs/observability.md`](../observability.md)
 4. `docs/baselines/<date>/adr-0024-phase0/`
 
 Phase Improvement Contract:
@@ -177,10 +177,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/role_profile.rb` (new)
-2. `runtimes/ruby/lib/recurgent/role_profile_registry.rb` (new)
-3. `runtimes/ruby/lib/recurgent/call_state.rb`
-4. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/role_profile.rb`](../../runtimes/ruby/lib/recurgent/role_profile.rb) (new)
+2. [`runtimes/ruby/lib/recurgent/role_profile_registry.rb`](../../runtimes/ruby/lib/recurgent/role_profile_registry.rb) (new)
+3. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+4. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
 5. `runtimes/ruby/spec/...` (unit + acceptance)
 
 Phase Improvement Contract:
@@ -224,9 +224,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/role_profile_guard.rb` (new)
-2. `runtimes/ruby/lib/recurgent/observability.rb`
-3. `runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`
+1. [`runtimes/ruby/lib/recurgent/role_profile_guard.rb`](../../runtimes/ruby/lib/recurgent/role_profile_guard.rb) (new)
+2. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+3. [`runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`](../../runtimes/ruby/lib/recurgent/observability_attempt_fields.rb)
 4. `runtimes/ruby/spec/...`
 
 Phase Improvement Contract:
@@ -259,9 +259,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/call_execution.rb`
-2. `runtimes/ruby/lib/recurgent/outcome.rb`
-3. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+2. [`runtimes/ruby/lib/recurgent/outcome.rb`](../../runtimes/ruby/lib/recurgent/outcome.rb)
+3. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
 4. `runtimes/ruby/spec/...`
 
 Phase Improvement Contract:
@@ -293,10 +293,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/proposal_store.rb`
-2. `runtimes/ruby/lib/recurgent/authority.rb`
-3. `docs/governance.md`
-4. `docs/maintenance.md`
+1. [`runtimes/ruby/lib/recurgent/proposal_store.rb`](../../runtimes/ruby/lib/recurgent/proposal_store.rb)
+2. [`runtimes/ruby/lib/recurgent/authority.rb`](../../runtimes/ruby/lib/recurgent/authority.rb)
+3. [`docs/governance.md`](../governance.md)
+4. [`docs/maintenance.md`](../maintenance.md)
 
 Phase Improvement Contract:
 
@@ -327,10 +327,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/role_profile_guard.rb`
-2. `runtimes/ruby/lib/recurgent/role_profile_registry.rb`
+1. [`runtimes/ruby/lib/recurgent/role_profile_guard.rb`](../../runtimes/ruby/lib/recurgent/role_profile_guard.rb)
+2. [`runtimes/ruby/lib/recurgent/role_profile_registry.rb`](../../runtimes/ruby/lib/recurgent/role_profile_registry.rb)
 3. `runtimes/ruby/spec/...`
-4. `docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`
+4. [`docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md)
 
 Phase Improvement Contract:
 
@@ -387,8 +387,8 @@ Suggested files:
 
 1. `runtimes/ruby/lib/recurgent/promotion_policy.rb`
 2. `runtimes/ruby/lib/recurgent/tool_scorecard.rb`
-3. `runtimes/ruby/lib/recurgent/observability.rb`
-4. `docs/observability.md`
+3. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+4. [`docs/observability.md`](../observability.md)
 
 Phase Improvement Contract:
 
@@ -407,8 +407,8 @@ Exit criteria:
 Run and archive results for each phase:
 
 1. Entire test suite (`bundle exec rspec`).
-2. Calculator example (`runtimes/ruby/examples/calculator.rb`) and verify arithmetic outputs.
-3. Personal assistant example (`runtimes/ruby/examples/assistant.rb`) with prompts:
+2. Calculator example ([`runtimes/ruby/examples/calculator.rb`](../../runtimes/ruby/examples/calculator.rb)) and verify arithmetic outputs.
+3. Personal assistant example ([`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb)) with prompts:
    - `What's the top news items in Google News, Yahoo! News, and NY Times`
    - `What's are the action adventure movies playing in theaters`
    - `What's a good recipe for Jaffna Kool`

@@ -157,15 +157,15 @@ As Ruby and Lua evolve, implementation details can diverge from behavior contrac
 
 ### Solution
 
-1. ADR 0006: monorepo runtime boundaries (`runtimes/ruby`, `runtimes/lua`).
-2. ADR 0007: runtime-agnostic contract package under `specs/contract/v1`.
+1. ADR 0006: monorepo runtime boundaries ([`runtimes/ruby`](../runtimes/ruby), [`runtimes/lua`](../runtimes/lua)).
+2. ADR 0007: runtime-agnostic contract package under [`specs/contract/v1`](../specs/contract/v1).
 
 Important split:
 
-1. `specs/contract/`: normative behavior contract and scenarios.
-2. `docs/product-specs/`: product/design specifications.
+1. [`specs/contract/`](../specs/contract): normative behavior contract and scenarios.
+2. [`docs/product-specs/`](product-specs): product/design specifications.
 
-This separation is critical: implementation parity belongs to `specs/`; product intent belongs to `docs/`.
+This separation is critical: implementation parity belongs to [`specs/`](../specs); product intent belongs to [`docs/`](.).
 
 ---
 
@@ -546,23 +546,23 @@ Answers:
 
 ## Fast Code Reading Path (If You Want to Contribute Today)
 
-1. `runtimes/ruby/lib/recurgent.rb` (dynamic surface and primitives)
-2. `runtimes/ruby/lib/recurgent/call_execution.rb` + `fresh_generation.rb`
-3. `runtimes/ruby/lib/recurgent/outcome.rb` + `outcome_contract_validator.rb`
-4. `runtimes/ruby/lib/recurgent/artifact_store.rb` + `artifact_selector.rb` + `tool_store.rb`
-5. `runtimes/ruby/lib/recurgent/role_profile.rb` + `role_profile_guard.rb` + `role_profile_registry.rb`
-6. `runtimes/ruby/lib/recurgent/authority.rb` + `proposal_store.rb` + `call_state.rb`
-7. `runtimes/ruby/lib/recurgent/observability.rb` + `observability_attempt_fields.rb`
+1. [`runtimes/ruby/lib/recurgent.rb`](../runtimes/ruby/lib/recurgent.rb) (dynamic surface and primitives)
+2. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../runtimes/ruby/lib/recurgent/call_execution.rb) + `fresh_generation.rb`
+3. [`runtimes/ruby/lib/recurgent/outcome.rb`](../runtimes/ruby/lib/recurgent/outcome.rb) + `outcome_contract_validator.rb`
+4. [`runtimes/ruby/lib/recurgent/artifact_store.rb`](../runtimes/ruby/lib/recurgent/artifact_store.rb) + `artifact_selector.rb` + `tool_store.rb`
+5. [`runtimes/ruby/lib/recurgent/role_profile.rb`](../runtimes/ruby/lib/recurgent/role_profile.rb) + `role_profile_guard.rb` + `role_profile_registry.rb`
+6. [`runtimes/ruby/lib/recurgent/authority.rb`](../runtimes/ruby/lib/recurgent/authority.rb) + `proposal_store.rb` + `call_state.rb`
+7. [`runtimes/ruby/lib/recurgent/observability.rb`](../runtimes/ruby/lib/recurgent/observability.rb) + `observability_attempt_fields.rb`
 
 Then cross-check with:
 
-1. `docs/architecture.md`
-2. `docs/ubiquitous-language.md`
-3. `docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md`
-4. `docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`
-5. `docs/adrs/0025-awareness-substrate-and-authority-boundary.md`
-6. `docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md`
-7. `docs/plans/awareness-substrate-authority-boundary-implementation-plan.md`
+1. [`docs/architecture.md`](architecture.md)
+2. [`docs/ubiquitous-language.md`](ubiquitous-language.md)
+3. [`docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md`](adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md)
+4. [`docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`](adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md)
+5. [`docs/adrs/0025-awareness-substrate-and-authority-boundary.md`](adrs/0025-awareness-substrate-and-authority-boundary.md)
+6. [`docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md`](plans/contract-first-role-profiles-state-continuity-implementation-plan.md)
+7. [`docs/plans/awareness-substrate-authority-boundary-implementation-plan.md`](plans/awareness-substrate-authority-boundary-implementation-plan.md)
 
 ---
 
@@ -577,8 +577,8 @@ Use this as the architecture timeline index.
 | 0003 | Failures are typed through `Outcome` instead of opaque exceptions/strings. |
 | 0004 | Coordination API and language become LLM-native (`for`, `delegate`, `remember`). |
 | 0005 | Naming hard cut to Recurgent. |
-| 0006 | Monorepo runtime partitioning (`runtimes/ruby`, `runtimes/lua`). |
-| 0007 | Runtime-agnostic normative contract package under `specs/contract/v1`. |
+| 0006 | Monorepo runtime partitioning ([`runtimes/ruby`](../runtimes/ruby), [`runtimes/lua`](../runtimes/lua)). |
+| 0007 | Runtime-agnostic normative contract package under [`specs/contract/v1`](../specs/contract/v1). |
 | 0008 | Tool Builder/Tool UL and tolerant delegation interface become canonical. |
 | 0009 | Issue-first PR compliance is enforced as repository governance. |
 | 0010 | Generated programs can declare dependencies; environment contract introduced. |
@@ -606,28 +606,28 @@ Note: ADR status markers may lag implementation. For \"what is live,\" use runti
 
 ### Core Runtime Evolution
 
-1. `docs/plans/recurgent-implementation-plan.md`
-2. `docs/plans/dependency-environment-implementation-plan.md`
-3. `docs/plans/cross-session-tool-persistence-implementation-plan.md`
-4. `docs/plans/cacheability-pattern-memory-implementation-plan.md`
-5. `docs/plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md`
+1. [`docs/plans/recurgent-implementation-plan.md`](plans/recurgent-implementation-plan.md)
+2. [`docs/plans/dependency-environment-implementation-plan.md`](plans/dependency-environment-implementation-plan.md)
+3. [`docs/plans/cross-session-tool-persistence-implementation-plan.md`](plans/cross-session-tool-persistence-implementation-plan.md)
+4. [`docs/plans/cacheability-pattern-memory-implementation-plan.md`](plans/cacheability-pattern-memory-implementation-plan.md)
+5. [`docs/plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md`](plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md)
 
 ### Contract and Boundary Hardening
 
-1. `docs/plans/outcome-boundary-contract-validation-implementation-plan.md`
-2. `docs/plans/tool-self-awareness-boundary-referral-implementation-plan.md`
-3. `docs/plans/validation-first-fresh-generation-implementation-plan.md`
-4. `docs/plans/contract-driven-utility-failures-implementation-plan.md`
-5. `docs/plans/guardrail-exhaustion-boundary-normalization-implementation-plan.md`
-6. `docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md`
+1. [`docs/plans/outcome-boundary-contract-validation-implementation-plan.md`](plans/outcome-boundary-contract-validation-implementation-plan.md)
+2. [`docs/plans/tool-self-awareness-boundary-referral-implementation-plan.md`](plans/tool-self-awareness-boundary-referral-implementation-plan.md)
+3. [`docs/plans/validation-first-fresh-generation-implementation-plan.md`](plans/validation-first-fresh-generation-implementation-plan.md)
+4. [`docs/plans/contract-driven-utility-failures-implementation-plan.md`](plans/contract-driven-utility-failures-implementation-plan.md)
+5. [`docs/plans/guardrail-exhaustion-boundary-normalization-implementation-plan.md`](plans/guardrail-exhaustion-boundary-normalization-implementation-plan.md)
+6. [`docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md`](plans/contract-first-role-profiles-state-continuity-implementation-plan.md)
 
 ### Context, Execution, and Telemetry
 
-1. `docs/plans/structured-conversation-history-implementation-plan.md`
-2. `docs/plans/generated-code-execution-sandbox-isolation-implementation-plan.md`
-3. `docs/plans/external-data-provenance-implementation-plan.md`
-4. `docs/plans/failed-attempt-exception-telemetry-implementation-plan.md`
-5. `docs/plans/awareness-substrate-authority-boundary-implementation-plan.md`
+1. [`docs/plans/structured-conversation-history-implementation-plan.md`](plans/structured-conversation-history-implementation-plan.md)
+2. [`docs/plans/generated-code-execution-sandbox-isolation-implementation-plan.md`](plans/generated-code-execution-sandbox-isolation-implementation-plan.md)
+3. [`docs/plans/external-data-provenance-implementation-plan.md`](plans/external-data-provenance-implementation-plan.md)
+4. [`docs/plans/failed-attempt-exception-telemetry-implementation-plan.md`](plans/failed-attempt-exception-telemetry-implementation-plan.md)
+5. [`docs/plans/awareness-substrate-authority-boundary-implementation-plan.md`](plans/awareness-substrate-authority-boundary-implementation-plan.md)
 
 Planning discipline across this repo is not generic PM ceremony: each plan is expected to define measurable deltas, non-improvement expectations, phase-level improvement contracts, and rollback triggers.
 

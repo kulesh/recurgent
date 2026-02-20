@@ -107,11 +107,11 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/outcome.rb`
-2. `runtimes/ruby/lib/recurgent/prompting.rb`
-3. `runtimes/ruby/lib/recurgent/call_execution.rb`
-4. `runtimes/ruby/lib/recurgent/call_state.rb`
-5. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/outcome.rb`](../../runtimes/ruby/lib/recurgent/outcome.rb)
+2. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+3. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+4. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+5. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
 
 Exit criteria:
 
@@ -137,10 +137,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/artifact_metrics.rb`
-2. `runtimes/ruby/lib/recurgent/artifact_store.rb`
-3. `runtimes/ruby/lib/recurgent/tool_store.rb`
-4. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/artifact_metrics.rb`](../../runtimes/ruby/lib/recurgent/artifact_metrics.rb)
+2. [`runtimes/ruby/lib/recurgent/artifact_store.rb`](../../runtimes/ruby/lib/recurgent/artifact_store.rb)
+3. [`runtimes/ruby/lib/recurgent/tool_store.rb`](../../runtimes/ruby/lib/recurgent/tool_store.rb)
+4. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
 
 Exit criteria:
 
@@ -172,9 +172,9 @@ Secondary v1 signal (optional enrichment):
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/call_execution.rb`
-2. `runtimes/ruby/lib/recurgent/observability.rb`
-3. `runtimes/ruby/lib/recurgent/pattern_memory_store.rb` (or dedicated telemetry store)
+1. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+2. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+3. [`runtimes/ruby/lib/recurgent/pattern_memory_store.rb`](../../runtimes/ruby/lib/recurgent/pattern_memory_store.rb) (or dedicated telemetry store)
 
 Exit criteria:
 
@@ -200,8 +200,8 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/prompting.rb`
-2. `runtimes/ruby/lib/recurgent/known_tool_ranker.rb`
+1. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+2. [`runtimes/ruby/lib/recurgent/known_tool_ranker.rb`](../../runtimes/ruby/lib/recurgent/known_tool_ranker.rb)
 
 Exit criteria:
 
@@ -229,9 +229,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/tool_maintenance.rb`
-2. `bin/recurgent-tools` (new subcommand for evaluate/evolve)
-3. `docs/observability.md` (operator workflow)
+1. [`runtimes/ruby/lib/recurgent/tool_maintenance.rb`](../../runtimes/ruby/lib/recurgent/tool_maintenance.rb)
+2. [`bin/recurgent-tools`](../../bin/recurgent-tools) (new subcommand for evaluate/evolve)
+3. [`docs/observability.md`](../observability.md) (operator workflow)
 
 Exit criteria:
 
@@ -254,9 +254,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/artifact_selector.rb`
-2. `runtimes/ruby/lib/recurgent/artifact_repair.rb`
-3. `runtimes/ruby/lib/recurgent/artifact_metrics.rb`
+1. [`runtimes/ruby/lib/recurgent/artifact_selector.rb`](../../runtimes/ruby/lib/recurgent/artifact_selector.rb)
+2. [`runtimes/ruby/lib/recurgent/artifact_repair.rb`](../../runtimes/ruby/lib/recurgent/artifact_repair.rb)
+3. [`runtimes/ruby/lib/recurgent/artifact_metrics.rb`](../../runtimes/ruby/lib/recurgent/artifact_metrics.rb)
 
 Exit criteria:
 

@@ -99,7 +99,7 @@ Implementation:
 
 Suggested files:
 
-1. `docs/adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md`
+1. [`docs/adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md`](../adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md)
 2. `docs/baselines/<date>/...`
 
 Exit criteria:
@@ -125,9 +125,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/call_execution.rb`
-2. `runtimes/ruby/lib/recurgent.rb`
-3. `runtimes/ruby/lib/recurgent/call_state.rb`
+1. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+2. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb)
+3. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
 
 Exit criteria:
 
@@ -157,9 +157,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/call_execution.rb`
-2. `runtimes/ruby/lib/recurgent/call_state.rb`
-3. `runtimes/ruby/lib/recurgent/tool_store.rb` (if additional snapshot boundaries are needed)
+1. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+2. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+3. [`runtimes/ruby/lib/recurgent/tool_store.rb`](../../runtimes/ruby/lib/recurgent/tool_store.rb) (if additional snapshot boundaries are needed)
 
 Exit criteria:
 
@@ -190,10 +190,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent.rb`
-2. `runtimes/ruby/lib/recurgent/call_execution.rb`
-3. `runtimes/ruby/lib/recurgent/prompting.rb`
-4. `runtimes/ruby/lib/recurgent/outcome.rb`
+1. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb)
+2. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+3. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+4. [`runtimes/ruby/lib/recurgent/outcome.rb`](../../runtimes/ruby/lib/recurgent/outcome.rb)
 
 Exit criteria:
 
@@ -226,10 +226,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/observability.rb`
-2. `runtimes/ruby/lib/recurgent/call_state.rb`
-3. `runtimes/ruby/lib/recurgent/artifact_metrics.rb`
-4. `runtimes/ruby/lib/recurgent/pattern_memory_store.rb` (if event schema extension is needed)
+1. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+2. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+3. [`runtimes/ruby/lib/recurgent/artifact_metrics.rb`](../../runtimes/ruby/lib/recurgent/artifact_metrics.rb)
+4. [`runtimes/ruby/lib/recurgent/pattern_memory_store.rb`](../../runtimes/ruby/lib/recurgent/pattern_memory_store.rb) (if event schema extension is needed)
 
 Exit criteria:
 
@@ -254,11 +254,11 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/fresh_generation.rb`
-2. `runtimes/ruby/lib/recurgent/fresh_outcome_repair.rb`
-3. `runtimes/ruby/lib/recurgent/guardrail_policy.rb`
-4. `runtimes/ruby/lib/recurgent/guardrail_outcome_feedback.rb`
-5. `runtimes/ruby/lib/recurgent/call_state.rb`
+1. [`runtimes/ruby/lib/recurgent/fresh_generation.rb`](../../runtimes/ruby/lib/recurgent/fresh_generation.rb)
+2. [`runtimes/ruby/lib/recurgent/fresh_outcome_repair.rb`](../../runtimes/ruby/lib/recurgent/fresh_outcome_repair.rb)
+3. [`runtimes/ruby/lib/recurgent/guardrail_policy.rb`](../../runtimes/ruby/lib/recurgent/guardrail_policy.rb)
+4. [`runtimes/ruby/lib/recurgent/guardrail_outcome_feedback.rb`](../../runtimes/ruby/lib/recurgent/guardrail_outcome_feedback.rb)
+5. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
 
 Exit criteria:
 
@@ -289,9 +289,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/prompting.rb`
-2. `runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`
-3. `docs/observability.md`
+1. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+2. [`runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb`](../../runtimes/ruby/spec/acceptance/recurgent_acceptance_spec.rb)
+3. [`docs/observability.md`](../observability.md)
 
 Exit criteria:
 

@@ -12,11 +12,11 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 
 ## 2. Legal and Policy Baseline
 
-- [x] `LICENSE` present and correct.
-- [x] `CODE_OF_CONDUCT.md` present.
-- [x] `CONTRIBUTING.md` present.
-- [x] `SECURITY.md` present.
-- [x] `SUPPORT.md` present.
+- [x] [`LICENSE`](../LICENSE) present and correct.
+- [x] [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) present.
+- [x] [`CONTRIBUTING.md`](../CONTRIBUTING.md) present.
+- [x] [`SECURITY.md`](../SECURITY.md) present.
+- [x] [`SUPPORT.md`](../SUPPORT.md) present.
 - [x] Verify copyright and year are correct everywhere.
 - [x] Confirm all example snippets are safe to distribute publicly (no proprietary content/API secrets).
 - [x] Confirm repository has no trademark-sensitive or third-party restricted assets.
@@ -27,20 +27,20 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 - [x] Ensure `.gitignore` excludes local logs, tokens, generated binaries, and editor artifacts.
 - [ ] Confirm no secrets in history and working tree (`gitleaks` clean).
 - [x] Ensure no sensitive issue data is left in local tracker exports intended for publish.
-- [x] Validate top-level structure is intentional (`README.md`, `docs/`, `runtimes/`, `specs/`, `bin/`).
+- [x] Validate top-level structure is intentional ([`README.md`](../README.md), [`docs/`](.), [`runtimes/`](../runtimes), [`specs/`](../specs), [`bin/`](../bin)).
 
 ## 4. Documentation Readiness
 
-- [x] `README.md` has:
+- [x] [`README.md`](../README.md) has:
   - [x] clear value proposition
   - [x] quickstart that works
   - [x] minimal runnable example
   - [x] links to docs index and FAQs
-- [x] `docs/index.md` links are complete and not stale.
-- [x] `docs/onboarding.md` setup steps are reproducible with `mise`.
-- [x] `docs/product-specs/delegation-contracts.md` matches runtime behavior (symmetry for `Agent.for` and `delegate`).
-- [x] `docs/observability.md` matches emitted JSONL fields (`trace_id`, `call_id`, `contract_source`, etc.).
-- [x] `docs/delegate-vs-for.md` examples reflect current API.
+- [x] [`docs/index.md`](index.md) links are complete and not stale.
+- [x] [`docs/onboarding.md`](onboarding.md) setup steps are reproducible with `mise`.
+- [x] [`docs/product-specs/delegation-contracts.md`](product-specs/delegation-contracts.md) matches runtime behavior (symmetry for `Agent.for` and `delegate`).
+- [x] [`docs/observability.md`](observability.md) matches emitted JSONL fields (`trace_id`, `call_id`, `contract_source`, etc.).
+- [x] [`docs/delegate-vs-for.md`](delegate-vs-for.md) examples reflect current API.
 - [x] ADR index includes all active design decisions and no stale statuses.
 - [x] Add/verify a concise “Known limitations” section:
   - [x] stdlib-only execution constraints
@@ -53,12 +53,12 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 - [x] Error taxonomy is documented and stable (`provider`, `invalid_code`, `execution`, `timeout`, `budget_exceeded`).
 - [x] Capability-boundary prompt rule is present in runtime prompts.
 - [x] Logging path normalizes UTF-8 and avoids JSON 3.0 breakage warnings.
-- [x] Conformance docs in `specs/contract/v1/` reflect current behavior.
+- [x] Conformance docs in [`specs/contract/v1/`](../specs/contract/v1) reflect current behavior.
 
 ## 6. Quality Gates (Ruby Runtime)
 
-- [x] `mise exec -- bundle exec rspec` passes in `runtimes/ruby`.
-- [x] `mise exec -- bundle exec rubocop` passes in `runtimes/ruby`.
+- [x] `mise exec -- bundle exec rspec` passes in [`runtimes/ruby`](../runtimes/ruby).
+- [x] `mise exec -- bundle exec rubocop` passes in [`runtimes/ruby`](../runtimes/ruby).
 - [x] Deterministic examples run successfully (especially `observability_demo.rb`).
 - [x] At least one manual smoke run validates tolerant failure handling for provider-invalid payload.
 - [x] Regression coverage exists for:
@@ -84,7 +84,7 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 - [x] PR compliance workflow present.
 - [x] Stale workflow present.
 - [x] Maintainer triage playbook includes bot/low-value PR handling criteria.
-- [x] PR compliance messaging clearly references `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
+- [x] PR compliance messaging clearly references [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md).
 - [x] Labels are configured in repo (`ready-for-pr`, `accepted`, `good first issue`, `help wanted`).
 
 ## 9. GitHub Repository Settings (Manual)
@@ -102,7 +102,7 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 ## 10. Release Artifact and Versioning
 
 - [x] Decide and tag first public version (for example `v0.1.0`).
-- [x] Ensure `CHANGELOG.md` has release notes for initial public release.
+- [x] Ensure [`CHANGELOG.md`](../CHANGELOG.md) has release notes for initial public release.
 - [x] Ensure runtime gem metadata links are valid (`homepage`, `source_code_uri`, `changelog_uri`).
 - [x] Confirm release process doc aligns with actual tagging and publishing commands.
 - [x] Prepare release notes with:
@@ -141,10 +141,10 @@ Completed locally on 2026-02-18:
   - `cd runtimes/ruby && bundle exec rubocop` (clean)
   - `cd runtimes/ruby && mise exec -- ruby examples/observability_demo.rb` (tolerant failure behavior validated)
 - Documentation/link checks:
-  - `docs/index.md` file references resolved locally (no missing file paths)
+  - [`docs/index.md`](index.md) file references resolved locally (no missing file paths)
 - Hygiene:
-  - Purged local `.beads/` state.
-  - Removed generated article artifacts from `runtimes/ruby/`.
+  - Purged local [`.beads/`](../.beads) state.
+  - Removed generated article artifacts from [`runtimes/ruby/`](../runtimes/ruby).
   - Added ignore rules for generated article outputs in `.gitignore`.
 - Security automation notes:
   - GitHub Dependabot vulnerability alerts enabled for the repository.

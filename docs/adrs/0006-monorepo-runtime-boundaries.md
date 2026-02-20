@@ -11,7 +11,7 @@ Recurgent is now explicitly multi-runtime (Ruby now, Lua planned). Keeping all r
 
 Adopt a runtime-partitioned monorepo layout:
 
-1. Keep shared product and architecture documentation at repository root (`docs/`, `README.md`, ADRs).
+1. Keep shared product and architecture documentation at repository root ([`docs/`](..), [`README.md`](../../README.md), ADRs).
 2. Place each runtime implementation in `runtimes/<language>/`.
 3. Keep runtime-specific tooling, tests, examples, and packaging metadata inside each runtime directory.
 4. Preserve one ubiquitous language and contract across runtimes while allowing independent runtime release cadence.

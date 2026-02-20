@@ -6,9 +6,9 @@ Recurgent uses Semantic Versioning.
 
 ## Release Checklist
 
-1. Ensure `runtimes/ruby` test and lint suites pass.
+1. Ensure [`runtimes/ruby`](../runtimes/ruby) test and lint suites pass.
 2. Confirm docs/contracts are aligned with runtime behavior.
-3. Update `CHANGELOG.md`.
+3. Update [`CHANGELOG.md`](../CHANGELOG.md).
 4. Tag release as `vX.Y.Z`.
 5. Publish release notes summarizing:
    - behavior changes

@@ -1,6 +1,6 @@
 # Runtime Architecture
 
-This document is the canonical architecture map for the current Ruby runtime (`runtimes/ruby`).
+This document is the canonical architecture map for the current Ruby runtime ([`runtimes/ruby`](../runtimes/ruby)).
 
 It reflects the implemented system after the recent lifecycle and boundary hardening work:
 
@@ -262,8 +262,8 @@ This document describes implemented runtime behavior.
 
 For rationale and tradeoffs:
 
-- see `docs/adrs/`.
+- see [`docs/adrs/`](adrs).
 
 For phased execution detail:
 
-- see `docs/plans/`.
+- see [`docs/plans/`](plans).

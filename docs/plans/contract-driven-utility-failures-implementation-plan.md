@@ -97,8 +97,8 @@ Implementation:
 
 Key files:
 
-1. `runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`
-2. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`](../../runtimes/ruby/lib/recurgent/outcome_contract_validator.rb)
+2. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -137,9 +137,9 @@ deliverable:
 
 Key files:
 
-1. `runtimes/ruby/lib/recurgent/outcome_contract_shapes.rb`
-2. `runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`
-3. `runtimes/ruby/spec/recurgent_spec.rb`
+1. [`runtimes/ruby/lib/recurgent/outcome_contract_shapes.rb`](../../runtimes/ruby/lib/recurgent/outcome_contract_shapes.rb)
+2. [`runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`](../../runtimes/ruby/lib/recurgent/outcome_contract_validator.rb)
+3. [`runtimes/ruby/spec/recurgent_spec.rb`](../../runtimes/ruby/spec/recurgent_spec.rb)
 
 Exit criteria:
 
@@ -162,9 +162,9 @@ Implementation:
 
 Key files:
 
-1. `runtimes/ruby/lib/recurgent/prompting.rb`
-2. `docs/product-specs/delegation-contracts.md`
-3. `docs/tolerant-delegation-interfaces.md` (if needed for examples)
+1. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+2. [`docs/product-specs/delegation-contracts.md`](../product-specs/delegation-contracts.md)
+3. [`docs/tolerant-delegation-interfaces.md`](../tolerant-delegation-interfaces.md) (if needed for examples)
 
 Exit criteria:
 
@@ -185,9 +185,9 @@ Implementation:
 
 Key files:
 
-1. `runtimes/ruby/lib/recurgent/observability.rb`
-2. `runtimes/ruby/lib/recurgent/pattern_memory_store.rb`
-3. `runtimes/ruby/lib/recurgent/user_correction_signals.rb`
+1. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+2. [`runtimes/ruby/lib/recurgent/pattern_memory_store.rb`](../../runtimes/ruby/lib/recurgent/pattern_memory_store.rb)
+3. [`runtimes/ruby/lib/recurgent/user_correction_signals.rb`](../../runtimes/ruby/lib/recurgent/user_correction_signals.rb)
 
 Exit criteria:
 
@@ -214,9 +214,9 @@ Implementation:
 
 Key files:
 
-1. `runtimes/ruby/lib/recurgent/tool_maintenance.rb`
-2. `bin/recurgent-tools` (if CLI output surface is expanded)
-3. `docs/observability.md`
+1. [`runtimes/ruby/lib/recurgent/tool_maintenance.rb`](../../runtimes/ruby/lib/recurgent/tool_maintenance.rb)
+2. [`bin/recurgent-tools`](../../bin/recurgent-tools) (if CLI output surface is expanded)
+3. [`docs/observability.md`](../observability.md)
 
 Exit criteria:
 

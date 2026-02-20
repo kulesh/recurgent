@@ -4,9 +4,9 @@
 
 Agent uses `mise` for project runtime management.
 
-- Ruby is pinned in `.mise.toml` for reproducible development.
+- Ruby is pinned in [`.mise.toml`](../.mise.toml) for reproducible development.
 - Update policy: bump to latest stable Ruby after verification with test + lint gates.
-- Commands below are run from `runtimes/ruby`.
+- Commands below are run from [`runtimes/ruby`](../runtimes/ruby).
 
 ## Dependency Update Policy
 
@@ -123,4 +123,4 @@ Run periodic scope-pressure checks for role-heavy tools:
 bin/recurgent-tools namespace-pressure "<role>"
 ```
 
-Escalate to follow-up ADR drafting when collisions, multi-lifetime usage, and ambiguity-linked continuity violations cross thresholds defined in `docs/observability.md`.
+Escalate to follow-up ADR drafting when collisions, multi-lifetime usage, and ambiguity-linked continuity violations cross thresholds defined in [`docs/observability.md`](observability.md).

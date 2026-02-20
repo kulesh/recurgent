@@ -77,7 +77,7 @@ Implementation:
    - `Net::HTTP` use or `tool("web_fetcher")` -> `http_fetch`
    - collection iteration that extracts both `title` and `link` fields into structured output -> `news_headline_extract`
 3. Capture baseline traces from:
-   - `runtimes/ruby/examples/assistant.rb`
+   - [`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb)
    - prompts: Google News, Yahoo News, NYT.
 
 Exit criteria:
@@ -102,11 +102,11 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/capability_pattern_extractor.rb`
-2. `runtimes/ruby/lib/recurgent/call_state.rb`
-3. `runtimes/ruby/lib/recurgent/call_execution.rb`
-4. `runtimes/ruby/lib/recurgent/artifact_repair.rb`
-5. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/capability_pattern_extractor.rb`](../../runtimes/ruby/lib/recurgent/capability_pattern_extractor.rb)
+2. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+3. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+4. [`runtimes/ruby/lib/recurgent/artifact_repair.rb`](../../runtimes/ruby/lib/recurgent/artifact_repair.rb)
+5. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
 
 Exit criteria:
 
@@ -142,9 +142,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/pattern_memory_store.rb`
-2. `runtimes/ruby/lib/recurgent/tool_store_paths.rb` (path helper)
-3. `runtimes/ruby/lib/recurgent/call_execution.rb` (write hook)
+1. [`runtimes/ruby/lib/recurgent/pattern_memory_store.rb`](../../runtimes/ruby/lib/recurgent/pattern_memory_store.rb)
+2. [`runtimes/ruby/lib/recurgent/tool_store_paths.rb`](../../runtimes/ruby/lib/recurgent/tool_store_paths.rb) (path helper)
+3. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb) (write hook)
 
 Exit criteria:
 
@@ -178,9 +178,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/prompting.rb`
-2. `runtimes/ruby/lib/recurgent/known_tool_ranker.rb` (optional utility reuse)
-3. `runtimes/ruby/lib/recurgent/call_execution.rb` (pass method context to prompt builder if needed)
+1. [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb)
+2. [`runtimes/ruby/lib/recurgent/known_tool_ranker.rb`](../../runtimes/ruby/lib/recurgent/known_tool_ranker.rb) (optional utility reuse)
+3. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb) (pass method context to prompt builder if needed)
 
 Exit criteria:
 

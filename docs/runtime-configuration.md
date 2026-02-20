@@ -3,8 +3,8 @@
 This page is the operational reference for `Agent.configure_runtime` and related environment variables.
 
 Primary implementation sources:
-- `runtimes/ruby/lib/recurgent/runtime_config.rb`
-- `runtimes/ruby/lib/recurgent.rb`
+- [`runtimes/ruby/lib/recurgent/runtime_config.rb`](../runtimes/ruby/lib/recurgent/runtime_config.rb)
+- [`runtimes/ruby/lib/recurgent.rb`](../runtimes/ruby/lib/recurgent.rb)
 
 ## Why This Matters
 
@@ -115,16 +115,16 @@ Agent.configure_runtime(
 ## Verification Checklist
 
 After changing runtime config:
-1. run `bundle exec rubocop` and `bundle exec rspec` in `runtimes/ruby`,
+1. run `bundle exec rubocop` and `bundle exec rspec` in [`runtimes/ruby`](../runtimes/ruby),
 2. run `ruby examples/calculator.rb`,
 3. run `ruby examples/assistant.rb`,
-4. inspect `recurgent.jsonl` per `docs/observability.md`.
+4. inspect `recurgent.jsonl` per [`docs/observability.md`](observability.md).
 
 ## Related Docs
 
-- `docs/architecture.md`
-- `docs/observability.md`
-- `docs/product-specs/delegation-contracts.md`
-- `docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md`
-- `docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`
-- `docs/adrs/0025-awareness-substrate-and-authority-boundary.md`
+- [`docs/architecture.md`](architecture.md)
+- [`docs/observability.md`](observability.md)
+- [`docs/product-specs/delegation-contracts.md`](product-specs/delegation-contracts.md)
+- [`docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md`](adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md)
+- [`docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`](adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md)
+- [`docs/adrs/0025-awareness-substrate-and-authority-boundary.md`](adrs/0025-awareness-substrate-and-authority-boundary.md)

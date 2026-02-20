@@ -93,4 +93,4 @@ bundle update --all
 bundle outdated
 ```
 
-For constraint notes and upgrade order, see `docs/maintenance.md`.
+For constraint notes and upgrade order, see [`docs/maintenance.md`](maintenance.md).

@@ -18,7 +18,7 @@ In addition, every phase section must include a `Phase Improvement Contract`:
 2. expected delta,
 3. observed delta after validation run.
 
-Use `docs/plans/TEMPLATE.md` for new implementation plans.
+Use [`docs/plans/TEMPLATE.md`](TEMPLATE.md) for new implementation plans.
 
 ## Core Runtime Evolution
 

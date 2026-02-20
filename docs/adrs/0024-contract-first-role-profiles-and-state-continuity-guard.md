@@ -371,7 +371,7 @@ Phase validation traces showed why ADR 0024 is still required after ADR 0025:
 
 ## Ubiquitous Language Additions
 
-This ADR introduces canonical terms to add to `docs/ubiquitous-language.md`:
+This ADR introduces canonical terms to add to [`docs/ubiquitous-language.md`](../ubiquitous-language.md):
 
 1. `Role Profile`
 2. `Canonical State Key`

@@ -4,9 +4,9 @@
 
 Support is best-effort and prioritized for:
 
-1. Reproducible runtime bugs in `runtimes/ruby`.
-2. Contract/documentation mismatches under `specs/contract/`.
-3. Security issues reported via `SECURITY.md`.
+1. Reproducible runtime bugs in [`runtimes/ruby`](../runtimes/ruby).
+2. Contract/documentation mismatches under [`specs/contract/`](../specs/contract).
+3. Security issues reported via [`SECURITY.md`](../SECURITY.md).
 
 ## What to Include in Bug Reports
 

@@ -96,8 +96,8 @@ The plan is to add a coordination-layer vocabulary that matches this mental mode
 ## Work Breakdown
 
 1. Documentation
-- Add ubiquitous language section to `README.md`.
-- Add migration guide under `docs/`.
+- Add ubiquitous language section to [`README.md`](../../README.md).
+- Add migration guide under [`docs/`](..).
 - Keep docs index and retrieval index updated.
 
 2. API

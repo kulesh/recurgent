@@ -73,8 +73,8 @@ Implementation:
 
 Suggested files:
 
-1. `docs/adrs/0025-awareness-substrate-and-authority-boundary.md`
-2. `docs/observability.md`
+1. [`docs/adrs/0025-awareness-substrate-and-authority-boundary.md`](../adrs/0025-awareness-substrate-and-authority-boundary.md)
+2. [`docs/observability.md`](../observability.md)
 3. `docs/baselines/<date>/...`
 
 Exit criteria:
@@ -101,9 +101,9 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/call_state.rb`
-2. `runtimes/ruby/lib/recurgent/observability.rb`
-3. `runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`
+1. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+2. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
+3. [`runtimes/ruby/lib/recurgent/observability_attempt_fields.rb`](../../runtimes/ruby/lib/recurgent/observability_attempt_fields.rb)
 
 Exit criteria:
 
@@ -131,10 +131,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/proposal_store.rb` (new)
-2. `runtimes/ruby/lib/recurgent.rb` (config/wiring)
-3. `bin/recurgent-tools` (proposal inspection commands)
-4. `docs/governance.md`
+1. [`runtimes/ruby/lib/recurgent/proposal_store.rb`](../../runtimes/ruby/lib/recurgent/proposal_store.rb) (new)
+2. [`runtimes/ruby/lib/recurgent.rb`](../../runtimes/ruby/lib/recurgent.rb) (config/wiring)
+3. [`bin/recurgent-tools`](../../bin/recurgent-tools) (proposal inspection commands)
+4. [`docs/governance.md`](../governance.md)
 
 Exit criteria:
 
@@ -159,10 +159,10 @@ Implementation:
 
 Suggested files:
 
-1. `runtimes/ruby/lib/recurgent/authority.rb` (new)
-2. `runtimes/ruby/lib/recurgent/call_execution.rb`
-3. `runtimes/ruby/lib/recurgent/outcome.rb`
-4. `runtimes/ruby/lib/recurgent/observability.rb`
+1. [`runtimes/ruby/lib/recurgent/authority.rb`](../../runtimes/ruby/lib/recurgent/authority.rb) (new)
+2. [`runtimes/ruby/lib/recurgent/call_execution.rb`](../../runtimes/ruby/lib/recurgent/call_execution.rb)
+3. [`runtimes/ruby/lib/recurgent/outcome.rb`](../../runtimes/ruby/lib/recurgent/outcome.rb)
+4. [`runtimes/ruby/lib/recurgent/observability.rb`](../../runtimes/ruby/lib/recurgent/observability.rb)
 
 Exit criteria:
 
@@ -193,9 +193,9 @@ Implementation:
 
 Suggested files:
 
-1. `docs/governance.md`
-2. `docs/maintenance.md`
-3. `bin/recurgent-tools`
+1. [`docs/governance.md`](../governance.md)
+2. [`docs/maintenance.md`](../maintenance.md)
+3. [`bin/recurgent-tools`](../../bin/recurgent-tools)
 
 Exit criteria:
 
@@ -223,7 +223,7 @@ Implementation:
 
 Suggested files:
 
-1. `docs/observability.md`
+1. [`docs/observability.md`](../observability.md)
 2. `docs/adrs/<future-context-scope-adr>.md` (only if triggered)
 
 Exit criteria:
