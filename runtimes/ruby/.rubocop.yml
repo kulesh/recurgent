@@ -9,6 +9,7 @@ Style/Documentation:
 Metrics/MethodLength:
   Max: 50
   Exclude:
+    - "lib/recurgent.rb"
     - "lib/recurgent/call_state.rb"
     - "lib/recurgent/tool_store.rb"
 
@@ -24,6 +25,8 @@ Metrics/ModuleLength:
     - "lib/recurgent/artifact_metrics.rb"
     - "lib/recurgent/artifact_selector.rb"
     - "lib/recurgent/artifact_store.rb"
+    - "lib/recurgent/role_profile_guard.rb"
+    - "lib/recurgent/role_profile_registry.rb"
     - "lib/recurgent/tool_store.rb"
 
 Metrics/AbcSize:
@@ -36,6 +39,10 @@ Metrics/AbcSize:
     - "lib/recurgent/known_tool_ranker.rb"
     - "lib/recurgent/observability_attempt_fields.rb"
     - "lib/recurgent/prompting.rb"
+    - "lib/recurgent/role_profile.rb"
+    - "lib/recurgent/role_profile_guard.rb"
+    - "lib/recurgent/role_profile_registry.rb"
+    - "lib/recurgent.rb"
     - "lib/recurgent/runtime_config.rb"
     - "lib/recurgent/tool_store.rb"
 
@@ -46,6 +53,9 @@ Metrics/CyclomaticComplexity:
     - "lib/recurgent/call_state.rb"
     - "lib/recurgent/known_tool_ranker.rb"
     - "lib/recurgent/prompting.rb"
+    - "lib/recurgent/role_profile.rb"
+    - "lib/recurgent/role_profile_guard.rb"
+    - "lib/recurgent.rb"
     - "lib/recurgent/runtime_config.rb"
     - "lib/recurgent/tool_store.rb"
 
@@ -55,6 +65,9 @@ Metrics/PerceivedComplexity:
     - "lib/recurgent/artifact_selector.rb"
     - "lib/recurgent/known_tool_ranker.rb"
     - "lib/recurgent/prompting.rb"
+    - "lib/recurgent/role_profile.rb"
+    - "lib/recurgent/role_profile_guard.rb"
+    - "lib/recurgent.rb"
     - "lib/recurgent/runtime_config.rb"
     - "lib/recurgent/tool_store.rb"
 

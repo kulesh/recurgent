@@ -14,9 +14,7 @@ class Agent
 
         role = data[:role].to_s.strip
         raise ArgumentError, "role_profile[:role] must be provided" if role.empty?
-        if expected_role && role != expected_role.to_s
-          raise ArgumentError, "role_profile[:role] must match agent role '#{expected_role}'"
-        end
+        raise ArgumentError, "role_profile[:role] must match agent role '#{expected_role}'" if expected_role && role != expected_role.to_s
 
         version = Integer(data[:version])
         raise ArgumentError, "role_profile[:version] must be >= 1" if version <= 0
@@ -63,13 +61,18 @@ class Agent
         }
 
         if normalized[:scope] == :all_methods
-          raise ArgumentError,
-                "role_profile constraint '#{name}' with scope all_methods must not declare methods" unless methods.empty?
+          unless methods.empty?
+            raise ArgumentError,
+                  "role_profile constraint '#{name}' with scope all_methods must not declare methods"
+          end
           normalized[:exclude_methods] = exclude_methods unless exclude_methods.empty?
         else
           raise ArgumentError, "role_profile constraint '#{name}' requires methods for scope explicit_methods" if methods.empty?
-          raise ArgumentError,
-                "role_profile constraint '#{name}' with scope explicit_methods must not declare exclude_methods" unless exclude_methods.empty?
+
+          unless exclude_methods.empty?
+            raise ArgumentError,
+                  "role_profile constraint '#{name}' with scope explicit_methods must not declare exclude_methods"
+          end
           normalized[:methods] = methods
         end
 

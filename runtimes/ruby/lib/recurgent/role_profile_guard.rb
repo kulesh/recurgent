@@ -92,7 +92,6 @@ class Agent
       scoped_methods = _role_profile_constraint_methods(constraint: constraint, method_name: method_name, kind: kind)
       observations, family_label = _role_profile_constraint_observations(
         kind: kind,
-        constraint: constraint,
         scoped_methods: scoped_methods,
         method_name: method_name,
         code: code,
@@ -119,14 +118,13 @@ class Agent
                           "#{family_label} diverged across sibling methods"
                         end
       result[:correction_hint] = _role_profile_constraint_correction_hint(
-        constraint: constraint,
         expected: expected,
         observations: observations
       )
       result
     end
 
-    def _role_profile_constraint_observations(kind:, constraint:, scoped_methods:, method_name:, code:, outcome:)
+    def _role_profile_constraint_observations(kind:, scoped_methods:, method_name:, code:, outcome:)
       case kind
       when :shared_state_slot
         [
@@ -163,11 +161,11 @@ class Agent
     def _role_profile_shared_state_observations(method_names:, method_name:, code:)
       metadata = _toolstore_load_registry_tools[@role.to_s]
       method_profiles = _toolstore_method_state_key_profiles(metadata || {}).transform_values do |keys|
-        Array(keys).map(&:to_s).reject(&:empty?).sort.first
+        Array(keys).map(&:to_s).reject(&:empty?).min
       end
       method_profiles.merge!(_role_profile_cached_observations(kind: :shared_state_slot))
       current_keys = _toolstore_state_keys_from_code(code.to_s).map(&:to_s).reject(&:empty?).uniq
-      current_primary = current_keys.sort.first
+      current_primary = current_keys.min
       if current_primary
         method_profiles[method_name.to_s] = current_primary
         _role_profile_record_observation(kind: :shared_state_slot, method_name: method_name, value: current_primary)
@@ -195,7 +193,7 @@ class Agent
       return nil unless scorecard.is_a?(Hash)
 
       latest = Array(scorecard["state_key_observations"]).last
-      Array(latest).map(&:to_s).reject(&:empty?).sort.first
+      Array(latest).map(&:to_s).reject(&:empty?).min
     end
 
     def _role_profile_return_shape_observations(method_names:, method_name:, outcome:)
@@ -356,7 +354,7 @@ class Agent
       nil
     end
 
-    def _role_profile_constraint_correction_hint(constraint:, expected:, observations:)
+    def _role_profile_constraint_correction_hint(expected:, observations:)
       if expected
         "Use '#{expected}' consistently for this profile constraint."
       else

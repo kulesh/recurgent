@@ -251,7 +251,7 @@ class Agent
       rationale = metrics.merge(
         "observation_window_met" => metrics["calls"] >= policy[:min_calls] && metrics["session_count"] >= policy[:min_sessions],
         "gate_pass" => gate_pass,
-        "profile_enabled_role" => metrics["role_profile_observation_count"] > 0
+        "profile_enabled_role" => metrics["role_profile_observation_count"].positive?
       )
 
       if current_state == "candidate" && state.outcome&.ok?
@@ -323,7 +323,8 @@ class Agent
       return false if metrics["wrong_boundary_count"] > policy[:max_wrong_boundary_count]
       return false if metrics["provenance_violations"] > policy[:max_provenance_violations]
       return false if metrics["state_key_consistency_ratio"] < policy[:min_state_key_consistency_ratio]
-      if metrics["role_profile_observation_count"] > 0
+
+      if metrics["role_profile_observation_count"].positive?
         min_profile_pass_rate = policy[:min_role_profile_pass_rate] || 0.99
         return false if metrics["role_profile_pass_rate"] < min_profile_pass_rate
       end

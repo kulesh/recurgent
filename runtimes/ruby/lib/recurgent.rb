@@ -590,9 +590,7 @@ class Agent
     @context = {}
     _hydrate_role_profiles!
     _role_profile_registry_apply!(config[:role_profile], source: "initialize_option") unless config[:role_profile].nil?
-    unless config[:role_profile_version].nil?
-      _role_profile_registry_activate!(version: config[:role_profile_version], source: "initialize_option")
-    end
+    _role_profile_registry_activate!(version: config[:role_profile_version], source: "initialize_option") unless config[:role_profile_version].nil?
     @verbose, @log, @debug = config.values_at(:verbose, :log, :debug)
     @max_generation_attempts, @guardrail_recovery_budget, @fresh_outcome_repair_budget, @provider_timeout_seconds, @delegation_budget =
       _resolve_runtime_limits(config)
@@ -850,19 +848,16 @@ class Agent
   end
 
   def _proposal_role_profile_payload(target:, metadata:)
-    payload = if metadata.is_a?(Hash)
-                metadata["role_profile"] || metadata[:role_profile]
-              end
+    payload = (metadata["role_profile"] || metadata[:role_profile] if metadata.is_a?(Hash))
     payload ||= target["role_profile"] || target[:role_profile] if target.is_a?(Hash)
-    if target.is_a?(Hash)
-      payload ||= target if target.key?("constraints") || target.key?(:constraints)
-    end
+    payload ||= target if target.is_a?(Hash) && (target.key?("constraints") || target.key?(:constraints))
     return nil unless payload.is_a?(Hash)
 
     expected_role = _proposal_role_profile_target_role(target: target, metadata: metadata)
     if !expected_role.empty? && expected_role != @role
       raise ArgumentError, "proposal target role '#{expected_role}' does not match current role '#{@role}'"
     end
+
     payload
   end
 
@@ -876,12 +871,8 @@ class Agent
   end
 
   def _proposal_role_profile_version_value(target:, metadata:)
-    value = if metadata.is_a?(Hash)
-              metadata["active_version"] || metadata[:active_version] || metadata["version"] || metadata[:version]
-            end
-    if value.nil? && target.is_a?(Hash)
-      value = target["active_version"] || target[:active_version] || target["version"] || target[:version]
-    end
+    value = (metadata["active_version"] || metadata[:active_version] || metadata["version"] || metadata[:version] if metadata.is_a?(Hash))
+    value = target["active_version"] || target[:active_version] || target["version"] || target[:version] if value.nil? && target.is_a?(Hash)
     return nil if value.nil?
 
     Integer(value)
