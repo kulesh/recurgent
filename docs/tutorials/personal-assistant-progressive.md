@@ -59,7 +59,7 @@ This tutorial shows Ruby snippets so you can understand system mechanics. In rea
 3. A trainer model inspects outcomes/logs, then tune contracts and policy where needed.
 4. Rinse. Repeat. Review.
 
-Think of snippets as a set of domain specific language, control surfaces, and diagnostics. The snippets are not manual implementations of every sub-tool by a human.
+Think of snippets as a set of domain specific language, control surfaces, and diagnostics. The snippets are not manual implementations of every tool by a human.
 
 ## Copy/Paste Quickstart (10-15 min)
 
@@ -187,12 +187,12 @@ Configure policy intentionally before creating agents.
 
 The tutorial example uses these keys:
 
-| Key | What it controls | Why you care |
-| --- | --- | --- |
-| `role_profile_shadow_mode_enabled` | Evaluates role profile continuity and logs results without blocking | calibrate continuity policy safely |
-| `role_profile_enforcement_enabled` | Allows role profile continuity violations to trigger recoverable enforcement | prevent silent sibling-method drift |
-| `promotion_shadow_mode_enabled` | Evaluates lifecycle promotion decisions without changing selection | tune promotion thresholds with evidence |
-| `promotion_enforcement_enabled` | Enforces lifecycle selection decisions | activate reliability-gated default reuse |
+| Key                                | What it controls                                                             | Why you care                             |
+| ---------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------- |
+| `role_profile_shadow_mode_enabled` | Evaluates role profile continuity and logs results without blocking          | calibrate continuity policy safely       |
+| `role_profile_enforcement_enabled` | Allows role profile continuity violations to trigger recoverable enforcement | prevent silent sibling-method drift      |
+| `promotion_shadow_mode_enabled`    | Evaluates lifecycle promotion decisions without changing selection           | tune promotion thresholds with evidence  |
+| `promotion_enforcement_enabled`    | Enforces lifecycle selection decisions                                       | activate reliability-gated default reuse |
 
 For full key set (including authority/dependency/toolstore settings), see:
 
@@ -329,13 +329,13 @@ Move from implicit conventions to explicit role continuity constraints.
 
 ### Constraint field semantics
 
-| Field | Meaning | Common values |
-| --- | --- | --- |
-| `kind` | what coherence dimension to evaluate | `:shared_state_slot`, `:return_shape_family`, `:signature_family` |
-| `scope` | which methods participate in the constraint | `:all_methods` (default), `:explicit_methods` |
-| `mode` | how strict the rule is | `:coordination` (agreement, no fixed value), `:prescriptive` (explicit canonical value) |
-| `canonical_key` / `canonical_value` | fixed expected value when prescriptive mode is used | e.g. `:conversation_history` |
-| `exclude_methods` | optional carve-out list when scope is broad | e.g. `%w[history]` |
+| Field                               | Meaning                                             | Common values                                                                           |
+| ----------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `kind`                              | what coherence dimension to evaluate                | `:shared_state_slot`, `:return_shape_family`, `:signature_family`                       |
+| `scope`                             | which methods participate in the constraint         | `:all_methods` (default), `:explicit_methods`                                           |
+| `mode`                              | how strict the rule is                              | `:coordination` (agreement, no fixed value), `:prescriptive` (explicit canonical value) |
+| `canonical_key` / `canonical_value` | fixed expected value when prescriptive mode is used | e.g. `:conversation_history`                                                            |
+| `exclude_methods`                   | optional carve-out list when scope is broad         | e.g. `%w[history]`                                                                      |
 
 ### Example profile
 
@@ -424,13 +424,34 @@ pp entries.group_by { |e| e["role"] }.transform_values { |xs|
 Top-level Tool Builder call (`depth: 0`):
 
 ```json
-{"trace_id":"t-123","call_id":"c-1","depth":0,"role":"personal assistant that remembers conversation history","method":"ask","outcome_status":"ok","duration_ms":1820,"solver_shape_stance":"orchestrate","active_role_profile_version":1}
+{
+  "trace_id": "t-123",
+  "call_id": "c-1",
+  "depth": 0,
+  "role": "personal assistant that remembers conversation history",
+  "method": "ask",
+  "outcome_status": "ok",
+  "duration_ms": 1820,
+  "solver_shape_stance": "orchestrate",
+  "active_role_profile_version": 1
+}
 ```
 
 Delegated Tool call (`depth: 1`):
 
 ```json
-{"trace_id":"t-123","call_id":"c-2","parent_call_id":"c-1","depth":1,"role":"news_aggregator","method":"get_headlines","outcome_status":"error","outcome_error_type":"tool_registry_violation","guardrail_recovery_attempts":2,"latest_failure_stage":"validation"}
+{
+  "trace_id": "t-123",
+  "call_id": "c-2",
+  "parent_call_id": "c-1",
+  "depth": 1,
+  "role": "news_aggregator",
+  "method": "get_headlines",
+  "outcome_status": "error",
+  "outcome_error_type": "tool_registry_violation",
+  "guardrail_recovery_attempts": 2,
+  "latest_failure_stage": "validation"
+}
 ```
 
 What to read from these quickly:
