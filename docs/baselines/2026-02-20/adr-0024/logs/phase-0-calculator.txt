@@ -1,0 +1,34 @@
+=== Calculator ===
+Model: claude-sonnet-4-5-20250929
+
+No Math module. No formulas. No operator overloading.
+Just a name and method calls. The LLM figures out the rest.
+
+-> calc.memory = 5
+
+-> calc.add(3)
+8
+
+-> calc.multiply(4)
+32
+
+-> calc.sqrt(latest_result)
+5.656854249492381
+
+-> calc.runtime_context[:memory] || calc.runtime_context[:value]
+32
+
+-> calc.sqrt(144)
+12.0
+
+-> calc.factorial(10)
+3628800
+
+-> calc.convert(100, from: 'celsius', to: 'fahrenheit')
+{original: {value: 100, unit: "celsius"}, converted: {value: 212.0, unit: "fahrenheit"}, formula: "celsius to fahrenheit", result: 212.0}
+
+-> calc.solve('2x + 5 = 17')
+6.0
+
+-> calc.history
+{summary: {total_calls: 7, user_calls: 7, agent_calls: 0}, timeline: [{call_id: "4ba1debc90ec2c00", timestamp: "2026-02-20T01:48:45.945Z", speaker: "user", method: "add", args: [3], kwargs: {}, outcome: {status: "ok", ok: true, retriable: false, value_class: "Integer"}}, {call_id: "24425420bac09dcb", timestamp: "2026-02-20T01:48:51.280Z", speaker: "user", method: "multiply", args: [4], kwargs: {}, outcome: {status: "ok", ok: true, retriable: false, value_class: "Integer"}}, {call_id: "f24fad98cb197706", timestamp: "2026-02-20T01:49:00.906Z", speaker: "user", method: "sqrt", args: [32], kwargs: {}, outcome: {status: "ok", ok: true, retriable: false, value_class: "Float"}}, {call_id: "83f29b25b01aa10b", timestamp: "2026-02-20T01:49:11.169Z", speaker: "user", method: "sqrt", args: [144], kwargs: {}, outcome: {status: "ok", ok: true, retriable: false, value_class: "Float"}}, {call_id: "03695fb2acc48265", timestamp: "2026-02-20T01:49:21.174Z", speaker: "user", method: "factorial", args: [10], kwargs: {}, outcome: {status: "ok", ok: true, retriable: false, value_class: "Integer"}}, {call_id: "0aeaf00b723c5267", timestamp: "2026-02-20T01:49:31.828Z", speaker: "user", method: "convert", args: [100], kwargs: {from: "celsius", to: "fahrenheit"}, outcome: {status: "ok", ok: true, retriable: false, value_class: "Hash"}}, {call_id: "f0e3c8c70b198128", timestamp: "2026-02-20T01:49:44.486Z", speaker: "user", method: "solve", args: ["2x + 5 = 17"], kwargs: {}, outcome: {status: "ok", ok: true, retriable: false, value_class: "Float"}}], note: "Full conversation history with 7 recorded interactions"}

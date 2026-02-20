@@ -206,7 +206,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-19T21:04:42Z
+Last Updated (UTC): 2026-02-20T02:38:50Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -225,7 +225,9 @@ Last Updated (UTC): 2026-02-19T21:04:42Z
 - `docs/tolerant-delegation-interfaces.md` - canonical tolerant delegation interface guidance and examples
 - `docs/delegate-vs-for.md` - concrete decision rules for delegate vs Agent.for usage
 - `docs/specs/delegation-contracts.md` - Phase 1 Tool Builder-authored Tool contract fields and behavior
+- `docs/adrs/TEMPLATE.md` - ADR authoring template that requires status quo baseline, expected improvements, validation signals, and rollback triggers
 - `docs/plans/README.md` - implementation plan map organized by runtime evolution, boundary hardening, and telemetry/context work
+- `docs/plans/TEMPLATE.md` - implementation plan authoring template with baseline-to-target deltas and per-phase improvement contracts
 - `docs/plans/recurgent-implementation-plan.md` - phased implementation plan for LLM-native coordination API and naming transition
 - `docs/plans/dependency-environment-implementation-plan.md` - detailed phased implementation plan for ADR 0010 dependency-aware environments
 - `docs/plans/cross-session-tool-persistence-implementation-plan.md` - phased implementation plan for ADR 0012 cross-session tool and artifact persistence
@@ -239,9 +241,20 @@ Last Updated (UTC): 2026-02-19T21:04:42Z
 - `docs/plans/guardrail-exhaustion-boundary-normalization-implementation-plan.md` - phased implementation plan for ADR 0022 generic guardrail exhaustion boundary normalization with top-level-only user-facing message stabilization
 - `docs/plans/failed-attempt-exception-telemetry-implementation-plan.md` - phased implementation plan for ADR 0016 augmentation to persist failed-attempt exception diagnostics for repaired fresh calls
 - `docs/plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md` - phased implementation plan for ADR 0023 solver-shape evidence capture and reliability-gated lifecycle evolution
+- `docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md` - phased implementation plan for ADR 0024 coordination-first role profiles, state continuity guard, and profile-compliance-aware promotion gating
 - `docs/plans/awareness-substrate-authority-boundary-implementation-plan.md` - phased implementation plan for ADR 0025 bounded awareness substrate, proposal artifacts, and explicit authority gate enforcement
 - `docs/baselines/2026-02-15/README.md` - baseline trace capture instructions and fixtures before artifact persistence rollout
+- `docs/baselines/2026-02-20/adr-0024/phase-0-validation.md` - ADR 0024 phase 0 validation results for suite, calculator, assistant, and trace diagnosis
+- `docs/baselines/2026-02-20/adr-0024/phase-1-validation.md` - ADR 0024 phase 1 validation results for suite, calculator, assistant, and trace diagnosis
+- `docs/baselines/2026-02-20/adr-0024/phase-2-validation.md` - ADR 0024 phase 2 validation results for suite, calculator, assistant, and trace diagnosis
+- `docs/baselines/2026-02-20/adr-0024/phase-3-validation.md` - ADR 0024 phase 3 validation results for suite, calculator, assistant, and trace diagnosis
+- `docs/baselines/2026-02-20/adr-0024/phase-4-validation.md` - ADR 0024 phase 4 validation results for suite, calculator, assistant, and trace diagnosis
+- `docs/baselines/2026-02-20/adr-0024/phase-5-validation.md` - ADR 0024 phase 5 validation results for suite, calculator, assistant, and trace diagnosis
+- `docs/baselines/2026-02-20/adr-0024/phase-6-validation.md` - ADR 0024 phase 6 validation results for suite, calculator, assistant, and trace diagnosis
+- `docs/baselines/2026-02-20/adr-0024/phase-rollup.json` - machine-readable rollup of phase-by-phase validation outcomes for ADR 0024
+- `docs/baselines/2026-02-20/adr-0024/logs/` - copied per-phase raw logs and outputs (rspec, calculator, assistant, jsonl traces)
 - `docs/reports/adr-0023-phase-validation-report.md` - per-phase validation transcript for tests, examples, logs, and diagnostics during ADR 0023 implementation
+- `docs/reports/adr-0024-phase-validation-rollup.md` - ADR 0024 implementation rollup comparing expected improvements vs observed phase outcomes
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
 - `docs/support.md` - support scope and triage expectations

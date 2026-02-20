@@ -1,0 +1,34 @@
+=== Calculator ===
+Model: claude-sonnet-4-5-20250929
+
+No Math module. No formulas. No operator overloading.
+Just a name and method calls. The LLM figures out the rest.
+
+-> calc.memory = 5
+
+-> calc.add(3)
+8
+
+-> calc.multiply(4)
+0
+
+-> calc.sqrt(latest_result)
+0.0
+
+-> calc.runtime_context[:memory] || calc.runtime_context[:value]
+8
+
+-> calc.sqrt(144)
+12.0
+
+-> calc.factorial(10)
+3628800.0
+
+-> calc.convert(100, from: 'celsius', to: 'fahrenheit')
+212.0
+
+-> calc.solve('2x + 5 = 17')
+{solution: 6.0, equation: "2x + 5 = 17", steps: ["Original equation: 2x + 5 = 17", "Standard form: 2.0x + 5.0 = 17.0", "Subtract 5.0 from both sides: 2.0x = 12.0", "Divide by 2.0: x = 6.0"], verification: "2.0 * 6.0 + 5.0 = 17.0 (should equal 17.0)"}
+
+-> calc.history
+{count: 7, records: [{index: 0, call_id: "fe40229042683e87", timestamp: "2026-02-20T02:25:33.883Z", speaker: "user", method_name: "add", args: [3], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Integer"}}, {index: 1, call_id: "eb87747a0852d9bc", timestamp: "2026-02-20T02:25:45.093Z", speaker: "user", method_name: "multiply", args: [4], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Integer"}}, {index: 2, call_id: "71e5226df6a688cf", timestamp: "2026-02-20T02:25:57.445Z", speaker: "user", method_name: "sqrt", args: [0], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float"}}, {index: 3, call_id: "71f712f81d8328fc", timestamp: "2026-02-20T02:26:00.029Z", speaker: "user", method_name: "sqrt", args: [144], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float"}}, {index: 4, call_id: "1be21c45799fa2f2", timestamp: "2026-02-20T02:26:10.947Z", speaker: "user", method_name: "factorial", args: [10], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float"}}, {index: 5, call_id: "94ca01c105d1d4a7", timestamp: "2026-02-20T02:26:21.873Z", speaker: "user", method_name: "convert", args: [100], kwargs: {from: "celsius", to: "fahrenheit"}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float"}}, {index: 6, call_id: "3518b319f61f24e2", timestamp: "2026-02-20T02:26:37.252Z", speaker: "user", method_name: "solve", args: ["2x + 5 = 17"], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Hash"}}], message: "Retrieved 7 conversation record(s)."}

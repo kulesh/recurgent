@@ -13,6 +13,8 @@ This index is organized for fast retrieval:
 - `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary
 - `docs/observability.md` - log schema, trace model, and live watcher usage
 - `docs/adrs/README.md` - architecture decision index
+- `docs/adrs/TEMPLATE.md` - ADR template with baseline, expected-improvement, validation, and rollback sections
+- `docs/plans/TEMPLATE.md` - implementation-plan template with phase-level improvement contracts
 
 ## Product and Specs
 
@@ -53,6 +55,7 @@ This index is organized for fast retrieval:
 ## Implementation Plans
 
 - `docs/plans/README.md` - plan map
+- `docs/plans/TEMPLATE.md` - plan template
 - `docs/plans/recurgent-implementation-plan.md`
 - `docs/plans/dependency-environment-implementation-plan.md`
 - `docs/plans/cross-session-tool-persistence-implementation-plan.md`
@@ -67,11 +70,14 @@ This index is organized for fast retrieval:
 - `docs/plans/guardrail-exhaustion-boundary-normalization-implementation-plan.md`
 - `docs/plans/failed-attempt-exception-telemetry-implementation-plan.md`
 - `docs/plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md`
+- `docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md`
 - `docs/plans/awareness-substrate-authority-boundary-implementation-plan.md`
 
 ## Baselines and Operations
 
 - `docs/baselines/2026-02-15/README.md` - baseline trace fixtures
+- `docs/baselines/2026-02-20/adr-0024/phase-rollup.json` - ADR 0024 phase-by-phase validation rollup
+- `docs/reports/adr-0024-phase-validation-rollup.md` - ADR 0024 expected-vs-observed validation analysis
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/maintenance.md` - dependency/runtime maintenance policy
 - `docs/release-process.md` - release process and SemVer policy

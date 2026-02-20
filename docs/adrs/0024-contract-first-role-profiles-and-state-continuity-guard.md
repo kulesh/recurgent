@@ -7,6 +7,12 @@
 
 ADR 0023 introduced solver-shape observability and reliability-gated lifecycle promotion. That infrastructure answers "how reliably did this artifact execute?" It does not answer "is this role semantically coherent across methods?"
 
+ADR 0025 is now implemented and adds the control-plane substrate for awareness, proposal artifacts, and authority gating. ADR 0024 must run on top of that substrate:
+
+1. role-profile mutations are proposal artifacts (`role_profile_update`),
+2. enactment is maintainer-approved (`approve`/`apply`) and authority-gated,
+3. observability fields from ADR 0025 are available for continuity rollout evidence.
+
 That distinction is now explicit:
 
 1. reliability infrastructure ranks observed behavior,
@@ -63,12 +69,13 @@ calculator_profile = Agent::RoleProfile.new(
   constraints: {
     accumulator_slot: {
       kind: :shared_state_slot,
-      methods: %w[memory= add multiply sqrt],
+      scope: :all_methods,
       mode: :coordination
     },
     arithmetic_shape: {
       kind: :return_shape_family,
-      methods: %w[add multiply sqrt],
+      scope: :all_methods,
+      exclude_methods: %w[history],
       mode: :coordination
     }
   }
@@ -81,7 +88,7 @@ Optional strict pinning is supported per constraint when deterministic behavior 
 strict_profile = calculator_profile.with_constraints(
   accumulator_slot: {
     kind: :shared_state_slot,
-    methods: %w[memory= add multiply sqrt],
+    scope: :all_methods,
     mode: :prescriptive,
     canonical_key: :value
   }
@@ -91,6 +98,8 @@ strict_profile = calculator_profile.with_constraints(
 ## Decision
 
 Introduce an explicit, opt-in role contract layer (`RoleProfile`) and a `State Continuity Guard` that validates role coherence using existing retry/repair infrastructure.
+
+This ADR remains the semantic-coherence layer. ADR 0025 remains the awareness/authority layer.
 
 ### 1. Role Profiles Are Explicit and Opt-In
 
@@ -107,10 +116,27 @@ No implicit runtime guessing of "which agents are roles" is introduced.
 
 V1 profile fields:
 
-1. constraint groups over sibling methods,
+1. constraint groups over role behavior,
 2. constraint mode per group (`coordination` default, `prescriptive` optional),
-3. optional explicit canonical values for prescriptive groups,
-4. profile version.
+3. constraint scope (`all_methods` default; narrowing optional),
+4. optional explicit canonical values for prescriptive groups,
+5. profile version.
+
+Scope semantics:
+
+1. `scope: :all_methods` (default): any method forged on this role is part of the constraint unless explicitly excluded.
+2. `scope: :explicit_methods`: apply only to listed `methods`.
+3. `exclude_methods`: optional carve-out list for `all_methods` scope.
+
+This keeps the role contract emergent by default. New methods are included automatically and inherit coordination pressure without predeclaring method names.
+
+### 2a. Clean Break on Schema Shape
+
+This amendment intentionally removes methods-first constraints as the baseline contract shape. Runtime and examples move to scope-first semantics without backward compatibility shims.
+
+1. old profiles that rely on implicit/required `methods` lists must be rewritten,
+2. runtime loaders fail fast on unsupported shape,
+3. persisted legacy profile artifacts are cleaned or replaced during rollout.
 
 Reliability scorecards remain independent and continue to drive lifecycle ranking/promotion decisions.
 
@@ -139,7 +165,7 @@ The continuity guard runs as part of existing validation/repair flow (ADR 0014, 
 Guard checks:
 
 1. generated code and outcomes satisfy each active profile constraint,
-2. coordination constraints validate sibling agreement,
+2. coordination constraints validate sibling agreement across observed role methods in scope,
 3. prescriptive constraints validate explicit declared values.
 
 Violation handling:
@@ -207,6 +233,15 @@ Continuity guard starts in observational shadow mode for profile-enabled roles:
 2. calibrate false holds/false violations,
 3. enable recoverable enforcement only after shadow evidence is clean.
 
+### 7. Profile Lifecycle Uses ADR 0025 Control Plane
+
+Role-profile lifecycle operations must use ADR 0025 proposal and authority primitives:
+
+1. profile creation/version bump/constraint mode change is represented as `role_profile_update` proposal artifact,
+2. profile enactment requires explicit maintainer approval and apply action,
+3. unauthorized mutation attempts must produce typed `authority_denied`,
+4. no continuity-enforcement path may bypass proposal/audit lanes.
+
 ## Current vs Post-ADR Runtime Shape
 
 ### Current
@@ -243,12 +278,14 @@ In scope:
 1. explicit `RoleProfile` contract model,
 2. continuity guard integrated into existing validation/retry lanes,
 3. observability fields for profile compliance and violations.
+4. integration with ADR 0025 proposal/authority workflow for profile lifecycle changes.
 
 Out of scope:
 
 1. auto-inference of role profiles by runtime,
 2. domain-specific semantic grading beyond authored profile contract,
 3. replacing reliability promotion policy from ADR 0023.
+4. bypassing ADR 0025 governance controls for profile updates.
 
 ## Consequences
 
@@ -279,28 +316,46 @@ Out of scope:
 
 ### Phase 1: Contract and UL
 
-1. add `RoleProfile` schema with `coordination` and `prescriptive` constraint modes,
+1. add scope-first `RoleProfile` schema with `coordination` and `prescriptive` constraint modes,
 2. document calculator profile as reference contract.
+3. define `role_profile_update` proposal artifact shape for profile publication/version bumps.
+4. remove methods-first examples from ADR/docs.
 
 ### Phase 2: Observational Guard (Shadow)
 
-1. run continuity checks in shadow mode,
+1. run continuity checks in shadow mode using role-wide default scope,
 2. record violations and correction hints without blocking execution.
+3. include ADR 0025 observability evidence in rollout review:
+   - `active_role_profile_version`
+   - `self_model.awareness_level`
+   - namespace-pressure signals (`namespace_key_collision_count`, `namespace_multi_lifetime_key_count`, `namespace_continuity_violation_count`).
 
 ### Phase 3: Recoverable Enforcement
 
 1. enable recoverable enforcement for coordination constraints,
 2. route through existing guardrail retry budgets and observability.
+3. keep profile activation behind approved proposal apply actions only.
 
 ### Phase 4: Prescriptive Constraints and Versioning
 
 1. enable prescriptive constraints selectively where determinism is required,
 2. enforce explicit active profile version logging and profile version bump workflow.
+3. require maintainer-approved proposal for any switch from coordination -> prescriptive mode.
+4. keep prescriptive constraints scope-first unless narrowing is explicitly authored.
 
 ### Phase 5: Promotion Coupling
 
 1. add profile-compliance evidence to promotion eligibility for profile-enabled roles,
 2. keep non-profile tools on reliability-only lifecycle policy.
+3. treat profile-compliance evidence as semantic-correctness signal, not authority signal.
+
+## Evidence from ADR 0025 Rollout
+
+Phase validation traces showed why ADR 0024 is still required after ADR 0025:
+
+1. calls can show `awareness_level: "l3"` with `active_role_profile_version: nil`,
+2. reliability outcomes can remain `ok` while deterministic semantics drift (calculator `solve` returned `8.5` for `2x + 5 = 17` in one rerun),
+3. therefore awareness/governance readiness does not replace continuity correctness.
 
 ## Guardrails
 
@@ -310,6 +365,9 @@ Out of scope:
 4. non-profile tools retain current tolerant behavior and promotion semantics.
 5. coordination-mode constraints must not force specific key names or shapes.
 6. prescriptive constraints must be explicit and reviewable.
+7. profile enactment and mode/version mutations must be proposal- and authority-gated via ADR 0025 lanes.
+8. default scope is role-wide (`all_methods`); explicit method lists are narrowing exceptions only.
+9. no compatibility layer for methods-first schema in runtime hot paths.
 
 ## Ubiquitous Language Additions
 
@@ -324,3 +382,4 @@ This ADR introduces canonical terms to add to `docs/ubiquitous-language.md`:
 7. `Coordination Constraint`
 8. `Prescriptive Constraint`
 9. `Active Profile Version`
+10. `Constraint Scope`

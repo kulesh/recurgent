@@ -1,0 +1,212 @@
+{
+  "0": {
+    "rspec": {
+      "examples": 249,
+      "failures": 0,
+      "pass": true
+    },
+    "calculator": {
+      "add_ok": true,
+      "multiply_ok": true,
+      "sqrt_latest_ok": true,
+      "runtime_context_ok": true,
+      "sqrt_144_ok": true,
+      "factorial_ok": true,
+      "convert_ok": false,
+      "solve_ok": true,
+      "overall_ok": false
+    },
+    "assistant": {
+      "news_has_google": true,
+      "news_has_yahoo": true,
+      "news_has_nyt": true,
+      "movies_capability_unavailable": true,
+      "recipe_mentions_jaffna": true,
+      "recipe_has_ingredients": true,
+      "recipe_has_instructions": true,
+      "overall_ok": true
+    },
+    "calculator_entries": 0,
+    "assistant_entries": 0
+  },
+  "1": {
+    "rspec": {
+      "examples": 252,
+      "failures": 0,
+      "pass": true
+    },
+    "calculator": {
+      "add_ok": true,
+      "multiply_ok": false,
+      "sqrt_latest_ok": false,
+      "runtime_context_ok": false,
+      "sqrt_144_ok": true,
+      "factorial_ok": false,
+      "convert_ok": true,
+      "solve_ok": true,
+      "overall_ok": false
+    },
+    "assistant": {
+      "news_has_google": true,
+      "news_has_yahoo": true,
+      "news_has_nyt": true,
+      "movies_capability_unavailable": true,
+      "recipe_mentions_jaffna": true,
+      "recipe_has_ingredients": true,
+      "recipe_has_instructions": true,
+      "overall_ok": true
+    },
+    "calculator_entries": 0,
+    "assistant_entries": 0
+  },
+  "2": {
+    "rspec": {
+      "examples": 253,
+      "failures": 0,
+      "pass": true
+    },
+    "calculator": {
+      "add_ok": true,
+      "multiply_ok": true,
+      "sqrt_latest_ok": true,
+      "runtime_context_ok": true,
+      "sqrt_144_ok": true,
+      "factorial_ok": true,
+      "convert_ok": true,
+      "solve_ok": true,
+      "overall_ok": true
+    },
+    "assistant": {
+      "news_has_google": true,
+      "news_has_yahoo": true,
+      "news_has_nyt": true,
+      "movies_capability_unavailable": true,
+      "recipe_mentions_jaffna": true,
+      "recipe_has_ingredients": true,
+      "recipe_has_instructions": true,
+      "overall_ok": true
+    },
+    "calculator_entries": 0,
+    "assistant_entries": 0
+  },
+  "3": {
+    "rspec": {
+      "examples": 259,
+      "failures": 0,
+      "pass": true
+    },
+    "calculator": {
+      "add_ok": true,
+      "multiply_ok": true,
+      "sqrt_latest_ok": true,
+      "runtime_context_ok": true,
+      "sqrt_144_ok": true,
+      "factorial_ok": true,
+      "convert_ok": true,
+      "solve_ok": true,
+      "overall_ok": true
+    },
+    "assistant": {
+      "news_has_google": true,
+      "news_has_yahoo": false,
+      "news_has_nyt": true,
+      "movies_capability_unavailable": true,
+      "recipe_mentions_jaffna": true,
+      "recipe_has_ingredients": true,
+      "recipe_has_instructions": true,
+      "overall_ok": false
+    },
+    "calculator_entries": 11,
+    "assistant_entries": 9
+  },
+  "4": {
+    "rspec": {
+      "examples": 259,
+      "failures": 0,
+      "pass": true
+    },
+    "calculator": {
+      "add_ok": true,
+      "multiply_ok": true,
+      "sqrt_latest_ok": false,
+      "runtime_context_ok": true,
+      "sqrt_144_ok": true,
+      "factorial_ok": true,
+      "convert_ok": true,
+      "solve_ok": true,
+      "overall_ok": false
+    },
+    "assistant": {
+      "news_has_google": true,
+      "news_has_yahoo": true,
+      "news_has_nyt": true,
+      "movies_capability_unavailable": true,
+      "recipe_mentions_jaffna": true,
+      "recipe_has_ingredients": true,
+      "recipe_has_instructions": true,
+      "overall_ok": true
+    },
+    "calculator_entries": 8,
+    "assistant_entries": 9
+  },
+  "5": {
+    "rspec": {
+      "examples": 259,
+      "failures": 0,
+      "pass": true
+    },
+    "calculator": {
+      "add_ok": true,
+      "multiply_ok": false,
+      "sqrt_latest_ok": false,
+      "runtime_context_ok": false,
+      "sqrt_144_ok": true,
+      "factorial_ok": true,
+      "convert_ok": true,
+      "solve_ok": true,
+      "overall_ok": false
+    },
+    "assistant": {
+      "news_has_google": true,
+      "news_has_yahoo": true,
+      "news_has_nyt": true,
+      "movies_capability_unavailable": true,
+      "recipe_mentions_jaffna": true,
+      "recipe_has_ingredients": true,
+      "recipe_has_instructions": true,
+      "overall_ok": true
+    },
+    "calculator_entries": 8,
+    "assistant_entries": 10
+  },
+  "6": {
+    "rspec": {
+      "examples": 259,
+      "failures": 0,
+      "pass": true
+    },
+    "calculator": {
+      "add_ok": true,
+      "multiply_ok": true,
+      "sqrt_latest_ok": true,
+      "runtime_context_ok": false,
+      "sqrt_144_ok": true,
+      "factorial_ok": true,
+      "convert_ok": true,
+      "solve_ok": true,
+      "overall_ok": false
+    },
+    "assistant": {
+      "news_has_google": true,
+      "news_has_yahoo": true,
+      "news_has_nyt": true,
+      "movies_capability_unavailable": true,
+      "recipe_mentions_jaffna": true,
+      "recipe_has_ingredients": true,
+      "recipe_has_instructions": true,
+      "overall_ok": true
+    },
+    "calculator_entries": 8,
+    "assistant_entries": 6
+  }
+}

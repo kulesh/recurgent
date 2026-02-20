@@ -1,0 +1,34 @@
+=== Calculator ===
+Model: claude-sonnet-4-5-20250929
+
+No Math module. No formulas. No operator overloading.
+Just a name and method calls. The LLM figures out the rest.
+
+-> calc.memory = 5
+
+-> calc.add(3)
+8
+
+-> calc.multiply(4)
+32
+
+-> calc.sqrt(latest_result)
+5.656854249492381
+
+-> calc.runtime_context[:memory] || calc.runtime_context[:value]
+32
+
+-> calc.sqrt(144)
+12.0
+
+-> calc.factorial(10)
+3628800
+
+-> calc.convert(100, from: 'celsius', to: 'fahrenheit')
+212.0
+
+-> calc.solve('2x + 5 = 17')
+6.0
+
+-> calc.history
+"Conversation History (7 records):\n\n1. [2026-02-20T02:18:30.236Z] user: add(3)\n   → success\n\n2. [2026-02-20T02:18:39.504Z] user: multiply(4)\n   → success\n\n3. [2026-02-20T02:18:52.280Z] user: sqrt(32)\n   → success\n\n4. [2026-02-20T02:18:59.443Z] user: sqrt(144)\n   → success\n\n5. [2026-02-20T02:19:24.391Z] user: factorial(10)\n   → success\n\n6. [2026-02-20T02:19:46.961Z] user: convert(100, from: celsius, to: fahrenheit)\n   → success\n\n7. [2026-02-20T02:19:59.448Z] user: solve(2x + 5 = 17)\n   → success\n"
