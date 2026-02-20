@@ -78,6 +78,7 @@ This index is organized for fast retrieval:
 - `docs/baselines/2026-02-15/README.md` - baseline trace fixtures
 - `docs/baselines/2026-02-20/adr-0024/phase-rollup.json` - ADR 0024 phase-by-phase validation rollup
 - `docs/reports/adr-0024-phase-validation-rollup.md` - ADR 0024 expected-vs-observed validation analysis
+- `docs/reports/adr-0024-scope-hardcut-validation-report.md` - validation report for scope-first role-profile hard cut and required calculator/assistant traces
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/maintenance.md` - dependency/runtime maintenance policy
 - `docs/release-process.md` - release process and SemVer policy

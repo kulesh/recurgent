@@ -206,7 +206,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-20T02:38:50Z
+Last Updated (UTC): 2026-02-20T03:57:23Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -255,6 +255,7 @@ Last Updated (UTC): 2026-02-20T02:38:50Z
 - `docs/baselines/2026-02-20/adr-0024/logs/` - copied per-phase raw logs and outputs (rspec, calculator, assistant, jsonl traces)
 - `docs/reports/adr-0023-phase-validation-report.md` - per-phase validation transcript for tests, examples, logs, and diagnostics during ADR 0023 implementation
 - `docs/reports/adr-0024-phase-validation-rollup.md` - ADR 0024 implementation rollup comparing expected improvements vs observed phase outcomes
+- `docs/reports/adr-0024-scope-hardcut-validation-report.md` - validation report for scope-first role-profile hard cut, with full-suite + calculator + assistant trace diagnosis
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
 - `docs/support.md` - support scope and triage expectations
