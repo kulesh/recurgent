@@ -71,6 +71,21 @@ class Agent
       proposal
     end
 
+    def _proposal_persist_record(proposal)
+      return nil unless proposal.is_a?(Hash)
+
+      id = proposal["id"].to_s
+      return nil if id.empty?
+
+      proposals = _proposal_load_all
+      index = proposals.index { |entry| entry["id"].to_s == id }
+      return nil unless index
+
+      proposals[index] = _json_safe(proposal)
+      _proposal_write_all(proposals)
+      proposals[index]
+    end
+
     def _proposal_load_all
       path = _toolstore_proposals_path
       return [] unless File.exist?(path)

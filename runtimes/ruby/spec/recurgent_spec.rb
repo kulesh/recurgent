@@ -84,6 +84,86 @@ RSpec.describe Agent do
         described_class.new("test", delegation_contract: { purpose: " " })
       end.to raise_error(ArgumentError, /delegation_contract\[:purpose\]/)
     end
+
+    it "accepts and normalizes role_profile metadata" do
+      g = described_class.new(
+        "calculator",
+        role_profile: {
+          role: "calculator",
+          version: 1,
+          constraints: {
+            accumulator_slot: {
+              kind: :shared_state_slot,
+              methods: %w[memory= add multiply],
+              mode: :coordination
+            }
+          }
+        }
+      )
+
+      expect(g.role_profile).to include(role: "calculator", version: 1)
+      expect(g.role_profile[:constraints]).to include(
+        accumulator_slot: include(kind: :shared_state_slot, mode: :coordination)
+      )
+    end
+
+    it "raises for role_profile role mismatch" do
+      expect do
+        described_class.new(
+          "calculator",
+          role_profile: {
+            role: "assistant",
+            version: 1,
+            constraints: {
+              accumulator_slot: {
+                kind: :shared_state_slot,
+                methods: %w[add],
+                mode: :coordination
+              }
+            }
+          }
+        )
+      end.to raise_error(ArgumentError, /role_profile\[:role\] must match agent role/)
+    end
+
+    it "supports selecting persisted role profile versions at initialization" do
+      Agent.configure_runtime(toolstore_root: runtime_toolstore_root)
+      described_class.new(
+        "calculator",
+        role_profile: {
+          role: "calculator",
+          version: 1,
+          constraints: {
+            accumulator_slot: {
+              kind: :shared_state_slot,
+              methods: %w[add multiply],
+              mode: :coordination
+            }
+          }
+        }
+      )
+      described_class.new(
+        "calculator",
+        role_profile: {
+          role: "calculator",
+          version: 2,
+          constraints: {
+            accumulator_slot: {
+              kind: :shared_state_slot,
+              methods: %w[add multiply],
+              mode: :prescriptive,
+              canonical_key: :value
+            }
+          }
+        }
+      )
+
+      activated = described_class.new("calculator", role_profile_version: 1)
+      expect(activated.role_profile).to include(role: "calculator", version: 1)
+
+      latest = described_class.new("calculator")
+      expect(latest.role_profile).to include(role: "calculator", version: 1)
+    end
   end
 
   describe "coordination primitives" do
@@ -113,6 +193,29 @@ RSpec.describe Agent do
       expect(self_model[:authority]).to eq(observe: true, propose: true, enact: false)
       expect(self_model[:execution_snapshot_ref]).to include("calculator.increment")
       expect(self_model[:evolution_snapshot_ref]).to include("calculator.increment@sha256:")
+    end
+
+    it "captures active_role_profile_version in self_model when profile is configured" do
+      g = described_class.new(
+        "calculator",
+        role_profile: {
+          role: "calculator",
+          version: 1,
+          constraints: {
+            accumulator_slot: {
+              kind: :shared_state_slot,
+              methods: %w[memory= add multiply],
+              mode: :coordination
+            }
+          }
+        }
+      )
+      stub_llm_response("context[:value] = 1; result = context[:value]")
+
+      expect_ok_outcome(g.add(1), value: 1)
+      self_model = g.self_model
+      expect(self_model[:active_role_profile_version]).to eq(1)
+      expect(g.role_profile[:version]).to eq(1)
     end
 
     it "persists proposal artifacts without applying runtime mutations" do
@@ -186,6 +289,127 @@ RSpec.describe Agent do
       applied = g.apply_proposal(proposal[:id], actor: "maintainer", note: "apply approved proposal")
       expect_ok_outcome(applied, value: applied.value)
       expect(applied.value["status"]).to eq("applied")
+    end
+
+    it "applies approved role_profile_update proposals and persists active profile version" do
+      Agent.configure_runtime(
+        toolstore_root: runtime_toolstore_root,
+        authority_enforcement_enabled: true,
+        authority_maintainers: ["maintainer"]
+      )
+      g = described_class.new("calculator")
+      proposal = g.propose(
+        proposal_type: "role_profile_update",
+        target: { role: "calculator" },
+        proposed_diff_summary: "publish calculator continuity profile v1",
+        evidence_refs: ["trace:profile-v1"],
+        metadata: {
+          action: "publish_and_activate",
+          role_profile: {
+            role: "calculator",
+            version: 1,
+            constraints: {
+              accumulator_slot: {
+                kind: :shared_state_slot,
+                methods: %w[add multiply],
+                mode: :coordination
+              }
+            }
+          }
+        }
+      )
+
+      approved = g.approve_proposal(proposal[:id], actor: "maintainer")
+      expect_ok_outcome(approved, value: approved.value)
+      applied = g.apply_proposal(proposal[:id], actor: "maintainer", note: "activate profile")
+      expect_ok_outcome(applied, value: applied.value)
+      expect(applied.value["status"]).to eq("applied")
+      expect(applied.value.dig("applied_mutation", "action")).to eq("publish_and_activate")
+      expect(g.role_profile).to include(role: "calculator", version: 1)
+
+      store_path = File.join(runtime_toolstore_root, "role_profiles.json")
+      store = JSON.parse(File.read(store_path))
+      expect(store.dig("roles", "calculator", "active_version")).to eq(1)
+      expect(store.dig("roles", "calculator", "versions", "1", "constraints")).to be_a(Hash)
+      expect(store.dig("roles", "calculator", "history")).to be_an(Array)
+      expect(store.dig("roles", "calculator", "history").last["event"]).to eq("publish")
+    end
+
+    it "supports proposal-driven profile version activation and rollback" do
+      Agent.configure_runtime(
+        toolstore_root: runtime_toolstore_root,
+        authority_enforcement_enabled: true,
+        authority_maintainers: ["maintainer"]
+      )
+      g = described_class.new("calculator")
+      v1 = g.propose(
+        proposal_type: "role_profile_update",
+        target: { role: "calculator" },
+        proposed_diff_summary: "publish v1 coordination profile",
+        metadata: {
+          action: "publish_and_activate",
+          role_profile: {
+            role: "calculator",
+            version: 1,
+            constraints: {
+              accumulator_slot: {
+                kind: :shared_state_slot,
+                methods: %w[add multiply],
+                mode: :coordination
+              }
+            }
+          }
+        }
+      )
+      expect_ok_outcome(g.approve_proposal(v1[:id], actor: "maintainer"), value: g.proposal(v1[:id]))
+      expect_ok_outcome(g.apply_proposal(v1[:id], actor: "maintainer"), value: g.proposal(v1[:id]))
+      expect(g.role_profile.dig(:constraints, :accumulator_slot, :mode)).to eq(:coordination)
+
+      v2 = g.propose(
+        proposal_type: "role_profile_update",
+        target: { role: "calculator" },
+        proposed_diff_summary: "publish v2 prescriptive profile",
+        metadata: {
+          action: "publish_only",
+          role_profile: {
+            role: "calculator",
+            version: 2,
+            constraints: {
+              accumulator_slot: {
+                kind: :shared_state_slot,
+                methods: %w[add multiply],
+                mode: :prescriptive,
+                canonical_key: :value
+              }
+            }
+          }
+        }
+      )
+      expect_ok_outcome(g.approve_proposal(v2[:id], actor: "maintainer"), value: g.proposal(v2[:id]))
+      expect_ok_outcome(g.apply_proposal(v2[:id], actor: "maintainer"), value: g.proposal(v2[:id]))
+      expect(g.role_profile[:version]).to eq(1)
+
+      activate = g.propose(
+        proposal_type: "role_profile_update",
+        target: { role: "calculator", version: 2 },
+        proposed_diff_summary: "activate v2 profile",
+        metadata: { action: "activate" }
+      )
+      expect_ok_outcome(g.approve_proposal(activate[:id], actor: "maintainer"), value: g.proposal(activate[:id]))
+      expect_ok_outcome(g.apply_proposal(activate[:id], actor: "maintainer"), value: g.proposal(activate[:id]))
+      expect(g.role_profile[:version]).to eq(2)
+      expect(g.role_profile.dig(:constraints, :accumulator_slot, :mode)).to eq(:prescriptive)
+
+      rollback = g.propose(
+        proposal_type: "role_profile_update",
+        target: { role: "calculator", version: 1 },
+        proposed_diff_summary: "rollback to v1 profile",
+        metadata: { action: "rollback" }
+      )
+      expect_ok_outcome(g.approve_proposal(rollback[:id], actor: "maintainer"), value: g.proposal(rollback[:id]))
+      expect_ok_outcome(g.apply_proposal(rollback[:id], actor: "maintainer"), value: g.proposal(rollback[:id]))
+      expect(g.role_profile[:version]).to eq(1)
+      expect(g.role_profile.dig(:constraints, :accumulator_slot, :mode)).to eq(:coordination)
     end
 
     it "builds agents via Agent.for" do
@@ -633,6 +857,61 @@ RSpec.describe Agent do
         version_entry = artifact.dig("lifecycle", "versions", checksum)
         expect(version_entry["lifecycle_state"]).to eq("durable")
         expect(version_entry["last_decision"]).to eq("promote")
+      end
+    end
+
+    it "holds profile-enabled artifacts in probation when role-profile continuity pass rate is below gate" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_root: tmpdir,
+          role_profile_shadow_mode_enabled: true,
+          role_profile_enforcement_enabled: false
+        )
+        profile = {
+          role: "calculator",
+          version: 1,
+          constraints: {
+            accumulator_slot: {
+              kind: :shared_state_slot,
+              methods: %w[add multiply],
+              mode: :coordination
+            }
+          }
+        }
+        g = described_class.new("calculator", role_profile: profile)
+        allow(g).to receive(:_promotion_policy_contract).and_return(
+          {
+            version: Agent::PROMOTION_POLICY_VERSION,
+            min_calls: 1,
+            min_sessions: 1,
+            min_contract_pass_rate: 0.0,
+            min_role_profile_pass_rate: 0.99,
+            max_guardrail_retry_exhausted: 100,
+            max_outcome_retry_exhausted: 100,
+            max_wrong_boundary_count: 100,
+            max_provenance_violations: 100,
+            min_state_key_consistency_ratio: 0.0
+          }
+        )
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: "context[:memory] = context.fetch(:memory, 0) + args[0]; result = context[:memory]"),
+          program_payload(code: "context[:value] = context.fetch(:value, 0) * args[0]; result = context[:value]"),
+          program_payload(code: "context[:value] = context.fetch(:value, 0) * args[0]; result = context[:value]")
+        )
+
+        expect_ok_outcome(g.add(2), value: 2)
+        expect_ok_outcome(g.multiply(3), value: 0)
+        expect_ok_outcome(g.multiply(4), value: 0)
+
+        artifact_path = g.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "multiply")
+        artifact = JSON.parse(File.read(artifact_path))
+        checksum = artifact.fetch("code_checksum")
+        version_entry = artifact.dig("lifecycle", "versions", checksum)
+        expect(version_entry["lifecycle_state"]).to eq("probation")
+        expect(version_entry["last_decision"]).to eq("continue_probation")
+        scorecard = artifact.dig("scorecards", checksum)
+        expect(scorecard["role_profile_observation_count"]).to be >= 2
+        expect(scorecard["role_profile_pass_rate"]).to eq(0.0)
       end
     end
 
@@ -1649,7 +1928,7 @@ RSpec.describe Agent do
       expect(described_class.instance_methods(false).map(&:to_s).sort).to eq(
         %w[
           apply_proposal approve_proposal define_singleton_method delegate inspect method_missing
-          proposal proposals propose reject_proposal remember runtime_context self_model to_s tool
+          proposal proposals propose reject_proposal remember role_profile runtime_context self_model to_s tool
         ]
       )
     end

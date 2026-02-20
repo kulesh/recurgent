@@ -100,6 +100,12 @@ class Agent
     end
 
     def _guardrail_required_correction(message)
+      if message.match?(/role_profile_continuity_violation/i)
+        explicit = message[/correction:\s*(.+)\z/i, 1]
+        return explicit.to_s unless explicit.to_s.strip.empty?
+
+        return "Align sibling methods with the active role profile continuity constraints."
+      end
       if message.match?(/singleton methods on Agent instances/i)
         return "Materialize tools with tool(\"name\") or delegate(\"name\", ...), then call dynamic methods; " \
                "do not define singleton methods."
@@ -121,6 +127,7 @@ class Agent
     end
 
     def _guardrail_violation_subtype(message)
+      return "role_profile_continuity_violation" if message.match?(/role_profile_continuity_violation/i)
       return "singleton_method_mutation" if message.match?(/singleton methods on Agent instances/i)
       return "context_tools_shape_misuse" if message.match?(/context\[:tools\] is a Hash keyed by tool name/i)
       return "hardcoded_external_fallback_success" if message.match?(/Hardcoded fallback payloads for external-fetch flows/i)

@@ -5,6 +5,28 @@ require_relative "../lib/recurgent"
 
 MODEL = Agent::DEFAULT_MODEL
 
+CALCULATOR_ROLE_PROFILE = {
+  role: "calculator",
+  version: 1,
+  constraints: {
+    accumulator_slot: {
+      kind: :shared_state_slot,
+      methods: %w[add multiply sqrt solve],
+      mode: :coordination
+    },
+    arithmetic_shape: {
+      kind: :return_shape_family,
+      methods: %w[add multiply sqrt],
+      mode: :coordination
+    }
+  }
+}.freeze
+
+Agent.configure_runtime(
+  role_profile_shadow_mode_enabled: true,
+  role_profile_enforcement_enabled: true
+)
+
 puts "=== Calculator ==="
 puts "Model: #{MODEL}"
 puts
@@ -12,7 +34,7 @@ puts "No Math module. No formulas. No operator overloading."
 puts "Just a name and method calls. The LLM figures out the rest."
 puts
 
-calc = Agent.for("calculator", model: MODEL)
+calc = Agent.for("calculator", model: MODEL, role_profile: CALCULATOR_ROLE_PROFILE)
 
 puts "-> calc.memory = 5"
 calc.memory = 5

@@ -12,6 +12,8 @@ class Agent
     :solver_shape, :solver_shape_complete,
     :self_model, :awareness_level, :authority,
     :active_contract_version, :active_role_profile_version,
+    :role_profile_compliance, :role_profile_violation_count, :role_profile_violation_types,
+    :role_profile_correction_hint, :role_profile_shadow_mode, :role_profile_enforced,
     :execution_snapshot_ref, :evolution_snapshot_ref,
     :namespace_key_collision_count, :namespace_multi_lifetime_key_count, :namespace_continuity_violation_count,
     :promotion_policy_version, :lifecycle_state, :lifecycle_decision,
@@ -53,6 +55,12 @@ class Agent
       authority: _awareness_default_authority,
       active_contract_version: nil,
       active_role_profile_version: nil,
+      role_profile_compliance: nil,
+      role_profile_violation_count: 0,
+      role_profile_violation_types: [],
+      role_profile_correction_hint: nil,
+      role_profile_shadow_mode: false,
+      role_profile_enforced: false,
       execution_snapshot_ref: nil,
       evolution_snapshot_ref: nil,
       namespace_key_collision_count: 0,
@@ -248,8 +256,8 @@ class Agent
   end
 
   def _active_role_profile_version
-    profile = @context[:role_profile]
-    return nil unless profile.is_a?(Hash)
+    profile = _active_role_profile
+    return nil unless profile
 
     profile[:version] || profile["version"] || profile[:profile_version] || profile["profile_version"]
   end
