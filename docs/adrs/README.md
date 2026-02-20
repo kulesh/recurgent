@@ -41,6 +41,7 @@ Use `docs/adrs/TEMPLATE.md` for new ADRs.
 - [`0023-solver-shape-and-reliability-gated-tool-evolution.md`](0023-solver-shape-and-reliability-gated-tool-evolution.md)
 - [`0024-contract-first-role-profiles-and-state-continuity-guard.md`](0024-contract-first-role-profiles-and-state-continuity-guard.md)
 - [`0025-awareness-substrate-and-authority-boundary.md`](0025-awareness-substrate-and-authority-boundary.md)
+- [`0026-structured-output-provider-eligibility.md`](0026-structured-output-provider-eligibility.md)
 - [`TEMPLATE.md`](TEMPLATE.md)
 
 ## Status Values
