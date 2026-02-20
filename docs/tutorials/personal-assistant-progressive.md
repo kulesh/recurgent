@@ -56,9 +56,10 @@ This tutorial shows Ruby snippets so you can understand system mechanics. In rea
 
 1. You define the top-level role, runtime policy, and constraints.
 2. The Agent (Tool Builder) generates and evolves tool code and method behavior.
-3. You inspect outcomes/logs, then tune contracts and policy where needed.
+3. A trainer model inspects outcomes/logs, then tune contracts and policy where needed.
+4. Rinse. Repeat. Review.
 
-Think of snippets as control surfaces and diagnostics, not as manual implementations of every sub-tool.
+Think of snippets as a set of domain specific language, control surfaces, and diagnostics. The snippets are not manual implementations of every sub-tool by a human.
 
 ## Copy/Paste Quickstart (10-15 min)
 
