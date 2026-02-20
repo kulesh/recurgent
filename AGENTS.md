@@ -206,7 +206,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-20T03:57:23Z
+Last Updated (UTC): 2026-02-20T05:16:33Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -218,12 +218,15 @@ Last Updated (UTC): 2026-02-20T03:57:23Z
 - `docs/index.md` - top-level documentation map organized by product, architecture, ADRs, and plans
 - `docs/architecture.md` - canonical runtime architecture map for dispatch, retry lanes, persistence, boundary normalization, and observability
 - `docs/onboarding.md` - setup, developer workflow, quality gates
+- `docs/runtime-configuration.md` - runtime configuration reference for dependency policy, persistence roots, lifecycle toggles, and authority controls
 - `docs/specs/idea-brief.md` - concept vision, rationale, demos, future direction
 - `docs/specs/recursim-product-spec.md` - product specification for Recursim simulator focused on robustness and reliable emergence in self-contained systems
 - `docs/observability.md` - mechanistic interpretability model, shared log schema, and live watcher usage
 - `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary and naming rules
 - `docs/tolerant-delegation-interfaces.md` - canonical tolerant delegation interface guidance and examples
 - `docs/delegate-vs-for.md` - concrete decision rules for delegate vs Agent.for usage
+- `docs/tutorials/README.md` - tutorial map for progressive, runnable documentation paths
+- `docs/tutorials/personal-assistant-progressive.md` - progressive personal-assistant tutorial from minimal loop to contracts, role profiles, observability, and authority-gated evolution
 - `docs/specs/delegation-contracts.md` - Phase 1 Tool Builder-authored Tool contract fields and behavior
 - `docs/adrs/TEMPLATE.md` - ADR authoring template that requires status quo baseline, expected improvements, validation signals, and rollback triggers
 - `docs/plans/README.md` - implementation plan map organized by runtime evolution, boundary hardening, and telemetry/context work

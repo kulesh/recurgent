@@ -24,6 +24,11 @@ This index is organized for fast retrieval:
 - `docs/tolerant-delegation-interfaces.md` - tolerant interface guidance
 - `docs/delegate-vs-for.md` - `delegate(...)` vs `Agent.for(...)` decision guide
 
+## Tutorials
+
+- `docs/tutorials/README.md` - tutorial map
+- `docs/tutorials/personal-assistant-progressive.md` - progressive walkthrough from minimal assistant to profile-aware, observable, governed runtime behavior
+
 ## Architecture Decisions
 
 - `docs/adrs/0001-core-dispatch-via-method-missing.md`
@@ -79,6 +84,7 @@ This index is organized for fast retrieval:
 - `docs/baselines/2026-02-20/adr-0024/phase-rollup.json` - ADR 0024 phase-by-phase validation rollup
 - `docs/reports/adr-0024-phase-validation-rollup.md` - ADR 0024 expected-vs-observed validation analysis
 - `docs/reports/adr-0024-scope-hardcut-validation-report.md` - validation report for scope-first role-profile hard cut and required calculator/assistant traces
+- `docs/runtime-configuration.md` - runtime configuration reference for dependency policy, lifecycle toggles, toolstore roots, and authority settings
 - `docs/roadmap.md` - near/mid/long-term roadmap
 - `docs/maintenance.md` - dependency/runtime maintenance policy
 - `docs/release-process.md` - release process and SemVer policy
