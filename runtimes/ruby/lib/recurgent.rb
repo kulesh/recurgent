@@ -30,6 +30,9 @@ require_relative "recurgent/pattern_memory_store"
 require_relative "recurgent/pattern_prompting"
 require_relative "recurgent/proposal_store"
 require_relative "recurgent/authority"
+require_relative "recurgent/role_profile"
+require_relative "recurgent/role_profile_registry"
+require_relative "recurgent/role_profile_guard"
 require_relative "recurgent/artifact_metrics"
 require_relative "recurgent/artifact_trigger_metadata"
 require_relative "recurgent/artifact_store"
@@ -192,6 +195,8 @@ class Agent
   include PatternPrompting
   include ProposalStore
   include Authority
+  include RoleProfileRegistry
+  include RoleProfileGuard
   include ArtifactMetrics
   include ArtifactStore
   include ArtifactSelector
@@ -352,6 +357,13 @@ class Agent
     @context
   end
 
+  def role_profile
+    profile = _active_role_profile
+    return nil if profile.nil?
+
+    _json_safe(profile)
+  end
+
   def self_model
     model = @self_model
     return _json_safe(_default_self_model_snapshot) if model.nil?
@@ -432,12 +444,23 @@ class Agent
       )
     end
 
+    mutation = _apply_proposal_mutation(
+      proposal: proposal,
+      actor: resolved_actor,
+      note: note
+    )
+    return mutation if mutation.is_a?(Outcome) && mutation.error?
+
     applied = _proposal_update_status(
       proposal_id: proposal_id,
       status: "applied",
       actor: resolved_actor,
       note: note
     )
+    if mutation.is_a?(Hash)
+      applied["applied_mutation"] = mutation
+      _proposal_persist_record(applied)
+    end
     Outcome.ok(value: applied, tool_role: @role, method_name: "apply_proposal")
   end
 
@@ -533,6 +556,8 @@ class Agent
       delegation_budget: DEFAULT_DELEGATION_BUDGET,
       delegation_contract: nil,
       delegation_contract_source: nil,
+      role_profile: nil,
+      role_profile_version: nil,
       trace_id: nil
     }
     unknown_keys = options.keys - defaults.keys
@@ -561,12 +586,15 @@ class Agent
     @role = role
     @model_name = config[:model]
     @provider = _build_provider(config[:model], config[:provider])
+    @runtime_config = Agent.runtime_config
     @context = {}
+    _hydrate_role_profiles!
+    _role_profile_registry_apply!(config[:role_profile], source: "initialize_option") unless config[:role_profile].nil?
+    _role_profile_registry_activate!(version: config[:role_profile_version], source: "initialize_option") unless config[:role_profile_version].nil?
     @verbose, @log, @debug = config.values_at(:verbose, :log, :debug)
     @max_generation_attempts, @guardrail_recovery_budget, @fresh_outcome_repair_budget, @provider_timeout_seconds, @delegation_budget =
       _resolve_runtime_limits(config)
     @delegation_contract, @delegation_contract_source = _resolve_delegation_contract(config)
-    @runtime_config = Agent.runtime_config
     @environment_manager = nil
     @env_manifest = nil
     @env_id = nil
@@ -746,6 +774,120 @@ class Agent
     return value if value.is_a?(Integer) && value >= 0
 
     raise ArgumentError, "delegation_budget must be an Integer >= 0 or nil"
+  end
+
+  def _apply_proposal_mutation(proposal:, actor:, note:)
+    proposal_type = proposal["proposal_type"].to_s
+    return nil unless proposal_type == "role_profile_update"
+
+    target = proposal["target"]
+    metadata = proposal["metadata"]
+    action = if metadata.is_a?(Hash) && metadata["action"]
+               metadata["action"]
+             elsif target.is_a?(Hash) && target["action"]
+               target["action"]
+             else
+               "publish_and_activate"
+             end
+    normalized_action = action.to_s.strip
+    normalized_action = "publish_and_activate" if normalized_action.empty?
+    proposal_id = proposal["id"].to_s
+
+    case normalized_action
+    when "activate", "rollback"
+      version = _proposal_role_profile_version_value(target: target, metadata: metadata)
+      return _invalid_proposal_payload_outcome(proposal_id, "missing role profile version for #{normalized_action}") if version.nil?
+
+      applied = if normalized_action == "activate"
+                  _role_profile_registry_activate!(
+                    version: version,
+                    actor: actor,
+                    source: "proposal_apply",
+                    proposal_id: proposal_id,
+                    note: note
+                  )
+                else
+                  _role_profile_registry_rollback!(
+                    version: version,
+                    actor: actor,
+                    source: "proposal_apply",
+                    proposal_id: proposal_id,
+                    note: note
+                  )
+                end
+      {
+        "proposal_type" => proposal_type,
+        "action" => normalized_action,
+        "active_version" => applied[:version]
+      }
+    when "publish", "publish_only", "publish_and_activate"
+      profile_payload = _proposal_role_profile_payload(target: target, metadata: metadata)
+      return nil if profile_payload.nil?
+
+      activate = normalized_action != "publish_only"
+      applied = _role_profile_registry_apply!(
+        profile_payload,
+        activate: activate,
+        actor: actor,
+        source: "proposal_apply",
+        proposal_id: proposal_id,
+        note: note
+      )
+      active = _active_role_profile
+      {
+        "proposal_type" => proposal_type,
+        "action" => normalized_action,
+        "published_version" => applied[:version],
+        "active_version" => active&.dig(:version)
+      }
+    else
+      _invalid_proposal_payload_outcome(proposal_id, "unsupported role_profile_update action '#{normalized_action}'")
+    end
+  rescue ArgumentError => e
+    _invalid_proposal_payload_outcome(proposal_id, e.message)
+  end
+
+  def _proposal_role_profile_payload(target:, metadata:)
+    payload = (metadata["role_profile"] || metadata[:role_profile] if metadata.is_a?(Hash))
+    payload ||= target["role_profile"] || target[:role_profile] if target.is_a?(Hash)
+    payload ||= target if target.is_a?(Hash) && (target.key?("constraints") || target.key?(:constraints))
+    return nil unless payload.is_a?(Hash)
+
+    expected_role = _proposal_role_profile_target_role(target: target, metadata: metadata)
+    if !expected_role.empty? && expected_role != @role
+      raise ArgumentError, "proposal target role '#{expected_role}' does not match current role '#{@role}'"
+    end
+
+    payload
+  end
+
+  def _proposal_role_profile_target_role(target:, metadata:)
+    return target["role"].to_s if target.is_a?(Hash) && target["role"]
+    return target[:role].to_s if target.is_a?(Hash) && target[:role]
+    return metadata["role"].to_s if metadata.is_a?(Hash) && metadata["role"]
+    return metadata[:role].to_s if metadata.is_a?(Hash) && metadata[:role]
+
+    ""
+  end
+
+  def _proposal_role_profile_version_value(target:, metadata:)
+    value = (metadata["active_version"] || metadata[:active_version] || metadata["version"] || metadata[:version] if metadata.is_a?(Hash))
+    value = target["active_version"] || target[:active_version] || target["version"] || target[:version] if value.nil? && target.is_a?(Hash)
+    return nil if value.nil?
+
+    Integer(value)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
+  def _invalid_proposal_payload_outcome(proposal_id, message)
+    Outcome.error(
+      error_type: "invalid_proposal_payload",
+      error_message: "Proposal '#{proposal_id}' is invalid: #{message}",
+      retriable: false,
+      tool_role: @role,
+      method_name: "apply_proposal"
+    )
   end
 
   def _normalize_delegation_contract(value)

@@ -1,0 +1,12 @@
+
+Randomized with seed 46549
+...............................................................................................[AGENT HISTORY assistant] dropped 1 non-canonical conversation history entries
+[AGENT HISTORY assistant] dropped 1 non-canonical conversation history entries
+.................................................................................[AGENT DELEGATE OPTION IGNORE tool_builder->movie_website_scraper] ignored non-runtime options: capabilities, methods
+...................................................................................
+
+Finished in 0.90564 seconds (files took 0.07898 seconds to load)
+259 examples, 0 failures
+
+Randomized with seed 46549
+

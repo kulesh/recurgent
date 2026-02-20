@@ -55,6 +55,11 @@ RSpec.describe Agent do
       )
       expect(entry["active_contract_version"]).to be_nil
       expect(entry["active_role_profile_version"]).to be_nil
+      expect(entry["role_profile_compliance"]).to be_nil
+      expect(entry["role_profile_violation_count"]).to eq(0)
+      expect(entry["role_profile_violation_types"]).to eq([])
+      expect(entry["role_profile_shadow_mode"]).to eq(false)
+      expect(entry["role_profile_enforced"]).to eq(false)
       expect(entry["execution_snapshot_ref"]).to include("calculator.increment")
       expect(entry["evolution_snapshot_ref"]).to include("calculator.increment@sha256:")
       expect(entry["namespace_key_collision_count"]).to eq(0)
@@ -69,6 +74,106 @@ RSpec.describe Agent do
       expect(entry).not_to have_key("system_prompt")
       expect(entry).not_to have_key("user_prompt")
       expect(entry).not_to have_key("context")
+    end
+
+    it "logs role-profile continuity drift in shadow mode without blocking outcome" do
+      profile = {
+        role: "calculator",
+        version: 1,
+        constraints: {
+          accumulator_slot: {
+            kind: :shared_state_slot,
+            scope: :all_methods,
+            mode: :coordination
+          }
+        }
+      }
+      g = described_class.new("calculator", log: log_path, role_profile: profile)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "context[:memory] = context.fetch(:memory, 0) + args[0]; result = context[:memory]"),
+        program_payload(code: "context[:value] = context.fetch(:value, 0) + args[0]; result = context[:value]")
+      )
+
+      expect_ok_outcome(g.add(2), value: 2)
+      expect_ok_outcome(g.multiply(3), value: 3)
+
+      entry = JSON.parse(File.readlines(log_path).last)
+      expect(entry["outcome_status"]).to eq("ok")
+      expect(entry["active_role_profile_version"]).to eq(1)
+      expect(entry["role_profile_shadow_mode"]).to eq(true)
+      expect(entry["role_profile_enforced"]).to eq(false)
+      expect(entry["role_profile_compliance"]).to include("passed" => false)
+      expect(entry["role_profile_violation_count"]).to be >= 1
+      expect(entry["role_profile_violation_types"]).to include("shared_state_slot_drift")
+      expect(entry["role_profile_correction_hint"]).to be_a(String)
+    end
+
+    it "routes enforced role-profile continuity violations through recoverable guardrail retries" do
+      Agent.configure_runtime(
+        toolstore_root: runtime_toolstore_root,
+        role_profile_shadow_mode_enabled: true,
+        role_profile_enforcement_enabled: true
+      )
+      profile = {
+        role: "calculator",
+        version: 1,
+        constraints: {
+          accumulator_slot: {
+            kind: :shared_state_slot,
+            scope: :all_methods,
+            mode: :coordination
+          }
+        }
+      }
+      g = described_class.new("calculator", log: log_path, role_profile: profile, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "context[:memory] = context.fetch(:memory, 0) + args[0]; result = context[:memory]"),
+        program_payload(code: "context[:value] = context.fetch(:value, 0) * args[0]; result = context[:value]"),
+        program_payload(code: "context[:memory] = context.fetch(:memory, 0) * args[0]; result = context[:memory]")
+      )
+
+      expect_ok_outcome(g.add(2), value: 2)
+      expect_ok_outcome(g.multiply(3), value: 6)
+
+      entry = JSON.parse(File.readlines(log_path).last)
+      expect(entry["outcome_status"]).to eq("ok")
+      expect(entry["guardrail_recovery_attempts"]).to eq(1)
+      expect(entry["role_profile_shadow_mode"]).to eq(true)
+      expect(entry["role_profile_enforced"]).to eq(true)
+      expect(entry["role_profile_compliance"]).to include("passed" => true)
+      expect(entry["attempt_failures"]).to be_a(Array)
+      expect(entry["attempt_failures"].length).to eq(1)
+      expect(entry["attempt_failures"].first["error_class"]).to eq("Agent::ToolRegistryViolationError")
+      expect(entry["attempt_failures"].first["error_message"]).to include("role_profile_continuity_violation")
+      expect(entry["latest_failure_message"]).to include("role_profile_continuity_violation")
+    end
+
+    it "emits prescriptive correction hints when canonical values are declared" do
+      profile = {
+        role: "calculator",
+        version: 2,
+        constraints: {
+          accumulator_slot: {
+            kind: :shared_state_slot,
+            scope: :all_methods,
+            mode: :prescriptive,
+            canonical_key: :value
+          }
+        }
+      }
+      g = described_class.new("calculator", log: log_path, role_profile: profile)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "context[:value] = context.fetch(:value, 0) + args[0]; result = context[:value]"),
+        program_payload(code: "context[:memory] = context.fetch(:memory, 0) * args[0]; result = context[:memory]")
+      )
+
+      expect_ok_outcome(g.add(2), value: 2)
+      expect_ok_outcome(g.multiply(3), value: 0)
+
+      entry = JSON.parse(File.readlines(log_path).last)
+      expect(entry["active_role_profile_version"]).to eq(2)
+      expect(entry["role_profile_compliance"]).to include("passed" => false)
+      expect(entry["role_profile_correction_hint"]).to include("Use 'value'")
     end
 
     it "logs validation-stage attempt failures for guardrail recovery that later succeeds" do

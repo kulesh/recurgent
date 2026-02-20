@@ -110,13 +110,21 @@ class Agent
         end
 
       _validate_generated_outcome_policy!(name, code, outcome)
-      _validate_delegated_outcome_contract(
+      validated = _validate_delegated_outcome_contract(
         outcome: outcome,
         method_name: name,
         args: args,
         kwargs: kwargs,
         state: state
       )
+      _evaluate_role_profile_continuity!(
+        profile: _active_role_profile,
+        method_name: name,
+        code: code,
+        outcome: validated,
+        state: state
+      )
+      validated
     end
 
     def _print_generated_code(name, code)

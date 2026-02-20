@@ -7,6 +7,8 @@ class Agent
     self_model_capture_enabled
     promotion_shadow_mode_enabled
     promotion_enforcement_enabled
+    role_profile_shadow_mode_enabled
+    role_profile_enforcement_enabled
     authority_enforcement_enabled
     authority_maintainers
   ].freeze
@@ -29,6 +31,12 @@ class Agent
       ),
       promotion_enforcement_enabled: _normalize_runtime_bool(
         ENV.fetch("RECURGENT_PROMOTION_ENFORCEMENT_ENABLED", "false")
+      ),
+      role_profile_shadow_mode_enabled: _normalize_runtime_bool(
+        ENV.fetch("RECURGENT_ROLE_PROFILE_SHADOW_MODE_ENABLED", "true")
+      ),
+      role_profile_enforcement_enabled: _normalize_runtime_bool(
+        ENV.fetch("RECURGENT_ROLE_PROFILE_ENFORCEMENT_ENABLED", "false")
       ),
       authority_enforcement_enabled: _normalize_runtime_bool(
         ENV.fetch("RECURGENT_AUTHORITY_ENFORCEMENT_ENABLED", "true")
@@ -83,6 +91,12 @@ class Agent
     end
     if options.key?(:promotion_enforcement_enabled)
       config[:promotion_enforcement_enabled] = _normalize_runtime_bool(options[:promotion_enforcement_enabled])
+    end
+    if options.key?(:role_profile_shadow_mode_enabled)
+      config[:role_profile_shadow_mode_enabled] = _normalize_runtime_bool(options[:role_profile_shadow_mode_enabled])
+    end
+    if options.key?(:role_profile_enforcement_enabled)
+      config[:role_profile_enforcement_enabled] = _normalize_runtime_bool(options[:role_profile_enforcement_enabled])
     end
     if options.key?(:authority_enforcement_enabled)
       config[:authority_enforcement_enabled] = _normalize_runtime_bool(options[:authority_enforcement_enabled])

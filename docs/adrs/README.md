@@ -2,6 +2,18 @@
 
 This directory captures architecture decisions that shape Recurgent's runtime behavior and maintenance model.
 
+## Required Outcome Sections
+
+Every new ADR must include these sections to make expected impact testable:
+
+1. `Status Quo Baseline`
+2. `Expected Improvements` (with measurable deltas)
+3. `Non-Improvement Expectations` (what should stay unchanged)
+4. `Validation Signals` (tests/traces/log fields and thresholds)
+5. `Rollback or Adjustment Triggers`
+
+Use `docs/adrs/TEMPLATE.md` for new ADRs.
+
 ## Index
 
 - `0001-core-dispatch-via-method-missing.md`
@@ -29,6 +41,7 @@ This directory captures architecture decisions that shape Recurgent's runtime be
 - `0023-solver-shape-and-reliability-gated-tool-evolution.md`
 - `0024-contract-first-role-profiles-and-state-continuity-guard.md`
 - `0025-awareness-substrate-and-authority-boundary.md`
+- `TEMPLATE.md`
 
 ## Status Values
 

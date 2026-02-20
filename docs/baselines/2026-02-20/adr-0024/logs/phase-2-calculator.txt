@@ -1,0 +1,34 @@
+=== Calculator ===
+Model: claude-sonnet-4-5-20250929
+
+No Math module. No formulas. No operator overloading.
+Just a name and method calls. The LLM figures out the rest.
+
+-> calc.memory = 5
+
+-> calc.add(3)
+8
+
+-> calc.multiply(4)
+32
+
+-> calc.sqrt(latest_result)
+5.656854249492381
+
+-> calc.runtime_context[:memory] || calc.runtime_context[:value]
+32
+
+-> calc.sqrt(144)
+12.0
+
+-> calc.factorial(10)
+3628800
+
+-> calc.convert(100, from: 'celsius', to: 'fahrenheit')
+212.0
+
+-> calc.solve('2x + 5 = 17')
+{equation: "2x + 5 = 17", solution: 6.0, steps: ["2.0x + 5.0 = 17.0", "2.0x = 12.0", "x = 6.0"]}
+
+-> calc.history
+{status: "success", record_count: 7, records: [{call_id: "316dc7d592bf4076", timestamp: "2026-02-20T02:01:45.826Z", speaker: "user", method_name: "add", args: [3], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Integer"}}, {call_id: "4c6ffbcf400015d9", timestamp: "2026-02-20T02:01:53.803Z", speaker: "user", method_name: "multiply", args: [4], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Integer"}}, {call_id: "12cf41440579988a", timestamp: "2026-02-20T02:01:59.342Z", speaker: "user", method_name: "sqrt", args: [32], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float"}}, {call_id: "0f833661975fbd37", timestamp: "2026-02-20T02:02:05.811Z", speaker: "user", method_name: "sqrt", args: [144], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float"}}, {call_id: "2d2cc1aa9c240edb", timestamp: "2026-02-20T02:02:11.418Z", speaker: "user", method_name: "factorial", args: [10], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Integer"}}, {call_id: "2ab5ab3bcb657b74", timestamp: "2026-02-20T02:02:22.058Z", speaker: "user", method_name: "convert", args: [100], kwargs: {from: "celsius", to: "fahrenheit"}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float"}}, {call_id: "ea22979bc3b2fee1", timestamp: "2026-02-20T02:02:47.945Z", speaker: "user", method_name: "solve", args: ["2x + 5 = 17"], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Hash"}}], current_state: {memory: 32, value: 3628800, tools_count: 3}}

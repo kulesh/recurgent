@@ -108,6 +108,12 @@ class Agent
         "failures" => 0,
         "contract_pass_count" => 0,
         "contract_fail_count" => 0,
+        "role_profile_observation_count" => 0,
+        "role_profile_pass_count" => 0,
+        "role_profile_fail_count" => 0,
+        "role_profile_pass_rate" => 1.0,
+        "role_profile_constraint_failures" => [],
+        "active_role_profile_version" => nil,
         "guardrail_retry_exhausted_count" => 0,
         "outcome_retry_exhausted_count" => 0,
         "wrong_boundary_count" => 0,
@@ -137,6 +143,7 @@ class Agent
       end
 
       _artifact_update_contract_scorecard!(scorecard, state)
+      _artifact_update_role_profile_scorecard!(scorecard, state)
       scorecard["guardrail_retry_exhausted_count"] = scorecard["guardrail_retry_exhausted_count"].to_i + 1 if state.guardrail_retry_exhausted == true
       scorecard["outcome_retry_exhausted_count"] = scorecard["outcome_retry_exhausted_count"].to_i + 1 if state.outcome_repair_retry_exhausted == true
       scorecard["wrong_boundary_count"] = scorecard["wrong_boundary_count"].to_i + 1 if error_type == "wrong_tool_boundary"
@@ -161,6 +168,33 @@ class Agent
       elsif state.contract_validation_passed == false
         scorecard["contract_fail_count"] = scorecard["contract_fail_count"].to_i + 1
       end
+    end
+
+    def _artifact_update_role_profile_scorecard!(scorecard, state)
+      return if state.active_role_profile_version.nil?
+
+      scorecard["role_profile_observation_count"] = scorecard["role_profile_observation_count"].to_i + 1
+      scorecard["active_role_profile_version"] = state.active_role_profile_version
+
+      compliance = state.role_profile_compliance
+      return unless compliance.is_a?(Hash)
+
+      passed = compliance[:passed]
+      passed = compliance["passed"] if passed.nil?
+      if passed == true
+        scorecard["role_profile_pass_count"] = scorecard["role_profile_pass_count"].to_i + 1
+      else
+        scorecard["role_profile_fail_count"] = scorecard["role_profile_fail_count"].to_i + 1
+      end
+
+      violations = compliance[:violation_types]
+      violations = compliance["violation_types"] if violations.nil?
+      scorecard["role_profile_constraint_failures"] = Array(violations).map(&:to_s).uniq.sort
+
+      pass_count = scorecard["role_profile_pass_count"].to_i
+      fail_count = scorecard["role_profile_fail_count"].to_i
+      total = pass_count + fail_count
+      scorecard["role_profile_pass_rate"] = total.zero? ? 1.0 : pass_count.to_f.fdiv(total).round(4)
     end
 
     def _artifact_update_state_key_coherence!(scorecard, state)

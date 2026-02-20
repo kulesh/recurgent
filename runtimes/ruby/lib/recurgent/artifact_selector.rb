@@ -184,6 +184,7 @@ class Agent
         min_calls: 10,
         min_sessions: 2,
         min_contract_pass_rate: 0.95,
+        min_role_profile_pass_rate: 0.99,
         max_guardrail_retry_exhausted: 0,
         max_outcome_retry_exhausted: 0,
         max_wrong_boundary_count: 0,
@@ -249,7 +250,8 @@ class Agent
       regressed = _artifact_shadow_regressed?(metrics: metrics)
       rationale = metrics.merge(
         "observation_window_met" => metrics["calls"] >= policy[:min_calls] && metrics["session_count"] >= policy[:min_sessions],
-        "gate_pass" => gate_pass
+        "gate_pass" => gate_pass,
+        "profile_enabled_role" => metrics["role_profile_observation_count"].positive?
       )
 
       if current_state == "candidate" && state.outcome&.ok?
@@ -306,7 +308,9 @@ class Agent
         "outcome_retry_exhausted" => candidate_scorecard.fetch("outcome_retry_exhausted_count", 0).to_i,
         "wrong_boundary_count" => candidate_scorecard.fetch("wrong_boundary_count", 0).to_i,
         "provenance_violations" => candidate_scorecard.fetch("provenance_violation_count", 0).to_i,
-        "state_key_consistency_ratio" => candidate_scorecard.fetch("state_key_consistency_ratio", 1.0).to_f.round(4)
+        "state_key_consistency_ratio" => candidate_scorecard.fetch("state_key_consistency_ratio", 1.0).to_f.round(4),
+        "role_profile_observation_count" => candidate_scorecard.fetch("role_profile_observation_count", 0).to_i,
+        "role_profile_pass_rate" => candidate_scorecard.fetch("role_profile_pass_rate", 1.0).to_f.round(4)
       }
     end
 
@@ -319,6 +323,11 @@ class Agent
       return false if metrics["wrong_boundary_count"] > policy[:max_wrong_boundary_count]
       return false if metrics["provenance_violations"] > policy[:max_provenance_violations]
       return false if metrics["state_key_consistency_ratio"] < policy[:min_state_key_consistency_ratio]
+
+      if metrics["role_profile_observation_count"].positive?
+        min_profile_pass_rate = policy[:min_role_profile_pass_rate] || 0.99
+        return false if metrics["role_profile_pass_rate"] < min_profile_pass_rate
+      end
 
       incumbent_contract_rate = _artifact_incumbent_contract_pass_rate(incumbent_scorecard)
       metrics["contract_pass_rate"] >= incumbent_contract_rate

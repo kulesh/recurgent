@@ -1,0 +1,34 @@
+=== Calculator ===
+Model: claude-sonnet-4-5-20250929
+
+No Math module. No formulas. No operator overloading.
+Just a name and method calls. The LLM figures out the rest.
+
+-> calc.memory = 5
+
+-> calc.add(3)
+8
+
+-> calc.multiply(4)
+32
+
+-> calc.sqrt(latest_result)
+5.656854249492381
+
+-> calc.runtime_context[:memory] || calc.runtime_context[:value]
+8
+
+-> calc.sqrt(144)
+12.0
+
+-> calc.factorial(10)
+3628800
+
+-> calc.convert(100, from: 'celsius', to: 'fahrenheit')
+212.0
+
+-> calc.solve('2x + 5 = 17')
+{equation: "2x + 5 = 17", solution: 6.0, variable: "x", steps: ["Original: 2x + 5 = 17", "Parsed: 2.0x + 5.0 = 17.0", "Subtract 5.0 from both sides: 2.0x = 12.0", "Divide both sides by 2.0: x = 6.0", "Verification: 2.0 × 6.0 + 5.0 = 17.0"], verified: true}
+
+-> calc.history
+"Conversation History (7 records):\n\n\n1. Call ID: 4d4cbf58e458a99d\n   Timestamp: 2026-02-20T02:33:55.229Z\n   Speaker: user\n   Method: add\n   Args: [3]\n   Outcome:\n     status: \"ok\"\n     ok: true\n     retriable: false\n     value_class: \"Integer\"\n\n2. Call ID: bf287d213669234b\n   Timestamp: 2026-02-20T02:34:01.848Z\n   Speaker: user\n   Method: multiply\n   Args: [4]\n   Outcome:\n     status: \"ok\"\n     ok: true\n     retriable: false\n     value_class: \"Integer\"\n\n3. Call ID: dae6852ca3842d1a\n   Timestamp: 2026-02-20T02:34:13.453Z\n   Speaker: user\n   Method: sqrt\n   Args: [32]\n   Outcome:\n     status: \"ok\"\n     ok: true\n     retriable: false\n     value_class: \"Float\"\n\n4. Call ID: 452071ff9d4a5440\n   Timestamp: 2026-02-20T02:34:16.618Z\n   Speaker: user\n   Method: sqrt\n   Args: [144]\n   Outcome:\n     status: \"ok\"\n     ok: true\n     retriable: false\n     value_class: \"Float\"\n\n5. Call ID: 7ae9820ba4f8dd7c\n   Timestamp: 2026-02-20T02:34:24.715Z\n   Speaker: user\n   Method: factorial\n   Args: [10]\n   Outcome:\n     status: \"ok\"\n     ok: true\n     retriable: false\n     value_class: \"Integer\"\n\n6. Call ID: 4288a1c66abb1708\n   Timestamp: 2026-02-20T02:34:39.517Z\n   Speaker: user\n   Method: convert\n   Args: [100]\n   Kwargs: {from: \"celsius\", to: \"fahrenheit\"}\n   Outcome:\n     status: \"ok\"\n     ok: true\n     retriable: false\n     value_class: \"Float\"\n\n7. Call ID: 52e2ad75aa9c96cb\n   Timestamp: 2026-02-20T02:34:54.004Z\n   Speaker: user\n   Method: solve\n   Args: [\"2x + 5 = 17\"]\n   Outcome:\n     status: \"ok\"\n     ok: true\n     retriable: false\n     value_class: \"Hash\""

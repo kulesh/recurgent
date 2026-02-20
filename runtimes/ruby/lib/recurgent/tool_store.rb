@@ -138,6 +138,7 @@ class Agent
       _toolstore_apply_outcome_counters!(updated, outcome)
       _toolstore_capture_method_name!(updated, method_name) if outcome&.ok?
       _toolstore_update_method_state_keys!(updated, method_name: method_name, state: state)
+      _toolstore_update_method_signatures!(updated, method_name: method_name, state: state)
       _toolstore_update_state_key_consistency_ratio!(updated)
       _toolstore_update_namespace_pressure!(updated, method_name: method_name, state: state)
       _toolstore_update_version_scorecard!(
@@ -202,6 +203,17 @@ class Agent
       method_profiles = _toolstore_method_state_key_profiles(metadata)
       method_profiles[method_name.to_s] = keys
       metadata[:method_state_keys] = method_profiles
+    end
+
+    def _toolstore_update_method_signatures!(metadata, method_name:, state:)
+      return unless state
+
+      signature = _toolstore_signature_from_code(state.code.to_s)
+      return if signature.to_s.empty?
+
+      signatures = _toolstore_method_signatures(metadata)
+      signatures[method_name.to_s] = signature
+      metadata[:method_signatures] = signatures
     end
 
     def _toolstore_update_state_key_consistency_ratio!(metadata)
@@ -306,6 +318,12 @@ class Agent
           failures: 0,
           contract_pass_count: 0,
           contract_fail_count: 0,
+          role_profile_observation_count: 0,
+          role_profile_pass_count: 0,
+          role_profile_fail_count: 0,
+          role_profile_pass_rate: 1.0,
+          role_profile_constraint_failures: [],
+          active_role_profile_version: nil,
           guardrail_retry_exhausted_count: 0,
           outcome_retry_exhausted_count: 0,
           wrong_boundary_count: 0,
@@ -331,6 +349,7 @@ class Agent
       elsif state&.contract_validation_applied == true && state.contract_validation_passed == false
         scorecard[:contract_fail_count] = scorecard.fetch(:contract_fail_count, 0).to_i + 1
       end
+      _toolstore_update_role_profile_scorecard!(scorecard, state: state)
       if state&.guardrail_retry_exhausted == true
         scorecard[:guardrail_retry_exhausted_count] = scorecard.fetch(:guardrail_retry_exhausted_count, 0).to_i + 1
       end
@@ -353,6 +372,33 @@ class Agent
       scorecard[:updated_at] = _toolstore_timestamp
     end
 
+    def _toolstore_update_role_profile_scorecard!(scorecard, state:)
+      return unless state&.active_role_profile_version
+
+      scorecard[:role_profile_observation_count] = scorecard.fetch(:role_profile_observation_count, 0).to_i + 1
+      scorecard[:active_role_profile_version] = state.active_role_profile_version
+
+      compliance = state.role_profile_compliance
+      return unless compliance.is_a?(Hash)
+
+      passed = compliance[:passed]
+      passed = compliance["passed"] if passed.nil?
+      if passed == true
+        scorecard[:role_profile_pass_count] = scorecard.fetch(:role_profile_pass_count, 0).to_i + 1
+      else
+        scorecard[:role_profile_fail_count] = scorecard.fetch(:role_profile_fail_count, 0).to_i + 1
+      end
+
+      violations = compliance[:violation_types]
+      violations = compliance["violation_types"] if violations.nil?
+      scorecard[:role_profile_constraint_failures] = Array(violations).map(&:to_s).uniq.sort
+
+      pass_count = scorecard.fetch(:role_profile_pass_count, 0).to_i
+      fail_count = scorecard.fetch(:role_profile_fail_count, 0).to_i
+      total = pass_count + fail_count
+      scorecard[:role_profile_pass_rate] = total.zero? ? 1.0 : pass_count.to_f.fdiv(total).round(4)
+    end
+
     def _toolstore_update_lifecycle_snapshot!(metadata, state:)
       return unless state
 
@@ -370,8 +416,28 @@ class Agent
       end
     end
 
+    def _toolstore_method_signatures(metadata)
+      raw = metadata[:method_signatures] || metadata["method_signatures"]
+      return {} unless raw.is_a?(Hash)
+
+      raw.each_with_object({}) do |(method_name, signature), normalized|
+        entry = signature.to_s.strip
+        next if entry.empty?
+
+        normalized[method_name.to_s] = entry
+      end
+    end
+
     def _toolstore_state_keys_from_code(code)
       code.scan(/context\[(?::|["'])([a-zA-Z0-9_]+)["']?\]/).flatten.uniq
+    end
+
+    def _toolstore_signature_from_code(code)
+      arg_indexes = code.scan(/args\[(\d+)\]/).flatten.map(&:to_i).uniq.sort
+      kw_keys = code.scan(/kwargs\[(?::|["'])([a-zA-Z0-9_]+)["']?\]/).flatten.map(&:to_s).uniq.sort
+      args_part = arg_indexes.empty? ? "none" : arg_indexes.join(",")
+      kwargs_part = kw_keys.empty? ? "none" : kw_keys.join(",")
+      "args:#{args_part}|kwargs:#{kwargs_part}"
     end
 
     def _toolstore_schema_supported?(schema_version)

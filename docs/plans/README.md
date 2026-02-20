@@ -2,6 +2,24 @@
 
 This directory contains phased implementation plans that operationalize ADRs and major roadmap slices.
 
+## Required Outcome Sections
+
+Every new implementation plan must include:
+
+1. `Status Quo Baseline`
+2. `Expected Improvements` (measurable deltas from baseline)
+3. `Non-Improvement Expectations`
+4. `Validation Signals and Thresholds`
+5. `Rollback or Adjustment Triggers`
+
+In addition, every phase section must include a `Phase Improvement Contract`:
+
+1. baseline snapshot,
+2. expected delta,
+3. observed delta after validation run.
+
+Use `docs/plans/TEMPLATE.md` for new implementation plans.
+
 ## Core Runtime Evolution
 
 - `recurgent-implementation-plan.md` - LLM-native coordination API and naming transition
@@ -17,6 +35,7 @@ This directory contains phased implementation plans that operationalize ADRs and
 - `validation-first-fresh-generation-implementation-plan.md` - validation-first retries with transactional isolation
 - `contract-driven-utility-failures-implementation-plan.md` - utility semantics at contract boundary
 - `guardrail-exhaustion-boundary-normalization-implementation-plan.md` - top-level guardrail exhaustion normalization
+- `contract-first-role-profiles-state-continuity-implementation-plan.md` - role-profile coordination semantics, continuity guard rollout, and promotion coupling
 
 ## Context, Execution, and Telemetry
 
@@ -25,3 +44,4 @@ This directory contains phased implementation plans that operationalize ADRs and
 - `external-data-provenance-implementation-plan.md` - provenance invariants and enforcement
 - `failed-attempt-exception-telemetry-implementation-plan.md` - preserve failed-attempt diagnostics in logs/artifacts
 - `awareness-substrate-authority-boundary-implementation-plan.md` - bounded awareness rollout with explicit observe/propose/enact authority gates
+- `TEMPLATE.md` - canonical implementation-plan structure with measurable outcome contracts

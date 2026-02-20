@@ -25,6 +25,10 @@ class Agent
       File.join(_toolstore_root, "proposals.json")
     end
 
+    def _toolstore_role_profiles_path
+      File.join(_toolstore_root, "role_profiles.json")
+    end
+
     def _toolstore_artifacts_root
       File.join(_toolstore_root, "artifacts")
     end
