@@ -83,16 +83,17 @@ class Agent
 
       method = method_name.to_s
       constraints.select do |_name, constraint|
-        methods = Array(constraint[:methods]).map(&:to_s)
-        methods.include?(method)
+        _role_profile_constraint_applies_to_method?(constraint: constraint, method_name: method)
       end
     end
 
     def _role_profile_evaluate_constraint(constraint_name:, constraint:, method_name:, code:, outcome:)
       kind = constraint[:kind].to_sym
+      scoped_methods = _role_profile_constraint_methods(constraint: constraint, method_name: method_name, kind: kind)
       observations, family_label = _role_profile_constraint_observations(
         kind: kind,
         constraint: constraint,
+        scoped_methods: scoped_methods,
         method_name: method_name,
         code: code,
         outcome: outcome
@@ -102,7 +103,8 @@ class Agent
         constraint: constraint_name.to_s,
         kind: kind.to_s,
         mode: constraint[:mode].to_s,
-        methods: Array(constraint[:methods]),
+        scope: constraint[:scope].to_s,
+        methods: scoped_methods,
         observations: observations,
         family_label: family_label,
         passed: passed,
@@ -124,33 +126,64 @@ class Agent
       result
     end
 
-    def _role_profile_constraint_observations(kind:, constraint:, method_name:, code:, outcome:)
+    def _role_profile_constraint_observations(kind:, constraint:, scoped_methods:, method_name:, code:, outcome:)
       case kind
       when :shared_state_slot
-        [_role_profile_shared_state_observations(constraint: constraint, method_name: method_name, code: code), "state key"]
+        [
+          _role_profile_shared_state_observations(
+            method_names: scoped_methods,
+            method_name: method_name,
+            code: code
+          ),
+          "state key"
+        ]
       when :return_shape_family
-        [_role_profile_return_shape_observations(constraint: constraint, method_name: method_name, outcome: outcome), "return shape"]
+        [
+          _role_profile_return_shape_observations(
+            method_names: scoped_methods,
+            method_name: method_name,
+            outcome: outcome
+          ),
+          "return shape"
+        ]
       when :signature_family
-        [_role_profile_signature_observations(constraint: constraint, method_name: method_name, code: code), "method signature"]
+        [
+          _role_profile_signature_observations(
+            method_names: scoped_methods,
+            method_name: method_name,
+            code: code
+          ),
+          "method signature"
+        ]
       else
         [[], "constraint value"]
       end
     end
 
-    def _role_profile_shared_state_observations(constraint:, method_name:, code:)
+    def _role_profile_shared_state_observations(method_names:, method_name:, code:)
       metadata = _toolstore_load_registry_tools[@role.to_s]
-      method_profiles = _toolstore_method_state_key_profiles(metadata || {})
+      method_profiles = _toolstore_method_state_key_profiles(metadata || {}).transform_values do |keys|
+        Array(keys).map(&:to_s).reject(&:empty?).sort.first
+      end
+      method_profiles.merge!(_role_profile_cached_observations(kind: :shared_state_slot))
       current_keys = _toolstore_state_keys_from_code(code.to_s).map(&:to_s).reject(&:empty?).uniq
-      method_profiles[method_name.to_s] = current_keys unless current_keys.empty?
+      current_primary = current_keys.sort.first
+      if current_primary
+        method_profiles[method_name.to_s] = current_primary
+        _role_profile_record_observation(kind: :shared_state_slot, method_name: method_name, value: current_primary)
+      end
 
-      Array(constraint[:methods]).filter_map do |name|
+      Array(method_names).filter_map do |name|
         method = name.to_s
-        next current_keys.sort.first if method == method_name.to_s && !current_keys.empty?
+        next current_primary if method == method_name.to_s && current_primary
 
         artifact_key = _role_profile_artifact_primary_state_key(method)
-        next artifact_key unless artifact_key.nil?
+        unless artifact_key.nil?
+          _role_profile_record_observation(kind: :shared_state_slot, method_name: method, value: artifact_key)
+          next artifact_key
+        end
 
-        Array(method_profiles[method]).map(&:to_s).reject(&:empty?).sort.first
+        method_profiles[method].to_s.strip.then { |value| value.empty? ? nil : value }
       end
     end
 
@@ -165,22 +198,90 @@ class Agent
       Array(latest).map(&:to_s).reject(&:empty?).sort.first
     end
 
-    def _role_profile_return_shape_observations(constraint:, method_name:, outcome:)
+    def _role_profile_return_shape_observations(method_names:, method_name:, outcome:)
       metadata = _toolstore_load_registry_tools[@role.to_s]
       shape_profiles = _role_profile_method_return_shapes(metadata || {})
+      shape_profiles.merge!(_role_profile_cached_observations(kind: :return_shape_family))
       current_shape = _role_profile_value_shape(outcome.value)
-      shape_profiles[method_name.to_s] = current_shape unless current_shape.nil?
+      unless current_shape.nil?
+        shape_profiles[method_name.to_s] = current_shape
+        _role_profile_record_observation(kind: :return_shape_family, method_name: method_name, value: current_shape)
+      end
 
-      Array(constraint[:methods]).filter_map { |name| shape_profiles[name.to_s] }
+      Array(method_names).filter_map { |name| shape_profiles[name.to_s] }
     end
 
-    def _role_profile_signature_observations(constraint:, method_name:, code:)
+    def _role_profile_signature_observations(method_names:, method_name:, code:)
       metadata = _toolstore_load_registry_tools[@role.to_s]
       signature_profiles = _role_profile_method_signatures(metadata || {})
+      signature_profiles.merge!(_role_profile_cached_observations(kind: :signature_family))
       current_signature = _role_profile_signature_from_code(code.to_s)
-      signature_profiles[method_name.to_s] = current_signature unless current_signature.to_s.empty?
+      unless current_signature.to_s.empty?
+        signature_profiles[method_name.to_s] = current_signature
+        _role_profile_record_observation(kind: :signature_family, method_name: method_name, value: current_signature)
+      end
 
-      Array(constraint[:methods]).filter_map { |name| signature_profiles[name.to_s] }
+      Array(method_names).filter_map { |name| signature_profiles[name.to_s] }
+    end
+
+    def _role_profile_constraint_applies_to_method?(constraint:, method_name:)
+      case constraint[:scope].to_sym
+      when :all_methods
+        !Array(constraint[:exclude_methods]).map(&:to_s).include?(method_name.to_s)
+      when :explicit_methods
+        Array(constraint[:methods]).map(&:to_s).include?(method_name.to_s)
+      else
+        false
+      end
+    end
+
+    def _role_profile_constraint_methods(constraint:, method_name:, kind:)
+      case constraint[:scope].to_sym
+      when :explicit_methods
+        Array(constraint[:methods]).map(&:to_s).reject(&:empty?).uniq
+      when :all_methods
+        methods = _role_profile_observed_methods(kind: kind)
+        methods << method_name.to_s
+        excluded = Array(constraint[:exclude_methods]).map(&:to_s).reject(&:empty?)
+        methods.reject { |name| excluded.include?(name) }.uniq
+      else
+        [method_name.to_s]
+      end
+    end
+
+    def _role_profile_observed_methods(kind:)
+      metadata = _toolstore_load_registry_tools[@role.to_s] || {}
+      method_names = _toolstore_method_names(metadata)
+      kind_profiles = case kind
+                      when :shared_state_slot
+                        _toolstore_method_state_key_profiles(metadata).keys
+                      when :return_shape_family
+                        _role_profile_method_return_shapes(metadata).keys
+                      when :signature_family
+                        _role_profile_method_signatures(metadata).keys
+                      else
+                        []
+                      end
+      cached_methods = _role_profile_cached_observations(kind: kind).keys
+      (method_names + kind_profiles + cached_methods).map(&:to_s).reject(&:empty?).uniq
+    end
+
+    def _role_profile_cached_observations(kind:)
+      cache = (@role_profile_observation_cache ||= {})
+      scoped = cache[kind.to_sym]
+      return {} unless scoped.is_a?(Hash)
+
+      scoped.transform_keys(&:to_s)
+    end
+
+    def _role_profile_record_observation(kind:, method_name:, value:)
+      normalized_method = method_name.to_s.strip
+      normalized_value = value.to_s.strip
+      return if normalized_method.empty? || normalized_value.empty?
+
+      @role_profile_observation_cache ||= {}
+      @role_profile_observation_cache[kind.to_sym] ||= {}
+      @role_profile_observation_cache[kind.to_sym][normalized_method] = normalized_value
     end
 
     def _role_profile_method_return_shapes(metadata)

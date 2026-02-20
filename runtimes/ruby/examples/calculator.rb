@@ -11,12 +11,13 @@ CALCULATOR_ROLE_PROFILE = {
   constraints: {
     accumulator_slot: {
       kind: :shared_state_slot,
-      methods: %w[add multiply sqrt solve],
+      scope: :all_methods,
       mode: :coordination
     },
     arithmetic_shape: {
       kind: :return_shape_family,
-      methods: %w[add multiply sqrt],
+      scope: :all_methods,
+      exclude_methods: %w[history],
       mode: :coordination
     }
   }

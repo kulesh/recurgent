@@ -11,7 +11,7 @@ ASSISTANT_ROLE_PROFILE = {
   constraints: {
     conversation_history_slot: {
       kind: :shared_state_slot,
-      methods: %w[ask],
+      scope: :all_methods,
       mode: :prescriptive,
       canonical_key: :conversation_history
     }

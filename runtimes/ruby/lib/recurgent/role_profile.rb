@@ -5,6 +5,7 @@ class Agent
   class RoleProfile
     MODES = %w[coordination prescriptive].freeze
     KINDS = %w[shared_state_slot return_shape_family signature_family].freeze
+    SCOPES = %w[all_methods explicit_methods].freeze
 
     class << self
       def normalize(profile, expected_role: nil)
@@ -48,14 +49,29 @@ class Agent
         mode = "coordination" if mode.empty?
         raise ArgumentError, "role_profile constraint '#{name}' has unsupported mode '#{mode}'" unless MODES.include?(mode)
 
+        scope = raw[:scope].to_s.strip
+        scope = "all_methods" if scope.empty?
+        raise ArgumentError, "role_profile constraint '#{name}' has unsupported scope '#{scope}'" unless SCOPES.include?(scope)
+
         methods = Array(raw[:methods]).map { |entry| entry.to_s.strip }.reject(&:empty?).uniq
-        raise ArgumentError, "role_profile constraint '#{name}' requires at least one method" if methods.empty?
+        exclude_methods = Array(raw[:exclude_methods]).map { |entry| entry.to_s.strip }.reject(&:empty?).uniq
 
         normalized = {
           kind: kind.to_sym,
-          methods: methods,
+          scope: scope.to_sym,
           mode: mode.to_sym
         }
+
+        if normalized[:scope] == :all_methods
+          raise ArgumentError,
+                "role_profile constraint '#{name}' with scope all_methods must not declare methods" unless methods.empty?
+          normalized[:exclude_methods] = exclude_methods unless exclude_methods.empty?
+        else
+          raise ArgumentError, "role_profile constraint '#{name}' requires methods for scope explicit_methods" if methods.empty?
+          raise ArgumentError,
+                "role_profile constraint '#{name}' with scope explicit_methods must not declare exclude_methods" unless exclude_methods.empty?
+          normalized[:methods] = methods
+        end
 
         canonical_key = raw[:canonical_key]
         canonical_value = raw[:canonical_value]

@@ -83,7 +83,7 @@ RSpec.describe Agent do
         constraints: {
           accumulator_slot: {
             kind: :shared_state_slot,
-            methods: %w[add multiply],
+            scope: :all_methods,
             mode: :coordination
           }
         }
@@ -120,7 +120,7 @@ RSpec.describe Agent do
         constraints: {
           accumulator_slot: {
             kind: :shared_state_slot,
-            methods: %w[add multiply],
+            scope: :all_methods,
             mode: :coordination
           }
         }
@@ -155,7 +155,7 @@ RSpec.describe Agent do
         constraints: {
           accumulator_slot: {
             kind: :shared_state_slot,
-            methods: %w[add multiply],
+            scope: :all_methods,
             mode: :prescriptive,
             canonical_key: :value
           }
