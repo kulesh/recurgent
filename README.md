@@ -154,12 +154,12 @@ specs/    # runtime-agnostic contract specs
 
 ## Documentation Map
 
-- `docs/index.md` - full documentation index
-- `docs/architecture.md` - canonical architecture and lifecycle diagrams
-- `docs/observability.md` - log schema, trace model, live watcher
-- `docs/adrs/README.md` - design decisions and rationale
-- `docs/plans/README.md` - implementation plan map
-- `runtimes/ruby/README.md` - Ruby runtime quick reference
+- [`docs/index.md`](docs/index.md) - full documentation index
+- [`docs/architecture.md`](docs/architecture.md) - canonical architecture and lifecycle diagrams
+- [`docs/observability.md`](docs/observability.md) - log schema, trace model, live watcher
+- [`docs/adrs/README.md`](docs/adrs/README.md) - design decisions and rationale
+- [`docs/plans/README.md`](docs/plans/README.md) - implementation plan map
+- [`runtimes/ruby/README.md`](runtimes/ruby/README.md) - Ruby runtime quick reference
 
 ## FAQ
 
@@ -183,10 +183,10 @@ Yes. Anthropic and OpenAI are both supported. Routing is automatic by model name
 
 ## Community and Policy
 
-- `CONTRIBUTING.md`
-- `CODE_OF_CONDUCT.md`
-- `SECURITY.md`
-- `LICENSE`
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+- [`SECURITY.md`](SECURITY.md)
+- [`LICENSE`](LICENSE)
 
 ## References
 
