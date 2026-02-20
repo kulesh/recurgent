@@ -173,7 +173,7 @@ Checkpoint:
 2. top-level assistant remains concise while child tools execute concrete capability work.
 
 Deep links:
-- `docs/specs/delegation-contracts.md`
+- `docs/product-specs/delegation-contracts.md`
 - `docs/tolerant-delegation-interfaces.md`
 - `docs/delegate-vs-for.md`
 

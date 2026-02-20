@@ -193,7 +193,7 @@ Detection strategy (v1):
 
 ### Documentation
 
-1. `docs/specs/delegation-contracts.md`
+1. `docs/product-specs/delegation-contracts.md`
    - clarify interaction with conversation history (adjacent, not contract payload).
 2. `docs/observability.md`
    - document new history telemetry fields and interpretation.

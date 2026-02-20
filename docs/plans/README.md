@@ -22,26 +22,26 @@ Use `docs/plans/TEMPLATE.md` for new implementation plans.
 
 ## Core Runtime Evolution
 
-- `recurgent-implementation-plan.md` - LLM-native coordination API and naming transition
-- `dependency-environment-implementation-plan.md` - dependency-aware generated programs and environment contracts
-- `cross-session-tool-persistence-implementation-plan.md` - tool/artifact persistence lifecycle
-- `cacheability-pattern-memory-implementation-plan.md` - cacheability gating and pattern-memory promotion
-- `solver-shape-reliability-gated-tool-evolution-implementation-plan.md` - solver-shape evidence + reliability-gated lifecycle rollout
+- [`recurgent-implementation-plan.md`](recurgent-implementation-plan.md) - LLM-native coordination API and naming transition
+- [`dependency-environment-implementation-plan.md`](dependency-environment-implementation-plan.md) - dependency-aware generated programs and environment contracts
+- [`cross-session-tool-persistence-implementation-plan.md`](cross-session-tool-persistence-implementation-plan.md) - tool/artifact persistence lifecycle
+- [`cacheability-pattern-memory-implementation-plan.md`](cacheability-pattern-memory-implementation-plan.md) - cacheability gating and pattern-memory promotion
+- [`solver-shape-reliability-gated-tool-evolution-implementation-plan.md`](solver-shape-reliability-gated-tool-evolution-implementation-plan.md) - solver-shape evidence + reliability-gated lifecycle rollout
 
 ## Contract and Boundary Hardening
 
-- `outcome-boundary-contract-validation-implementation-plan.md` - delegated outcome contract enforcement
-- `tool-self-awareness-boundary-referral-implementation-plan.md` - `wrong_tool_boundary` and `low_utility` evolution loop
-- `validation-first-fresh-generation-implementation-plan.md` - validation-first retries with transactional isolation
-- `contract-driven-utility-failures-implementation-plan.md` - utility semantics at contract boundary
-- `guardrail-exhaustion-boundary-normalization-implementation-plan.md` - top-level guardrail exhaustion normalization
-- `contract-first-role-profiles-state-continuity-implementation-plan.md` - role-profile coordination semantics, continuity guard rollout, and promotion coupling
+- [`outcome-boundary-contract-validation-implementation-plan.md`](outcome-boundary-contract-validation-implementation-plan.md) - delegated outcome contract enforcement
+- [`tool-self-awareness-boundary-referral-implementation-plan.md`](tool-self-awareness-boundary-referral-implementation-plan.md) - `wrong_tool_boundary` and `low_utility` evolution loop
+- [`validation-first-fresh-generation-implementation-plan.md`](validation-first-fresh-generation-implementation-plan.md) - validation-first retries with transactional isolation
+- [`contract-driven-utility-failures-implementation-plan.md`](contract-driven-utility-failures-implementation-plan.md) - utility semantics at contract boundary
+- [`guardrail-exhaustion-boundary-normalization-implementation-plan.md`](guardrail-exhaustion-boundary-normalization-implementation-plan.md) - top-level guardrail exhaustion normalization
+- [`contract-first-role-profiles-state-continuity-implementation-plan.md`](contract-first-role-profiles-state-continuity-implementation-plan.md) - role-profile coordination semantics, continuity guard rollout, and promotion coupling
 
 ## Context, Execution, and Telemetry
 
-- `structured-conversation-history-implementation-plan.md` - structured history-first rollout
-- `generated-code-execution-sandbox-isolation-implementation-plan.md` - per-attempt sandbox receiver isolation
-- `external-data-provenance-implementation-plan.md` - provenance invariants and enforcement
-- `failed-attempt-exception-telemetry-implementation-plan.md` - preserve failed-attempt diagnostics in logs/artifacts
-- `awareness-substrate-authority-boundary-implementation-plan.md` - bounded awareness rollout with explicit observe/propose/enact authority gates
-- `TEMPLATE.md` - canonical implementation-plan structure with measurable outcome contracts
+- [`structured-conversation-history-implementation-plan.md`](structured-conversation-history-implementation-plan.md) - structured history-first rollout
+- [`generated-code-execution-sandbox-isolation-implementation-plan.md`](generated-code-execution-sandbox-isolation-implementation-plan.md) - per-attempt sandbox receiver isolation
+- [`external-data-provenance-implementation-plan.md`](external-data-provenance-implementation-plan.md) - provenance invariants and enforcement
+- [`failed-attempt-exception-telemetry-implementation-plan.md`](failed-attempt-exception-telemetry-implementation-plan.md) - preserve failed-attempt diagnostics in logs/artifacts
+- [`awareness-substrate-authority-boundary-implementation-plan.md`](awareness-substrate-authority-boundary-implementation-plan.md) - bounded awareness rollout with explicit observe/propose/enact authority gates
+- [`TEMPLATE.md`](TEMPLATE.md) - canonical implementation-plan structure with measurable outcome contracts

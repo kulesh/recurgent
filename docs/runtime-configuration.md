@@ -124,7 +124,7 @@ After changing runtime config:
 
 - `docs/architecture.md`
 - `docs/observability.md`
-- `docs/specs/delegation-contracts.md`
+- `docs/product-specs/delegation-contracts.md`
 - `docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md`
 - `docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`
 - `docs/adrs/0025-awareness-substrate-and-authority-boundary.md`
