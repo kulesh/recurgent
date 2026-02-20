@@ -206,7 +206,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-20T06:09:30Z
+Last Updated (UTC): 2026-02-20T06:22:15Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -216,6 +216,7 @@ Last Updated (UTC): 2026-02-20T06:09:30Z
 - `CHANGELOG.md` - release history and notable changes
 - `SUPPORT.md` - support policy entrypoint
 - `docs/index.md` - top-level documentation map organized by product, architecture, ADRs, and plans
+- `docs/architecture-onboarding.md` - chaptered contributor onboarding that builds a precise mental model of runtime layers, ADR lineage, and implementation mechanics
 - `docs/architecture.md` - canonical runtime architecture map for dispatch, retry lanes, persistence, boundary normalization, and observability
 - `docs/onboarding.md` - setup, developer workflow, quality gates
 - `docs/runtime-configuration.md` - runtime configuration reference for dependency policy, persistence roots, lifecycle toggles, and authority controls

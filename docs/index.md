@@ -8,6 +8,7 @@ This index is organized for fast retrieval:
 
 ## Start Here
 
+- [`docs/architecture-onboarding.md`](architecture-onboarding.md) - chaptered architecture onboarding from first principles to current runtime mechanics
 - [`docs/architecture.md`](architecture.md) - canonical runtime architecture and lifecycle diagrams
 - [`docs/onboarding.md`](onboarding.md) - setup, workflow, quality gates
 - [`docs/ubiquitous-language.md`](ubiquitous-language.md) - canonical Tool Builder/Tool vocabulary
