@@ -18,9 +18,9 @@ This index is organized for fast retrieval:
 
 ## Product and Specs
 
-- [`docs/specs/idea-brief.md`](specs/idea-brief.md) - mission and product framing
-- [`docs/specs/delegation-contracts.md`](specs/delegation-contracts.md) - delegation contract fields and behavior
-- [`docs/specs/recursim-product-spec.md`](specs/recursim-product-spec.md) - Recursim product specification
+- [`docs/product-specs/idea-brief.md`](product-specs/idea-brief.md) - mission and product framing
+- [`docs/product-specs/delegation-contracts.md`](product-specs/delegation-contracts.md) - delegation contract fields and behavior
+- [`docs/product-specs/recursim-product-spec.md`](product-specs/recursim-product-spec.md) - Recursim product specification
 - [`docs/tolerant-delegation-interfaces.md`](tolerant-delegation-interfaces.md) - tolerant interface guidance
 - [`docs/delegate-vs-for.md`](delegate-vs-for.md) - `delegate(...)` vs `Agent.for(...)` decision guide
 

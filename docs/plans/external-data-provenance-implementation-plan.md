@@ -78,7 +78,7 @@ Implementation:
 Suggested files:
 
 1. `docs/adrs/0021-external-data-provenance-invariant.md`
-2. `docs/specs/delegation-contracts.md`
+2. `docs/product-specs/delegation-contracts.md`
 3. `docs/tolerant-delegation-interfaces.md`
 
 Exit criteria:
