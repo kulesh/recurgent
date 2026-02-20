@@ -155,6 +155,7 @@ specs/    # runtime-agnostic contract specs
 ## Documentation Map
 
 - [`docs/index.md`](docs/index.md) - full documentation index
+- [`docs/architecture-onboarding.md`](docs/architecture-onboarding.md) - step-by-step architecture onboarding for contributors
 - [`docs/architecture.md`](docs/architecture.md) - canonical architecture and lifecycle diagrams
 - [`docs/observability.md`](docs/observability.md) - log schema, trace model, live watcher
 - [`docs/adrs/README.md`](docs/adrs/README.md) - design decisions and rationale
