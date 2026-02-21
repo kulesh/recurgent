@@ -217,6 +217,71 @@ RSpec.describe Agent do
       expect(g.role_profile[:version]).to eq(1)
     end
 
+    it "does not enforce return-shape continuity against error outcomes" do
+      Agent.configure_runtime(
+        toolstore_root: runtime_toolstore_root,
+        role_profile_shadow_mode_enabled: true,
+        role_profile_enforcement_enabled: true
+      )
+      profile = {
+        role: "calculator",
+        version: 1,
+        constraints: {
+          arithmetic_shape: {
+            kind: :return_shape_family,
+            scope: :all_methods,
+            mode: :coordination
+          }
+        }
+      }
+      g = described_class.new("calculator", role_profile: profile, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "result = 1"),
+        program_payload(
+          code: 'result = Agent::Outcome.error(error_type: "unsupported_capability", error_message: "no solver", retriable: false)'
+        )
+      )
+
+      expect_ok_outcome(g.add(1), value: 1)
+      expect_error_outcome(g.solve("2x + 1 = 3"), type: "unsupported_capability", retriable: false)
+      expect(mock_provider).to have_received(:generate_program).twice
+    end
+
+    it "applies setter observations to subsequent all-methods shared-state continuity checks" do
+      Dir.mktmpdir("recurgent-role-profile-setter-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_root: tmpdir,
+          role_profile_shadow_mode_enabled: true,
+          role_profile_enforcement_enabled: true
+        )
+        profile = {
+          role: "calculator",
+          version: 1,
+          constraints: {
+            accumulator_slot: {
+              kind: :shared_state_slot,
+              scope: :all_methods,
+              mode: :coordination
+            }
+          }
+        }
+        g = described_class.new(
+          "calculator",
+          role_profile: profile,
+          guardrail_recovery_budget: 1
+        )
+        g.memory = 1
+
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: "context[:value] = context.fetch(:value, 0) + args[0]; result = context[:value]"),
+          program_payload(code: "context[:memory] = context.fetch(:memory, 0) + args[0]; result = context[:memory]")
+        )
+
+        expect_ok_outcome(g.add(2), value: 3)
+        expect(mock_provider).to have_received(:generate_program).twice
+      end
+    end
+
     it "persists proposal artifacts without applying runtime mutations" do
       g = described_class.new("planner")
       proposal = g.propose(
@@ -515,6 +580,14 @@ RSpec.describe Agent do
       expect { parent.tool("missing_tool") }.to raise_error(ArgumentError, /Unknown tool 'missing_tool'/)
     end
 
+    it "raises when tool(name) attempts to materialize the current role" do
+      parent = described_class.for("news_aggregator")
+      parent.remember(tools: { "news_aggregator" => { purpose: "fetch news" } })
+
+      expect { parent.tool("news_aggregator") }
+        .to raise_error(Agent::ToolRegistryViolationError, /Self-materialization is not allowed/)
+    end
+
     it "propagates Tool Builder-authored contract fields to delegated tools" do
       parent = described_class.for("tool_builder")
       child = parent.delegate(
@@ -611,6 +684,13 @@ RSpec.describe Agent do
     it "raises BudgetExceededError when delegation budget is exhausted" do
       parent = described_class.for("planner", delegation_budget: 0)
       expect { parent.delegate("tax expert") }.to raise_error(Agent::BudgetExceededError, /Delegation budget exceeded/)
+    end
+
+    it "raises when delegate attempts to materialize the current role" do
+      parent = described_class.for("news_aggregator")
+
+      expect { parent.delegate("news_aggregator") }
+        .to raise_error(Agent::ToolRegistryViolationError, /Self-materialization is not allowed/)
     end
 
     it "raises when remember stores executable values inside context[:tools]" do

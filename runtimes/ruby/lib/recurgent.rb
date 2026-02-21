@@ -310,6 +310,7 @@ class Agent
       # No LLM call needed. This also ensures child Agents reliably receive
       # data from parents (the parent's LLM code does `result.items = data`).
       @context[method_name.chomp("=").to_sym] = args[0]
+      _record_setter_role_profile_observation!(setter_method_name: method_name)
     elsif args.empty? && kwargs.empty? && @context.key?(name.to_sym)
       # Context-backed readers are deterministic readback paths. If caller set
       # obj.foo = x earlier, obj.foo should return x without regenerating code.
@@ -465,7 +466,8 @@ class Agent
   end
 
   def tool(role, **options)
-    role_name = role.to_s
+    role_name = role.to_s.strip
+    _enforce_no_self_materialization!(role_name: role_name, api_name: "tool")
     metadata = _registered_tool_metadata(role_name)
     raise ArgumentError, "Unknown tool '#{role_name}' in #{@role}.tool" unless metadata
 
@@ -495,6 +497,8 @@ class Agent
     intent_signature: nil,
     **options
   )
+    role_name = role.to_s.strip
+    _enforce_no_self_materialization!(role_name: role_name, api_name: "delegate")
     raise BudgetExceededError, "Delegation budget exceeded in #{@role}.delegate (remaining: 0)" if @delegation_budget&.zero?
 
     resolved_budget = options.fetch(:delegation_budget) do
@@ -516,9 +520,9 @@ class Agent
     }
     runtime_options, ignored_options = _partition_delegate_runtime_options(options)
     delegate_options = inherited.merge(runtime_options)
-    _warn_ignored_delegate_options(role: role, ignored_options: ignored_options) unless ignored_options.empty?
+    _warn_ignored_delegate_options(role: role_name, ignored_options: ignored_options) unless ignored_options.empty?
     tool = Agent.for(
-      role,
+      role_name,
       purpose: purpose,
       deliverable: deliverable,
       acceptance: acceptance,
@@ -527,7 +531,7 @@ class Agent
       delegation_contract: explicit_contract,
       **delegate_options
     )
-    _register_delegated_tool(role: role, tool: tool, explicit_purpose: purpose)
+    _register_delegated_tool(role: role_name, tool: tool, explicit_purpose: purpose)
     tool
   end
 
@@ -541,6 +545,41 @@ end
 
 class Agent
   private
+
+  def _enforce_no_self_materialization!(role_name:, api_name:)
+    current_role = @role.to_s.strip
+    return unless role_name.casecmp?(current_role)
+
+    raise ToolRegistryViolationError,
+          "Self-materialization is not allowed in #{@role}.#{api_name}; " \
+          "implement this role directly instead of calling #{api_name}(\"#{role_name}\")."
+  end
+
+  def _record_setter_role_profile_observation!(setter_method_name:)
+    profile = _active_role_profile
+    return if profile.nil?
+
+    constraints = profile[:constraints]
+    return unless constraints.is_a?(Hash)
+
+    method_name = setter_method_name.to_s
+    return unless constraints.any? do |_constraint_name, constraint|
+      next false unless constraint.is_a?(Hash) && constraint[:kind].to_sym == :shared_state_slot
+
+      _role_profile_constraint_applies_to_method?(constraint: constraint, method_name: method_name)
+    end
+
+    state_key = method_name.delete_suffix("=")
+    return if state_key.empty?
+
+    _role_profile_record_observation(
+      kind: :shared_state_slot,
+      method_name: method_name,
+      value: state_key
+    )
+  rescue StandardError => e
+    warn "[AGENT ROLE PROFILE #{@role}] failed to record setter observation: #{e.class}: #{e.message}" if @debug
+  end
 
   def _resolve_initialize_config(options)
     defaults = {

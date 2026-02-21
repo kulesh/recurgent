@@ -167,6 +167,53 @@ RSpec.describe Agent do
       )
     end
 
+    it "normalizes optional object properties for OpenAI strict schemas" do
+      response = stub_responses_api("result = 1")
+      captured_request = nil
+      allow(mock_responses).to receive(:create) do |request|
+        captured_request = request
+        response
+      end
+
+      provider = described_class.new
+      provider.generate_program(
+        model: "gpt-4o",
+        system_prompt: "test",
+        user_prompt: "test",
+        tool_schema: {
+          name: "execute_code",
+          description: "Provide Ruby code and dependency declarations",
+          input_schema: {
+            type: "object",
+            properties: {
+              code: { type: "string" },
+              dependencies: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    version: { type: "string" }
+                  },
+                  required: ["name"],
+                  additionalProperties: false
+                }
+              }
+            },
+            required: ["code"],
+            additionalProperties: false
+          }
+        }
+      )
+
+      normalized_schema = captured_request.dig(:text, :format, :schema)
+      dependency_item_schema = normalized_schema.dig(:properties, :dependencies, :items)
+
+      expect(normalized_schema[:required]).to contain_exactly("code", "dependencies")
+      expect(dependency_item_schema[:required]).to contain_exactly("name", "version")
+      expect(dependency_item_schema.dig(:properties, :version, :type)).to eq(%w[string null])
+    end
+
     it "enforces timeout_seconds with Timeout.timeout" do
       allow(mock_responses).to receive(:create) do |_request|
         sleep 0.05

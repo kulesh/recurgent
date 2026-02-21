@@ -28,6 +28,18 @@ RSpec.describe Agent do
       g.read("README.md")
     end
 
+    it "includes identity guidance to avoid self-materialization from tool registry" do
+      g = described_class.new("news_aggregator")
+      g.remember(tools: { "news_aggregator" => { purpose: "fetch and aggregate news" } })
+      expect_llm_call_with(
+        code: "result = nil",
+        system_prompt: a_string_including("Identity context: you are this role.")
+                       .and(including("If the registry contains your role name, that entry refers to you."))
+                       .and(including('Do NOT materialize yourself with `tool("same_role_name")`'))
+      )
+      g.ask("latest")
+    end
+
     it "includes context state in user prompt" do
       g = described_class.new("calculator")
       g.value = 5
@@ -54,17 +66,10 @@ RSpec.describe Agent do
           history_access_hint = "History contents are available in context[:conversation_history]. " \
                                 "Inspect via generated Ruby code when needed; prompt does not preload records."
           schema_hint = "Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, outcome_summary."
-          source_refs_hint = "When present, outcome_summary may include compact source refs: source_count, primary_uri, retrieval_mode."
-          canonical_hint = "Prefer canonical fields (`record[:args]`, `record[:method_name]`, " \
-                           "`record[:outcome_summary]`); do not rely on ad hoc keys."
-          source_protocol_hint = "If current ask is about source/provenance/how data was obtained:"
           prompt.include?("<conversation_history>") &&
             prompt.include?("<record_count>4</record_count>") &&
             prompt.include?(history_access_hint) &&
             prompt.include?(schema_hint) &&
-            prompt.include?(source_refs_hint) &&
-            prompt.include?(canonical_hint) &&
-            prompt.include?(source_protocol_hint) &&
             !prompt.include?("<recent_records>") &&
             !prompt.include?("c2") &&
             !prompt.include?("c3") &&
