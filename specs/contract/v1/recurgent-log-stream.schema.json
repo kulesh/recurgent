@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "recurgent-log-stream.schema.json",
+  "title": "Recurgent JSONL Log Stream (v1)",
+  "description": "Schema for an in-memory JSON array of log entries (for example, from `jq -s . recurgent.jsonl`).",
+  "type": "array",
+  "items": {
+    "$ref": "recurgent-log-entry.schema.json"
+  }
+}

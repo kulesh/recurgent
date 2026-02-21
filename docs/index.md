@@ -105,5 +105,7 @@ This index is organized for fast retrieval:
 - [`specs/contract/README.md`](../specs/contract/README.md) - runtime-agnostic contract package
 - [`specs/contract/v1/agent-contract.md`](../specs/contract/v1/agent-contract.md) - normative behavior contract
 - [`specs/contract/v1/scenarios.yaml`](../specs/contract/v1/scenarios.yaml) - shared conformance scenarios
+- [`specs/contract/v1/recurgent-log-entry.schema.json`](../specs/contract/v1/recurgent-log-entry.schema.json) - machine-readable schema for one observability log entry
+- [`specs/contract/v1/recurgent-log-stream.schema.json`](../specs/contract/v1/recurgent-log-stream.schema.json) - schema for JSON-array form of `recurgent.jsonl`
 - [`runtimes/ruby/README.md`](../runtimes/ruby/README.md) - Ruby runtime quick reference
 - [`runtimes/lua/README.md`](../runtimes/lua/README.md) - Lua runtime placeholder

@@ -87,18 +87,12 @@ puts result.ok?
 
 The runtime decided it needed a specialized tool, wrote the contract (what it should accept, what it should return, how to handle failure), generated the implementation, and validated the results. The `web_fetcher` now exists in the registry — tested, typed, and available for reuse by any agent that needs it. Tools that meet their contracts survive. Tools that don't get repaired or replaced.
 
-## Who This Is For
-
-Recurgent is for developers building agents where you **don't have a spec upfront**. You have a role — "research assistant," "personal assistant," "data pipeline manager" — and an environment. You want the system to discover what capabilities it needs through real work, and you want those capabilities to persist and improve across sessions.
-
-If you're tired of hand-wiring tool definitions for every agent, or if you want agents that get meaningfully better the more you use them, this is the runtime for that.
-
 ## Quickstart
 
 ### Prerequisites
 
-- `mise` (https://mise.jdx.dev/)
-- Ruby (managed via `mise`)
+- Ruby 3.4+
+- Bundler
 - One provider key:
   - `ANTHROPIC_API_KEY`, or
   - `OPENAI_API_KEY`
@@ -106,7 +100,6 @@ If you're tired of hand-wiring tool definitions for every agent, or if you want 
 ### Setup
 
 ```bash
-mise install
 cd runtimes/ruby
 bundle install
 ```
@@ -142,15 +135,15 @@ The long game is agents that don't just respond to instructions but develop genu
 
 **Trajectory:** from single-agent emergence to measured, repeatable evolution loops.
 
-## Repository Layout
+## Known Limitations
 
-```text
-runtimes/
-  ruby/   # active runtime implementation
-  lua/    # reserved for Lua runtime parity
-docs/     # architecture, ADRs, specs, implementation plans
-specs/    # runtime-agnostic contract specs
-```
+- **Specialized interfaces still show up in some runs.** Agents occasionally create narrow methods (`fetch_google_news`) instead of reusable parameterized methods (`fetch_url(url)`), especially under weak contextual pressure. See [`docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md`](docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md) and [`docs/reports/adr-0023-phase-validation-report.md`](docs/reports/adr-0023-phase-validation-report.md).
+- **Semantic correctness is still uneven for open-ended tasks.** Example: a call can return a structurally valid `Outcome.ok` for "action adventure movies in theaters" but still be low-utility or wrong for the user intent. Reliability gates improve stability, not truthfulness/utility semantics. See [`docs/adrs/0017-contract-driven-utility-failures-and-observational-runtime.md`](docs/adrs/0017-contract-driven-utility-failures-and-observational-runtime.md) and [`docs/reports/adr-0025-phase-validation-report.md`](docs/reports/adr-0025-phase-validation-report.md).
+- **Role-profile continuity is opt-in.** Example: calculator siblings can drift (`memory=` writes `context[:memory]` while `add` reads `context[:value]`) unless a role profile is explicitly attached and enforced. See [`docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`](docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) and [`docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md`](docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md).
+- **External-source workflows are brittle.** Example: a news flow may fetch live RSS/HTML successfully but parsing yields empty or malformed headline sets after upstream feed/layout changes. See [`docs/adrs/0021-external-data-provenance-invariant.md`](docs/adrs/0021-external-data-provenance-invariant.md), [`docs/observability.md`](docs/observability.md), and [`docs/reports/adr-0024-phase-validation-rollup.md`](docs/reports/adr-0024-phase-validation-rollup.md).
+- **Content follow-up transforms are improving but not universal.** Example: after generating a long answer, a follow-up like "format that in markdown" can fail if the prior response content is not resolved from history/content refs. See [`docs/adrs/0026-response-content-continuity-substrate.md`](docs/adrs/0026-response-content-continuity-substrate.md) and [`docs/reports/adr-0026-phase-validation-report.md`](docs/reports/adr-0026-phase-validation-report.md).
+- **Dependency-backed generated code paths are less battle-tested than stdlib-only paths.** Example: generated code can request dependencies that fail under local/bundler/runtime environment mismatch even when stdlib-only paths pass. See [`docs/adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md`](docs/adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md), [`docs/plans/dependency-environment-implementation-plan.md`](docs/plans/dependency-environment-implementation-plan.md), and [`docs/runtime-configuration.md`](docs/runtime-configuration.md).
+- **Lua runtime parity is not implemented yet.** Example: runtime-agnostic specs exist, but `runtimes/lua` is still a placeholder while Ruby carries the active implementation. See [`docs/adrs/0006-monorepo-runtime-boundaries.md`](docs/adrs/0006-monorepo-runtime-boundaries.md), [`docs/roadmap.md`](docs/roadmap.md), and [`runtimes/lua/README.md`](runtimes/lua/README.md).
 
 ## Documentation Map
 
@@ -162,25 +155,12 @@ specs/    # runtime-agnostic contract specs
 - [`docs/plans/README.md`](docs/plans/README.md) - implementation plan map
 - [`runtimes/ruby/README.md`](runtimes/ruby/README.md) - Ruby runtime quick reference
 
-## FAQ
+## References
 
-### Why do examples use `runtime_context`?
-
-`runtime_context` is the canonical public state surface. Generated code may still use local `memory = context` aliases inside execution wrappers, but host-side read/write is standardized on `runtime_context`.
-
-### Where are logs and persisted tool artifacts stored?
-
-By default they are written under `$XDG_STATE_HOME/recurgent` (or `~/.local/state/recurgent` when `XDG_STATE_HOME` is unset). Set `XDG_STATE_HOME` to isolate runs per phase/environment.
-
-### Can I run this without committing to one model provider?
-
-Yes. Anthropic and OpenAI are both supported. Routing is automatic by model name prefix, or explicit via `provider:`.
-
-## Known Limitations
-
-- Generated code is limited to Ruby stdlib unless dependencies are explicitly declared and allowed by runtime policy.
-- Provider outputs can be invalid or low-utility; runtime retries and guardrails reduce this but do not eliminate it.
-- Tolerant Outcome handling improves interoperability, but callers should still validate domain-specific quality.
+- RLMs - https://alexzhang13.github.io/blog/2025/rlm/
+- gremllm - https://github.com/awwaiid/gremllm
+- Agentica - https://github.com/symbolica-ai/arcgentica
+- SkillsBench: Benchmarking How Well Agent Skills Work Across Diverse Tasks - https://arxiv.org/abs/2602.12670
 
 ## Community and Policy
 
@@ -188,10 +168,3 @@ Yes. Anthropic and OpenAI are both supported. Routing is automatic by model name
 - [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 - [`SECURITY.md`](SECURITY.md)
 - [`LICENSE`](LICENSE)
-
-## References
-
-- RLMs - https://alexzhang13.github.io/blog/2025/rlm/
-- gremllm - https://github.com/awwaiid/gremllm
-- Agentica - https://github.com/symbolica-ai/arcgentica
-- SkillsBench: Benchmarking How Well Agent Skills Work Across Diverse Tasks - https://arxiv.org/abs/2602.12670

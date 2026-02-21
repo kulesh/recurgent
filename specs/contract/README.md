@@ -19,6 +19,8 @@ specs/contract/
     scenarios.yaml       # runtime-agnostic test scenarios
     tolerant-delegation-profile.md    # tolerant delegation profile
     tolerant-delegation-scenarios.yaml  # tolerant profile scenarios
+    recurgent-log-entry.schema.json    # machine-readable schema for one JSONL log entry
+    recurgent-log-stream.schema.json   # schema for jq-slurped JSONL stream arrays
     conformance.md       # harness guidance for runtime implementations
 ```
 
