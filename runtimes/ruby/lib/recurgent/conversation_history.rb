@@ -2,14 +2,16 @@
 
 class Agent
   # Agent::ConversationHistory — canonical structured call-history records stored in context.
+  # rubocop:disable Metrics/ModuleLength
   module ConversationHistory
     include ConversationHistoryNormalization
 
     private
 
+    # rubocop:disable Metrics/AbcSize
     def _append_conversation_history_record!(method_name:, args:, kwargs:, duration_ms:, call_context:, outcome:)
       history = _conversation_history_store
-      history << _conversation_history_record(
+      record = _conversation_history_record(
         method_name: method_name,
         args: args,
         kwargs: kwargs,
@@ -17,12 +19,41 @@ class Agent
         call_context: call_context,
         outcome: outcome
       )
-      { appended: true, size: history.size }
+      history << record
+      outcome_summary = _conversation_history_value(record, :outcome_summary)
+      content_ref = _conversation_history_value(outcome_summary, :content_ref)
+      content_store_write = _consume_last_content_store_write_result
+      {
+        appended: true,
+        size: history.size,
+        content_store_write_applied: !content_ref.to_s.strip.empty?,
+        content_store_write_ref: content_ref&.to_s,
+        content_store_write_kind: _conversation_history_value(outcome_summary, :content_kind)&.to_s,
+        content_store_write_bytes: _conversation_history_value(outcome_summary, :content_bytes),
+        content_store_write_digest: _conversation_history_value(outcome_summary, :content_digest)&.to_s,
+        content_store_write_skipped_reason: content_store_write[:content_store_write_skipped_reason],
+        content_store_eviction_count: content_store_write[:content_store_eviction_count],
+        content_store_entry_count: _content_store_state.fetch(:order, []).size,
+        content_store_total_bytes: _content_store_state.fetch(:total_bytes, 0)
+      }
     rescue StandardError => e
       warn "[AGENT HISTORY #{@role}.#{method_name}] #{e.class}: #{e.message}" if @debug
       size = @context[:conversation_history].is_a?(Array) ? @context[:conversation_history].size : 0
-      { appended: false, size: size }
+      {
+        appended: false,
+        size: size,
+        content_store_write_applied: false,
+        content_store_write_ref: nil,
+        content_store_write_kind: nil,
+        content_store_write_bytes: nil,
+        content_store_write_digest: nil,
+        content_store_write_skipped_reason: "history_append_failed",
+        content_store_eviction_count: 0,
+        content_store_entry_count: _content_store_state.fetch(:order, []).size,
+        content_store_total_bytes: _content_store_state.fetch(:total_bytes, 0)
+      }
     end
+    # rubocop:enable Metrics/AbcSize
 
     def _conversation_history_store
       history = @context[:conversation_history]
@@ -54,7 +85,7 @@ class Agent
         method_name: method_name.to_s,
         args: _conversation_history_safe(args),
         kwargs: _conversation_history_safe(kwargs),
-        outcome_summary: _conversation_history_outcome_summary(outcome),
+        outcome_summary: _conversation_history_outcome_summary(outcome, call_context: call_context),
         trace_id: call_context&.fetch(:trace_id, nil),
         parent_call_id: call_context&.fetch(:parent_call_id, nil),
         depth: call_context&.fetch(:depth, nil),
@@ -80,7 +111,7 @@ class Agent
       depth.zero? ? "user" : "tool"
     end
 
-    def _conversation_history_outcome_summary(outcome)
+    def _conversation_history_outcome_summary(outcome, call_context:)
       return { status: "unknown", ok: false, error_type: "unknown", retriable: false } unless outcome.is_a?(Outcome)
 
       summary = {
@@ -90,8 +121,31 @@ class Agent
         retriable: outcome.retriable
       }
       summary.merge!(_conversation_history_provenance_summary(outcome.value)) if outcome.ok?
+      should_capture_content = outcome.ok? || @runtime_config.fetch(:content_store_store_error_payloads, false)
+      summary.merge!(_conversation_history_content_summary(outcome: outcome, call_context: call_context)) if should_capture_content
       summary[:value_class] = outcome.value.class.name unless outcome.value.nil?
       summary
+    end
+
+    def _conversation_history_content_summary(outcome:, call_context:)
+      storage = _store_outcome_content_for_history(outcome: outcome, call_context: call_context)
+      @_last_content_store_write_result = storage
+      return {} unless storage[:stored]
+
+      {
+        content_ref: storage[:content_ref],
+        content_kind: storage[:content_kind],
+        content_bytes: storage[:content_bytes],
+        content_digest: storage[:content_digest]
+      }.compact
+    end
+
+    def _consume_last_content_store_write_result
+      value = @_last_content_store_write_result
+      @_last_content_store_write_result = nil
+      return {} unless value.is_a?(Hash)
+
+      value
     end
 
     def _conversation_history_provenance_summary(value)
@@ -162,4 +216,5 @@ class Agent
       hash_value[key] || hash_value[key.to_s]
     end
   end
+  # rubocop:enable Metrics/ModuleLength
 end

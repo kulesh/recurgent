@@ -10,6 +10,7 @@ require_relative "recurgent/json_normalization"
 require_relative "recurgent/outcome"
 require_relative "recurgent/conversation_history_normalization"
 require_relative "recurgent/conversation_history"
+require_relative "recurgent/content_store"
 require_relative "recurgent/outcome_contract_constraints"
 require_relative "recurgent/outcome_contract_shapes"
 require_relative "recurgent/outcome_contract_validator"
@@ -184,6 +185,7 @@ class Agent
   include Observability
   include JsonNormalization
   include ConversationHistory
+  include ContentStore
   include OutcomeContractValidator
   include Dependencies
   include KnownToolRanker
@@ -816,9 +818,20 @@ class Agent
   end
 
   def _apply_proposal_mutation(proposal:, actor:, note:)
+    proposal_id = proposal["id"].to_s
     proposal_type = proposal["proposal_type"].to_s
-    return nil unless proposal_type == "role_profile_update"
+    case proposal_type
+    when "role_profile_update"
+      _apply_role_profile_update_mutation(proposal: proposal, actor: actor, note: note)
+    when "content_retention_policy_update"
+      _apply_content_retention_policy_update_mutation(proposal: proposal, actor: actor, note: note)
+    end
+  rescue ArgumentError => e
+    _invalid_proposal_payload_outcome(proposal_id, e.message)
+  end
 
+  def _apply_role_profile_update_mutation(proposal:, actor:, note:)
+    proposal_type = proposal["proposal_type"].to_s
     target = proposal["target"]
     metadata = proposal["metadata"]
     action = if metadata.is_a?(Hash) && metadata["action"]
@@ -882,8 +895,57 @@ class Agent
     else
       _invalid_proposal_payload_outcome(proposal_id, "unsupported role_profile_update action '#{normalized_action}'")
     end
-  rescue ArgumentError => e
-    _invalid_proposal_payload_outcome(proposal_id, e.message)
+  end
+
+  def _apply_content_retention_policy_update_mutation(proposal:, actor:, note:)
+    policy = _proposal_content_retention_policy_payload(
+      target: proposal["target"],
+      metadata: proposal["metadata"]
+    )
+    proposal_id = proposal["id"].to_s
+    return _invalid_proposal_payload_outcome(proposal_id, "missing content retention policy payload") if policy.nil? || policy.empty?
+
+    Agent.configure_runtime(**policy)
+    @runtime_config = Agent.runtime_config
+    {
+      "proposal_type" => proposal["proposal_type"].to_s,
+      "action" => "apply_runtime_policy",
+      "policy" => _json_safe(policy),
+      "actor" => actor.to_s,
+      "note" => note.to_s
+    }.compact
+  end
+
+  def _proposal_content_retention_policy_payload(target:, metadata:)
+    payload = metadata["content_retention_policy"] || metadata[:content_retention_policy] if metadata.is_a?(Hash)
+    payload ||= target["content_retention_policy"] || target[:content_retention_policy] if target.is_a?(Hash)
+    if target.is_a?(Hash)
+      allowed_key_names = %w[
+        content_store_max_entries
+        content_store_max_bytes
+        content_store_ttl_seconds
+        content_store_nested_capture_enabled
+        content_store_store_error_payloads
+      ]
+      payload ||= target if target.keys.any? { |key| allowed_key_names.include?(key.to_s) }
+    end
+    return nil unless payload.is_a?(Hash)
+
+    allowed_keys = %i[
+      content_store_max_entries
+      content_store_max_bytes
+      content_store_ttl_seconds
+      content_store_nested_capture_enabled
+      content_store_store_error_payloads
+    ]
+    normalized = {}
+    payload.each do |key, value|
+      normalized_key = key.to_sym
+      raise ArgumentError, "unsupported content retention key '#{key}'" unless allowed_keys.include?(normalized_key)
+
+      normalized[normalized_key] = value
+    end
+    normalized
   end
 
   def _proposal_role_profile_payload(target:, metadata:)

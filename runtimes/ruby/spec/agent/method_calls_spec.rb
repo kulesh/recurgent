@@ -760,6 +760,107 @@ RSpec.describe Agent do
       )
     end
 
+    it "stores content continuity refs in conversation history summaries for successful outcomes" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          result = {
+            message: "hello",
+            items: [1, 2, 3]
+          }
+        RUBY
+      )
+
+      expect_ok_outcome(g.ask("hello"), value: { message: "hello", items: [1, 2, 3] })
+      summary = g.runtime_context.fetch(:conversation_history).last.fetch(:outcome_summary)
+      expect(summary[:content_ref]).to match(/\Acontent:/)
+      expect(summary[:content_kind]).to eq("object")
+      expect(summary[:content_bytes]).to be_a(Integer)
+      expect(summary[:content_bytes]).to be > 0
+      expect(summary[:content_digest]).to match(/\Asha256:/)
+    end
+
+    it "does not store depth>=1 content refs by default when nested capture is disabled" do
+      g = described_class.new("assistant")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            worker = delegate("echo_worker")
+            worker.ask("nested")
+            nested_summary = worker.runtime_context.fetch(:conversation_history).last.fetch(:outcome_summary)
+            result = nested_summary[:content_ref] || nested_summary["content_ref"]
+          RUBY
+        ),
+        program_payload(code: 'result = "nested response"')
+      )
+
+      expect_ok_outcome(g.ask("run nested"), value: nil)
+    end
+
+    it "stores depth>=1 content refs when nested capture is explicitly enabled in runtime config" do
+      Agent.configure_runtime(toolstore_root: runtime_toolstore_root, content_store_nested_capture_enabled: true)
+      g = described_class.new("assistant")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            worker = delegate("echo_worker")
+            worker.ask("nested")
+            nested_summary = worker.runtime_context.fetch(:conversation_history).last.fetch(:outcome_summary)
+            result = nested_summary[:content_ref] || nested_summary["content_ref"]
+          RUBY
+        ),
+        program_payload(code: 'result = "nested response"')
+      )
+
+      outcome = g.ask("run nested")
+      expect(outcome).to be_ok
+      expect(outcome.value).to match(/\Acontent:/)
+    end
+
+    it "allows generated code to resolve prior payloads via content(ref)" do
+      g = described_class.new("assistant")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: 'result = { "snippet" => "QuickSort implementation in Smalltalk" }'),
+        program_payload(
+          code: <<~RUBY
+            history = context[:conversation_history] || []
+            summary = history.last[:outcome_summary] || history.last["outcome_summary"] || {}
+            ref = summary[:content_ref] || summary["content_ref"]
+            result = content(ref)
+          RUBY
+        )
+      )
+
+      expect_ok_outcome(
+        g.ask("write quicksort in smalltalk"),
+        value: { "snippet" => "QuickSort implementation in Smalltalk" }
+      )
+      expect_ok_outcome(
+        g.ask("format that in markdown"),
+        value: { "snippet" => "QuickSort implementation in Smalltalk" }
+      )
+    end
+
+    it "supports typed content_ref_not_found handling when content(ref) misses" do
+      g = described_class.new("assistant")
+      stub_llm_response(
+        <<~RUBY
+          payload = content("content:missing")
+          if payload.nil?
+            result = Agent::Outcome.error(
+              error_type: "content_ref_not_found",
+              error_message: "Referenced content is unavailable.",
+              retriable: false
+            )
+          else
+            result = payload
+          end
+        RUBY
+      )
+
+      expect_error_outcome(g.ask("format previous response"), type: "content_ref_not_found", retriable: false)
+    end
+
     it "returns invalid_dependency_manifest outcome when dependencies is not an array" do
       g = described_class.new("calculator")
       allow(mock_provider).to receive(:generate_program).and_return(

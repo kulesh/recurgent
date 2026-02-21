@@ -476,6 +476,36 @@ RSpec.describe Agent do
       expect(g.role_profile.dig(:constraints, :accumulator_slot, :mode)).to eq(:coordination)
     end
 
+    it "applies approved content retention policy proposals through authority lanes" do
+      Agent.configure_runtime(
+        toolstore_root: runtime_toolstore_root,
+        authority_enforcement_enabled: true,
+        authority_maintainers: ["maintainer"],
+        content_store_max_entries: 128
+      )
+      g = described_class.new("planner")
+      proposal = g.propose(
+        proposal_type: "content_retention_policy_update",
+        target: { content_store_max_entries: 32, content_store_nested_capture_enabled: true },
+        proposed_diff_summary: "reduce entry window and opt in nested capture",
+        evidence_refs: ["trace:content-retention-v1"]
+      )
+
+      expect_ok_outcome(g.approve_proposal(proposal[:id], actor: "maintainer"), value: g.proposal(proposal[:id]))
+      applied = g.apply_proposal(proposal[:id], actor: "maintainer", note: "apply content retention tuning")
+      expect_ok_outcome(applied, value: applied.value)
+      expect(applied.value["status"]).to eq("applied")
+      mutation = applied.value.fetch("applied_mutation")
+      expect(mutation["proposal_type"]).to eq("content_retention_policy_update")
+      policy = mutation["policy"] || mutation[:policy] || {}
+      expect(policy["content_store_max_entries"] || policy[:content_store_max_entries]).to eq(32)
+      expect(policy["content_store_nested_capture_enabled"] || policy[:content_store_nested_capture_enabled]).to eq(true)
+
+      runtime = Agent.runtime_config
+      expect(runtime[:content_store_max_entries]).to eq(32)
+      expect(runtime[:content_store_nested_capture_enabled]).to eq(true)
+    end
+
     it "builds agents via Agent.for" do
       g = described_class.for("calculator")
       expect(g).to be_a(described_class)

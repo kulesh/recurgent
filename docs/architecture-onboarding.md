@@ -458,6 +458,35 @@ Layer read order:
 
 ---
 
+## Infrastructure Primitives Catalog (Purpose + Mechanism + Code)
+
+The runtime has multiple infrastructure primitives. They are orthogonal by design: each has a narrow job and composes with others.
+
+| Primitive | Purpose | How it works | Primary code |
+| --- | --- | --- | --- |
+| Dynamic Dispatch | Make unknown domain methods executable without predeclared interfaces. | `method_missing` routes unresolved calls into generate -> validate -> execute lifecycle. | [`runtimes/ruby/lib/recurgent.rb`](../runtimes/ruby/lib/recurgent.rb), [`runtimes/ruby/lib/recurgent/call_execution.rb`](../runtimes/ruby/lib/recurgent/call_execution.rb) |
+| Outcome Boundary | Keep success/failure semantics typed and composable across delegation. | Every return is coerced into `Agent::Outcome`; callers consume `ok?/error?`, `value`, `error_type`, `retriable`. | [`runtimes/ruby/lib/recurgent/outcome.rb`](../runtimes/ruby/lib/recurgent/outcome.rb) |
+| Contract Validation | Prevent silent shape drift at delegation boundaries. | Delegated outputs are checked against declared contracts with tolerant canonicalization before acceptance. | [`runtimes/ruby/lib/recurgent/outcome_contract_validator.rb`](../runtimes/ruby/lib/recurgent/outcome_contract_validator.rb) |
+| Guardrails + Repair Lanes | Recover from common generation/runtime failures without leaking partial state. | Validation-first retries, bounded repair budgets, and retry feedback injection across code/outcome lanes. | [`runtimes/ruby/lib/recurgent/fresh_generation.rb`](../runtimes/ruby/lib/recurgent/fresh_generation.rb), [`runtimes/ruby/lib/recurgent/fresh_outcome_repair.rb`](../runtimes/ruby/lib/recurgent/fresh_outcome_repair.rb), [`runtimes/ruby/lib/recurgent/guardrail_code_checks.rb`](../runtimes/ruby/lib/recurgent/guardrail_code_checks.rb) |
+| Attempt Isolation | Ensure failed attempts do not pollute committed runtime state. | Snapshot-and-rollback around attempts; commit only on successful terminal attempt. | [`runtimes/ruby/lib/recurgent/attempt_isolation.rb`](../runtimes/ruby/lib/recurgent/attempt_isolation.rb) |
+| Execution Isolation | Prevent generated methods from leaking onto host agent surface. | Generated code executes inside disposable `ExecutionSandbox` receivers. | [`runtimes/ruby/lib/recurgent/execution_sandbox.rb`](../runtimes/ruby/lib/recurgent/execution_sandbox.rb), [`runtimes/ruby/lib/recurgent.rb`](../runtimes/ruby/lib/recurgent.rb) |
+| Dependency Environment | Run dependency-bearing generated code deterministically and safely. | Dependency manifests map to environment IDs; worker execution for dependency paths. | [`runtimes/ruby/lib/recurgent/dependencies.rb`](../runtimes/ruby/lib/recurgent/dependencies.rb), [`runtimes/ruby/lib/recurgent/worker_execution.rb`](../runtimes/ruby/lib/recurgent/worker_execution.rb) |
+| Continuity Infrastructure | Preserve coherence across turns/sessions in multiple dimensions. | Four layers: state (`context`), event (`conversation_history`), executable (artifacts/tools), response-content (`content_ref` + content store). | [`runtimes/ruby/lib/recurgent/conversation_history.rb`](../runtimes/ruby/lib/recurgent/conversation_history.rb), [`runtimes/ruby/lib/recurgent/content_store.rb`](../runtimes/ruby/lib/recurgent/content_store.rb), [`runtimes/ruby/lib/recurgent/artifact_store.rb`](../runtimes/ruby/lib/recurgent/artifact_store.rb), [`runtimes/ruby/lib/recurgent/tool_store.rb`](../runtimes/ruby/lib/recurgent/tool_store.rb) |
+| Persistence Infrastructure | Retain tool/artifact identity and evidence across sessions. | Tool registry + versioned artifact store + metadata/scorecards persisted under toolstore root. | [`runtimes/ruby/lib/recurgent/tool_store.rb`](../runtimes/ruby/lib/recurgent/tool_store.rb), [`runtimes/ruby/lib/recurgent/artifact_store.rb`](../runtimes/ruby/lib/recurgent/artifact_store.rb) |
+| Promotion Infrastructure | Convert observed reliability into explicit lifecycle transitions. | Scorecards + policy gating over `candidate -> probation -> durable -> degraded`. | [`runtimes/ruby/lib/recurgent/artifact_metrics.rb`](../runtimes/ruby/lib/recurgent/artifact_metrics.rb), [`runtimes/ruby/lib/recurgent/artifact_selector.rb`](../runtimes/ruby/lib/recurgent/artifact_selector.rb) |
+| Role Coherence Infrastructure | Enforce sibling-method semantic coherence for role-like agents. | Opt-in role profiles with coordination/prescriptive constraints evaluated through recoverable guardrail lanes. | [`runtimes/ruby/lib/recurgent/role_profile_guard.rb`](../runtimes/ruby/lib/recurgent/role_profile_guard.rb), [`runtimes/ruby/lib/recurgent/role_profile_registry.rb`](../runtimes/ruby/lib/recurgent/role_profile_registry.rb) |
+| Awareness Infrastructure | Expose runtime self-model as data for inspection and proposal quality. | Call state captures awareness level, authority tuple, active contract/profile versions, and snapshot refs. | [`runtimes/ruby/lib/recurgent/call_state.rb`](../runtimes/ruby/lib/recurgent/call_state.rb) |
+| Authority + Governance Infrastructure | Separate propose from enact; keep mutations auditable and approved. | Proposal artifacts, approval/apply workflow, maintainer-gated mutation paths. | [`runtimes/ruby/lib/recurgent/proposal_store.rb`](../runtimes/ruby/lib/recurgent/proposal_store.rb), [`runtimes/ruby/lib/recurgent/authority.rb`](../runtimes/ruby/lib/recurgent/authority.rb), [`runtimes/ruby/lib/recurgent.rb`](../runtimes/ruby/lib/recurgent.rb) |
+| Observability Infrastructure | Make runtime behavior mechanically inspectable and testable from traces. | JSONL logs capture prompts, outcomes, attempts, contracts, continuity, and lifecycle fields. | [`runtimes/ruby/lib/recurgent/observability.rb`](../runtimes/ruby/lib/recurgent/observability.rb), [`docs/observability.md`](observability.md) |
+
+Reading rule of thumb:
+
+1. If you are changing execution mechanics, touch dispatch + guardrail + observability together.
+2. If you are changing semantic correctness, touch role profiles/contracts before promotion policy.
+3. If you are changing policy, route mutation through authority-governed proposal paths.
+
+---
+
 ## Chapter 14: ADR and Plan Ladder (Why the System Looks Like This)
 
 The architecture is cumulative, not monolithic.

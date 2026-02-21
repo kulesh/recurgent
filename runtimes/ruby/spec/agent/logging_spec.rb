@@ -612,6 +612,31 @@ RSpec.describe Agent do
       expect(entry["history_query_patterns"]).to include("map")
     end
 
+    it "logs content store read telemetry when generated code resolves content(ref)" do
+      g = described_class.new("assistant", log: log_path, debug: true)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: 'result = { "snippet" => "hello" }'),
+        program_payload(
+          code: <<~RUBY
+            history = context[:conversation_history] || []
+            summary = history.last[:outcome_summary] || history.last["outcome_summary"] || {}
+            ref = summary[:content_ref] || summary["content_ref"]
+            result = content(ref)
+          RUBY
+        )
+      )
+
+      expect_ok_outcome(g.ask("first"), value: { "snippet" => "hello" })
+      expect_ok_outcome(g.ask("follow-up"), value: { "snippet" => "hello" })
+
+      entries = File.readlines(log_path).map { |line| JSON.parse(line) }
+      second = entries.last
+      expect(second["content_store_read_hit_count"]).to eq(1)
+      expect(second["content_store_read_miss_count"]).to eq(0)
+      expect(second["content_store_read_refs"]).to be_an(Array)
+      expect(second["content_store_read_refs"].first).to match(/\Acontent:/)
+    end
+
     it "logs inspect fallback for non-JSON outcome values in debug mode" do
       g = described_class.new("calculator", log: log_path, debug: true)
       stub_llm_response("result = Object.new")

@@ -30,6 +30,10 @@ class Agent
       @agent.remember(**entries)
     end
 
+    def content(ref)
+      @agent.send(:_resolve_content_ref, ref)
+    end
+
     def runtime_context
       @agent.runtime_context
     end
