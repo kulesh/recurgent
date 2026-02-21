@@ -63,6 +63,15 @@ class Agent
       )
       state.history_record_appended = history_append[:appended]
       state.conversation_history_size = history_append[:size]
+      state.content_store_write_applied = history_append[:content_store_write_applied]
+      state.content_store_write_ref = history_append[:content_store_write_ref]
+      state.content_store_write_kind = history_append[:content_store_write_kind]
+      state.content_store_write_bytes = history_append[:content_store_write_bytes]
+      state.content_store_write_digest = history_append[:content_store_write_digest]
+      state.content_store_write_skipped_reason = history_append[:content_store_write_skipped_reason]
+      state.content_store_eviction_count = history_append[:content_store_eviction_count]
+      state.content_store_entry_count = history_append[:content_store_entry_count]
+      state.content_store_total_bytes = history_append[:content_store_total_bytes]
       _record_pattern_memory_event(method_name: name, state: state, call_context: call_context)
       _persist_method_artifact_for_call(method_name: name, state: state, duration_ms: duration_ms)
       _finalize_solver_shape_state!(state) if @runtime_config.fetch(:solver_shape_capture_enabled, true)
@@ -105,7 +114,12 @@ class Agent
           )
         else
           state.execution_receiver = "sandbox"
+          _content_store_reset_read_trace!
           result = _execute_code(code, name, *args, **kwargs)
+          read_trace = _content_store_read_trace_snapshot
+          state.content_store_read_hit_count = read_trace[:hits]
+          state.content_store_read_miss_count = read_trace[:misses]
+          state.content_store_read_refs = read_trace[:refs]
           Outcome.coerce(result, tool_role: @role, method_name: name)
         end
 

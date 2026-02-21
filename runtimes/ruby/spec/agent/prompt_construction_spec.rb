@@ -40,6 +40,17 @@ RSpec.describe Agent do
       g.ask("latest")
     end
 
+    it "includes content continuity helper guidance in system prompt" do
+      g = described_class.new("assistant")
+      expect_llm_call_with(
+        code: "result = nil",
+        system_prompt: a_string_including("content(ref)")
+                       .and(including("outcome_summary.content_ref"))
+                       .and(including("returns `nil` if missing/evicted"))
+      )
+      g.ask("format previous response")
+    end
+
     it "includes context state in user prompt" do
       g = described_class.new("calculator")
       g.value = 5
@@ -65,11 +76,15 @@ RSpec.describe Agent do
         user_prompt: satisfy do |prompt|
           history_access_hint = "History contents are available in context[:conversation_history]. " \
                                 "Inspect via generated Ruby code when needed; prompt does not preload records."
-          schema_hint = "Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, outcome_summary."
+          schema_hint = "Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, " \
+                        "outcome_summary(status, ok, error_type, retriable, value_class, content_ref, " \
+                        "content_kind, content_bytes, content_digest, source_count, primary_uri, retrieval_mode)."
+          followup_hint = "For follow-up transforms, use outcome_summary.content_ref + content(ref)."
           prompt.include?("<conversation_history>") &&
             prompt.include?("<record_count>4</record_count>") &&
             prompt.include?(history_access_hint) &&
             prompt.include?(schema_hint) &&
+            prompt.include?(followup_hint) &&
             !prompt.include?("<recent_records>") &&
             !prompt.include?("c2") &&
             !prompt.include?("c3") &&

@@ -119,6 +119,7 @@ class Agent
         - `context` is working memory.
         - `context[:tools]` is the tool registry metadata.
         - `context[:conversation_history]` is prior structured call history.
+        - `content(ref)` retrieves stored payload for `outcome_summary.content_ref`; returns `nil` if missing/evicted.
         - If a role profile is active, it defines continuity constraints for sibling methods.
         - Identity context: you are this role. If the registry contains your role name, that entry refers to you.
         - Do NOT materialize yourself with `tool("same_role_name")` or `delegate("same_role_name", ...)`; implement directly.
@@ -148,6 +149,7 @@ class Agent
         - `context` is working memory.
         - `context[:tools]` is the tool registry metadata.
         - `context[:conversation_history]` is prior structured call history.
+        - `content(ref)` retrieves stored payload for `outcome_summary.content_ref`; returns `nil` if missing/evicted.
         - If a role profile is active, it defines continuity constraints for sibling methods.
         - Identity context: you are this role. If the registry contains your role name, that entry refers to you.
         - Do NOT materialize yourself with `tool("same_role_name")` or `delegate("same_role_name", ...)`; implement directly.
@@ -240,6 +242,8 @@ class Agent
           - Tool registry metadata is available in full at `context[:tools]` (authoritative).
           - `<known_tools>` is only a preview; both are metadata, not callable objects.
           - Materialize reusable capabilities with `tool("tool_name")` or `delegate("tool_name", ...)`.
+          - For content follow-ups ("that", "previous answer", "format it"), inspect `context[:conversation_history]`,
+            resolve `outcome_summary.content_ref`, and fetch body via `content(ref)` before transforming.
           - Ask:
               1. What capability is required?
               2. Is it already available in `context[:tools]`?
@@ -486,7 +490,8 @@ class Agent
         <conversation_history>
         <record_count>#{history.length}</record_count>
         <access_hint>History contents are available in context[:conversation_history]. Inspect via generated Ruby code when needed; prompt does not preload records.</access_hint>
-        <record_schema>Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, outcome_summary.</record_schema>
+        <record_schema>Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, outcome_summary(status, ok, error_type, retriable, value_class, content_ref, content_kind, content_bytes, content_digest, source_count, primary_uri, retrieval_mode).</record_schema>
+        <followup_protocol>For follow-up transforms, use outcome_summary.content_ref + content(ref). If missing, return typed `content_ref_not_found` or `low_utility` instead of fabricating prior content.</followup_protocol>
         </conversation_history>
       HISTORY
     end
@@ -894,6 +899,45 @@ class Agent
           delta = kwargs[:amount] || args.first || 1
           context[:value] = current - delta.to_f
           result = context[:value]
+          ```
+          </pattern>
+
+          <pattern kind="content_followup_transform">
+          ```ruby
+          # Content follow-up workflow: find history ref -> fetch content -> transform.
+          history = context[:conversation_history] || []
+          latest = history.reverse.find do |record|
+            summary = record[:outcome_summary] || record["outcome_summary"] || {}
+            ref = summary[:content_ref] || summary["content_ref"]
+            ref && !ref.to_s.strip.empty?
+          end
+
+          if latest.nil?
+            result = Agent::Outcome.error(
+              error_type: "content_ref_not_found",
+              error_message: "No prior content reference found in conversation history.",
+              retriable: false,
+              tool_role: @role,
+              method_name: "#{name}"
+            )
+            return
+          end
+
+          summary = latest[:outcome_summary] || latest["outcome_summary"] || {}
+          ref = summary[:content_ref] || summary["content_ref"]
+          payload = content(ref)
+          if payload.nil?
+            result = Agent::Outcome.error(
+              error_type: "content_ref_not_found",
+              error_message: "Referenced prior content is unavailable (missing or evicted).",
+              retriable: true,
+              tool_role: @role,
+              method_name: "#{name}"
+            )
+            return
+          end
+
+          result = payload.to_s
           ```
           </pattern>
 

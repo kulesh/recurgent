@@ -45,6 +45,7 @@ class Agent
 
       _normalize_conversation_history_outcome_summary_base(raw_summary)
         .merge(_normalize_conversation_history_outcome_summary_provenance(raw_summary))
+        .merge(_normalize_conversation_history_outcome_summary_content(raw_summary))
     end
 
     def _normalize_conversation_history_outcome_summary_base(raw_summary)
@@ -69,6 +70,20 @@ class Agent
       normalized
     end
 
+    def _normalize_conversation_history_outcome_summary_content(raw_summary)
+      content_ref = _normalize_conversation_history_content_ref(_conversation_history_value(raw_summary, :content_ref))
+      content_kind = _normalize_conversation_history_optional_string(_conversation_history_value(raw_summary, :content_kind))
+      content_bytes = _normalize_conversation_history_source_count(_conversation_history_value(raw_summary, :content_bytes))
+      content_digest = _normalize_conversation_history_optional_string(_conversation_history_value(raw_summary, :content_digest))
+
+      normalized = {}
+      normalized[:content_ref] = content_ref unless content_ref.nil?
+      normalized[:content_kind] = content_kind unless content_kind.nil?
+      normalized[:content_bytes] = content_bytes unless content_bytes.nil?
+      normalized[:content_digest] = content_digest unless content_digest.nil?
+      normalized
+    end
+
     def _normalize_conversation_history_source_count(value)
       return nil if value.nil?
 
@@ -77,6 +92,14 @@ class Agent
 
       parsed
     rescue ArgumentError, TypeError
+      nil
+    end
+
+    def _normalize_conversation_history_content_ref(value)
+      normalized = _normalize_conversation_history_optional_string(value)
+      return nil if normalized.nil?
+      return normalized if normalized.start_with?("content:")
+
       nil
     end
 

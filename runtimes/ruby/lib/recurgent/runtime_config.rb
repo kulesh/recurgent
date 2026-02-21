@@ -9,10 +9,16 @@ class Agent
     promotion_enforcement_enabled
     role_profile_shadow_mode_enabled
     role_profile_enforcement_enabled
+    content_store_max_entries
+    content_store_max_bytes
+    content_store_ttl_seconds
+    content_store_nested_capture_enabled
+    content_store_store_error_payloads
     authority_enforcement_enabled
     authority_maintainers
   ].freeze
 
+  # rubocop:disable Metrics/MethodLength
   def self.runtime_config
     @runtime_config ||= {
       gem_sources: DEFAULT_GEM_SOURCES.dup,
@@ -38,6 +44,27 @@ class Agent
       role_profile_enforcement_enabled: _normalize_runtime_bool(
         ENV.fetch("RECURGENT_ROLE_PROFILE_ENFORCEMENT_ENABLED", "false")
       ),
+      content_store_max_entries: _normalize_runtime_positive_integer(
+        ENV.fetch("RECURGENT_CONTENT_STORE_MAX_ENTRIES", "128"),
+        field: "content_store_max_entries",
+        allow_nil: false
+      ),
+      content_store_max_bytes: _normalize_runtime_positive_integer(
+        ENV.fetch("RECURGENT_CONTENT_STORE_MAX_BYTES", "2097152"),
+        field: "content_store_max_bytes",
+        allow_nil: false
+      ),
+      content_store_ttl_seconds: _normalize_runtime_positive_integer(
+        ENV.fetch("RECURGENT_CONTENT_STORE_TTL_SECONDS", ""),
+        field: "content_store_ttl_seconds",
+        allow_nil: true
+      ),
+      content_store_nested_capture_enabled: _normalize_runtime_bool(
+        ENV.fetch("RECURGENT_CONTENT_STORE_NESTED_CAPTURE_ENABLED", "false")
+      ),
+      content_store_store_error_payloads: _normalize_runtime_bool(
+        ENV.fetch("RECURGENT_CONTENT_STORE_STORE_ERROR_PAYLOADS", "false")
+      ),
       authority_enforcement_enabled: _normalize_runtime_bool(
         ENV.fetch("RECURGENT_AUTHORITY_ENFORCEMENT_ENABLED", "true")
       ),
@@ -46,6 +73,7 @@ class Agent
       )
     }
   end
+  # rubocop:enable Metrics/MethodLength
 
   def self.configure_runtime(gem_sources: nil, source_mode: nil, allowed_gems: nil, blocked_gems: nil, **options)
     config = runtime_config.dup
@@ -77,6 +105,7 @@ class Agent
     Array(value).map { |name| name.to_s.strip.downcase }.reject(&:empty?).uniq
   end
 
+  # rubocop:disable Metrics/MethodLength
   def self._apply_toolstore_runtime_options!(config, options)
     unknown_options = options.keys - TOOLSTORE_CONFIG_KEYS
     raise ArgumentError, "Unknown runtime config options: #{unknown_options.join(", ")}" unless unknown_options.empty?
@@ -98,6 +127,33 @@ class Agent
     if options.key?(:role_profile_enforcement_enabled)
       config[:role_profile_enforcement_enabled] = _normalize_runtime_bool(options[:role_profile_enforcement_enabled])
     end
+    if options.key?(:content_store_max_entries)
+      config[:content_store_max_entries] = _normalize_runtime_positive_integer(
+        options[:content_store_max_entries],
+        field: "content_store_max_entries",
+        allow_nil: false
+      )
+    end
+    if options.key?(:content_store_max_bytes)
+      config[:content_store_max_bytes] = _normalize_runtime_positive_integer(
+        options[:content_store_max_bytes],
+        field: "content_store_max_bytes",
+        allow_nil: false
+      )
+    end
+    if options.key?(:content_store_ttl_seconds)
+      config[:content_store_ttl_seconds] = _normalize_runtime_positive_integer(
+        options[:content_store_ttl_seconds],
+        field: "content_store_ttl_seconds",
+        allow_nil: true
+      )
+    end
+    if options.key?(:content_store_nested_capture_enabled)
+      config[:content_store_nested_capture_enabled] = _normalize_runtime_bool(options[:content_store_nested_capture_enabled])
+    end
+    if options.key?(:content_store_store_error_payloads)
+      config[:content_store_store_error_payloads] = _normalize_runtime_bool(options[:content_store_store_error_payloads])
+    end
     if options.key?(:authority_enforcement_enabled)
       config[:authority_enforcement_enabled] = _normalize_runtime_bool(options[:authority_enforcement_enabled])
     end
@@ -105,6 +161,7 @@ class Agent
 
     config[:authority_maintainers] = _normalize_runtime_maintainers(options[:authority_maintainers])
   end
+  # rubocop:enable Metrics/MethodLength
 
   def self._normalize_runtime_maintainers(value)
     return [] if value.nil?
@@ -121,5 +178,22 @@ class Agent
     return false if %w[0 false no off].include?(normalized)
 
     false
+  end
+
+  def self._normalize_runtime_positive_integer(value, field:, allow_nil:)
+    return nil if allow_nil && (value.nil? || value.to_s.strip.empty?)
+
+    error_suffix = allow_nil ? " or nil" : ""
+
+    parsed = if value.is_a?(Integer)
+               value
+             else
+               Integer(value.to_s, 10)
+             end
+    raise ArgumentError, "#{field} must be an Integer > 0#{error_suffix}" unless parsed.positive?
+
+    parsed
+  rescue ArgumentError, TypeError
+    raise ArgumentError, "#{field} must be an Integer > 0#{error_suffix}"
   end
 end
