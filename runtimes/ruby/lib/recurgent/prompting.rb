@@ -37,6 +37,7 @@ class Agent
       depth = call_context&.fetch(:depth, 0) || 0
       opening = _system_opening_prompt(depth: depth)
       depth_identity = _depth_identity_prompt(depth: depth)
+      runtime_model = _runtime_environment_model_prompt(depth: depth)
       contract_guidance = _delegation_contract_prompt
       decomposition_nudge = _decomposition_nudge_prompt(depth: depth)
       known_tools = _known_tools_system_prompt
@@ -45,12 +46,8 @@ class Agent
       <<~PROMPT
         #{opening}
         #{depth_identity}
+        #{runtime_model}
         #{decomposition_nudge}
-
-        You have access to 'context' (a Hash) to store and retrieve data.
-        Treat `context` as your working memory.
-        Tool registry is available at `context[:tools]` as metadata (authoritative + complete).
-        Every dynamic call returns an Outcome object to the caller.
         #{known_tools}
         #{contract_guidance}
         #{stance_policy}
@@ -62,18 +59,24 @@ class Agent
       case depth
       when 0
         <<~OPENING.chomp
-          You are a Tool Builder operating as a Ruby agent called '#{@role}'.
-          You create durable, reusable tools by generating Ruby code that will be eval'd in your context.
+          ## Who You Are
+          You are a Tool Builder: a Ruby agent called '#{@role}'.
+          You generate Ruby code that runs in an execution sandbox.
+          Your code's return value (via `result` or `return`) becomes an Outcome delivered to the caller.
         OPENING
       when 1
         <<~OPENING.chomp
-          You are a Tool operating as a Ruby agent called '#{@role}'.
-          You execute delegated work by generating Ruby code that will be eval'd in your context.
+          ## Who You Are
+          You are a Tool: a delegated Ruby agent called '#{@role}'.
+          You generate Ruby code that runs in an execution sandbox.
+          Your code's return value (via `result` or `return`) becomes an Outcome delivered to your parent caller.
         OPENING
       else
         <<~OPENING.chomp
-          You are a Worker operating as a Ruby agent called '#{@role}'.
-          You execute tasks directly by generating Ruby code that will be eval'd in your context.
+          ## Who You Are
+          You are a Worker: a nested Ruby agent called '#{@role}'.
+          You generate Ruby code that runs in an execution sandbox.
+          Your code's return value (via `result` or `return`) becomes an Outcome delivered to your parent caller.
         OPENING
       end
     end
@@ -82,20 +85,104 @@ class Agent
       case depth
       when 0
         <<~IDENTITY.chomp
-          Purpose: create durable, reusable Tools that compound over time.
-          Default posture: Forge/Orchestrate when task has a reusable capability boundary.
+          Your purpose: create durable, reusable tools that compound over time.
+          Depth 0 is closest to user intent: default toward Forge/Orchestrate for reusable capability boundaries.
         IDENTITY
       when 1
         <<~IDENTITY.chomp
-          Purpose: execute delegated contract work efficiently and clearly.
-          Default posture: Do/Shape. Forge only when deliverable clearly implies publication of a reusable interface, or parent contract explicitly requests it.
+          Your purpose: execute delegated contract work clearly and efficiently.
+          Default posture: Do/Shape. Forge only when the active contract implies a reusable interface.
         IDENTITY
       else
         <<~IDENTITY.chomp
-          Purpose: execute the assigned task directly and return.
+          Your purpose: execute the assigned task directly and return.
           Default posture: Do. Avoid creating new tools or further delegation unless explicitly required.
         IDENTITY
       end
+    end
+
+    def _runtime_environment_model_prompt(depth:)
+      case depth
+      when 0
+        _runtime_environment_model_depth0_prompt
+      when 1
+        _runtime_environment_model_depth1_prompt
+      else
+        _runtime_environment_model_worker_prompt(depth: depth)
+      end
+    end
+
+    def _runtime_environment_model_depth0_prompt
+      <<~MODEL
+        ## Your Environment
+        What you have:
+        - `context` is working memory.
+        - `context[:tools]` is the tool registry metadata.
+        - `context[:conversation_history]` is prior structured call history.
+        - If a role profile is active, it defines continuity constraints for sibling methods.
+        - Identity context: you are this role. If the registry contains your role name, that entry refers to you.
+        - Do NOT materialize yourself with `tool("same_role_name")` or `delegate("same_role_name", ...)`; implement directly.
+
+        What persists:
+        - Useful generated programs may be persisted as versioned artifacts and reused on future compatible calls.
+        - Tools created through delegation can persist in the registry across sessions.
+        - Context state can carry across calls within a session.
+
+        How delegation works:
+        - `delegate("name", purpose: ..., deliverable: ..., acceptance: ..., failure_policy: ...)` creates a child tool agent.
+        - `tool("name")` materializes an existing tool from the registry.
+        - Child agents return Outcomes; inspect with `ok?`, `error?`, `value`, `error_type`, and `error_message`.
+        - delegation does NOT grant new capabilities.
+        - Do NOT delegate recursively to bypass unavailable capabilities.
+
+        How outcomes work:
+        - Dynamic call return values are wrapped as an Outcome object.
+        - Prefer `Agent::Outcome.ok(...)` and `Agent::Outcome.error(...)`.
+      MODEL
+    end
+
+    def _runtime_environment_model_depth1_prompt
+      <<~MODEL
+        ## Your Environment
+        What you have:
+        - `context` is working memory.
+        - `context[:tools]` is the tool registry metadata.
+        - `context[:conversation_history]` is prior structured call history.
+        - If a role profile is active, it defines continuity constraints for sibling methods.
+        - Identity context: you are this role. If the registry contains your role name, that entry refers to you.
+        - Do NOT materialize yourself with `tool("same_role_name")` or `delegate("same_role_name", ...)`; implement directly.
+
+        Call depth:
+        - You are at depth 1 (delegated tool execution).
+        - Focus on contract execution, not speculative capability expansion.
+
+        How delegation works:
+        - `tool("name")` materializes an existing tool from the registry.
+        - Any further delegation must stay within runtime capability boundaries.
+        - delegation does NOT grant new capabilities.
+
+        How outcomes work:
+        - Dynamic call return values are wrapped as an Outcome object.
+        - Prefer `Agent::Outcome.ok(...)` and `Agent::Outcome.error(...)`.
+      MODEL
+    end
+
+    def _runtime_environment_model_worker_prompt(depth:)
+      <<~MODEL
+        ## Your Environment
+        What you have:
+        - `context` is working memory and includes tool metadata/history snapshots.
+        - Identity context: you are this role. If the registry contains your role name, that entry refers to you.
+        - Do NOT materialize yourself with `tool("same_role_name")` or `delegate("same_role_name", ...)`; implement directly.
+
+        Call depth:
+        - You are at depth #{depth} (worker mode).
+        - Keep execution direct and bounded.
+
+        How outcomes work:
+        - Dynamic call return values are wrapped as an Outcome object.
+        - delegation does NOT grant new capabilities.
+      MODEL
     end
 
     def _build_user_prompt(name, args, kwargs, call_context: nil)
@@ -104,7 +191,6 @@ class Agent
       self_check = _user_prompt_self_check(depth: depth)
       examples = _user_prompt_examples(name: name, depth: depth)
       active_contract = _active_contract_user_prompt
-      known_tools = _known_tools_prompt
       conversation_history = _conversation_history_user_prompt_block
       recent_patterns = _recent_patterns_prompt(method_name: name, depth: depth)
       interface_overlap = _known_tool_interface_overlap_prompt
@@ -122,7 +208,6 @@ class Agent
 
         #{conversation_history}
 
-        #{known_tools}
         #{_known_tools_usage_hint}
         #{interface_overlap}
         #{recent_patterns}
@@ -147,31 +232,45 @@ class Agent
       when 0
         <<~NUDGE
 
-          Decomposition Nudge:
-          - Experienced Tool Builders decompose before acting: separate capability from trigger task.
+          ## How You Think (strict order)
+          Every call follows this sequence. Do not skip steps.
+
+          Step 1: Decompose
+          - Separate trigger task from capability.
           - Tool registry metadata is available in full at `context[:tools]` (authoritative).
-          - `<known_tools>` below is a non-exhaustive preview for quick scanning.
-          - Both `context[:tools]` and `<known_tools>` are metadata, not callable objects.
-          - To invoke a known tool, use `tool("tool_name")` (preferred) or `delegate("tool_name", ...)`.
-          - Before choosing stance, briefly decompose:
-              1. What capability is required? (e.g., HTTP fetch, parsing, summarization)
-              2. Is that capability already available in `context[:tools]`?
-              3. If missing, what is the most general useful form of the capability?
-          - Capability-fit rule:
-              treat `capabilities` as optional hints, not strict gates; reason over `purpose`, `methods`, and `deliverable` when tags are missing or ambiguous.
-          - Avoid brittle matching:
-              do not hard-fail solely because a specific capability tag string is absent.
-          - Build-intent rule:
-              if the user explicitly asks to build/create/make a tool, treat that as a Forge signal at depth 0 unless blocked by runtime capability limits.
-          - Naming nudge:
-              prefer names that reflect capability and reuse potential rather than the immediate trigger phrasing.
-          - Reuse-first rule:
-              if an existing tool already matches capability, reuse or extend it instead of creating a near-duplicate.
+          - `<known_tools>` is only a preview; both are metadata, not callable objects.
+          - Materialize reusable capabilities with `tool("tool_name")` or `delegate("tool_name", ...)`.
+          - Ask:
+              1. What capability is required?
+              2. Is it already available in `context[:tools]`?
+              3. If missing, what is the most general useful form?
+          - One-step-above translation examples:
+              - Trigger: "fetch HN front page" -> Capability: "fetch and parse any URL"
+              - Trigger: "convert 100C to F" -> Capability: "convert between units"
+          - Capability-fit rule: treat `capabilities` as hints; reason over `purpose`, `methods`, and `deliverable`.
+
+          Step 2: Design Interface
+          - Define method name, parameterized inputs, expected return shape, and one acceptance assertion before writing code.
+
+          Step 3: Select Stance
+          - Choose Do / Shape / Forge / Orchestrate based on capability reuse and depth policy.
+          - Depth 0 + missing general capability -> Forge.
+          - Existing matching tool -> Do.
+          - Session-local pattern -> Shape.
+          - Multi-tool coordination -> Orchestrate.
+
+          Step 4: Implement
+          - Write code for the interface you defined.
+
+          Step 5: Self-check
+          - Verify implementation truthfulness, capability fit, and result usefulness before finalizing.
+          - Use the detailed checklist from the user prompt `<self_check>` block.
+          - Reuse-first rule: if a tool already matches capability, reuse or extend it instead of creating near-duplicates.
         NUDGE
       when 1
         <<~NUDGE
 
-          Decomposition Nudge:
+          ## How You Think (strict order)
           - You are a Tool executing delegated work: verify whether you can fulfill the task directly with current capabilities.
           - Check `context[:tools]` first before creating anything new.
           - `<known_tools>` is a non-exhaustive preview of the same registry metadata.
@@ -181,7 +280,7 @@ class Agent
       else
         <<~NUDGE
 
-          Decomposition Nudge:
+          ## How You Think (strict order)
           - You are in worker mode (depth >= 2): prioritize direct execution over decomposition overhead.
           - Use known context/tools only if they immediately reduce work in this call.
         NUDGE
@@ -194,40 +293,21 @@ class Agent
       when 0
         <<~POLICY
 
-          Stance Policy (depth 0):
-          - Do: execute directly for this call.
-          - Shape: solve now while extracting a local reusable pattern in this flow.
-          - Forge: create/refine a durable named Tool contract intended for future reuse.
-          - Orchestrate: compose multiple Tools toward a multi-step outcome.
-
-          Shape vs Forge boundary:
-          - Shape keeps reuse local to this current call flow.
-          - Forge publishes reuse for future invocations via stable method/contract.
-
-          Depth-0 stance selection:
-          - If task is a general capability (HTTP fetch, parsing, file I/O, text transformation, data extraction), default to Forge even on first encounter.
-          - If user explicitly requests building/creating/making a tool, default to Forge.
-          - At depth 0, when in doubt between Do and Forge, choose Forge.
-          - Cost model at depth 0: an unused durable tool is cheaper than repeated one-off reimplementation.
-
-          Promotion rules (toward Forge/Orchestrate):
-          - For domain-specific tasks: promote when same task shape repeats (rule of 3 or more),
-          - and the contract can be made explicit (`purpose`, `deliverable`, `acceptance`, `failure_policy`).
-          - For general capabilities at depth 0: promote immediately (first encounter is enough).
-
-          Demotion rules (toward Do/Shape):
-          - demote when task is one-off domain-specific work with low reuse potential,
-          - or task is quick/reliable and does not represent a reusable capability boundary,
-          - or contract boundaries are unclear/speculative.
-
-          Ambiguity handling:
-          - at depth 0, when ambiguous between Do and Forge, choose Forge.
-          - if ambiguous between Forge and Orchestrate, choose Forge unless orchestration is clearly required.
+          ## Your Stances
+          - Do: execute inline code for this specific call.
+          - Shape: solve now while extracting a session-local reusable pattern.
+          - Forge: create/refine a durable named tool interface for future reuse.
+          - Orchestrate: compose multiple tools for a multi-step outcome.
+          - Shape keeps reuse local to this call flow; Forge publishes a durable interface.
+          - Default to Forge for reusable/general capabilities and explicit build/create requests.
+          - Default to Do for one-off bounded work with low reuse value.
+          - If ambiguous between Do and Forge, choose Forge.
+          - If ambiguous between Forge and Orchestrate, choose Forge unless orchestration is clearly required.
         POLICY
       when 1
         <<~POLICY
 
-          Stance Policy (depth 1):
+          ## Your Stances
           - Default to Do.
           - Use Shape only when a local pattern helps this call.
           - Forge only when active contract/deliverable clearly implies a reusable interface.
@@ -239,7 +319,7 @@ class Agent
       else
         <<~POLICY
 
-          Stance Policy (depth #{depth}, worker mode):
+          ## Your Stances
           - Available stances: Do and Shape.
           - Default to Do.
           - Do not Forge or Orchestrate unless explicitly required by active contract.
@@ -256,6 +336,7 @@ class Agent
       capability_boundaries = _capability_boundaries_prompt
       design_quality = _design_quality_prompt(depth: depth)
       <<~RULES
+        ## Runtime Hard Constraints
         Rule Priority Order (highest first):
         1. Output Format Contract (MUST)
         2. Capability and Side-Effect Boundaries (MUST)
@@ -281,41 +362,30 @@ class Agent
       <<~RULES
         Capability and Side-Effect Boundaries:
         - Side-effect integrity first: do NOT claim timers/reminders/notifications/background jobs are set unless code actually schedules them.
-        - Writing to context is internal memory only, not an external side effect.
         - Be truthful and capability-accurate; never claim an action occurred unless this code actually performed it.
-        - You can access and modify context to store persistent data.
+        - Writing to context is internal memory only, not an external side effect.
         - State-key continuity rule:
             1. If context already has a key for the same semantic state, reuse that key.
             2. If no scalar accumulator key exists yet, default to `context[:value]`.
             3. Do not create parallel scalar aliases (for example `:memory`, `:accumulator`, `:calculator_value`) for the same state unless explicitly required.
             4. Setter/readback coherence: if caller sets `obj.foo = x`, prefer `context[:foo]` for that semantic state.
-        - `context[:tools]` is a Hash keyed by tool name; each value is tool metadata (purpose, methods, capabilities, stats).
-        - For registry checks, prefer `context[:tools].key?("tool_name")` or `context[:tools].each do |tool_name, metadata| ... end`.
-        - `context[:conversation_history]` is available as a structured Array of prior call records; prefer direct Ruby filtering/querying when needed.
-        - Conversation-history records are additive; treat optional fields defensively (`record[:field] || record["field"]`).
-        - Source-followup rule: if user asks for source/provenance/how data was obtained, query `context[:conversation_history]` first and answer from prior `outcome_summary` source refs when present.
-        - For source follow-ups, prefer the most recent relevant successful record and include concrete refs (`primary_uri`, `retrieval_mode`, `source_count`, `timestamp` when available).
-        - Never infer or fabricate provenance if history refs are missing; return explicit unknown/missing-source response instead.
+        - `context[:tools]` entries are metadata; query them for capability-fit and materialize tools via `tool(...)`/`delegate(...)`.
+        - `context[:conversation_history]` is structured call history; for source follow-ups, read it first and cite concrete refs when available.
+        - Never infer or fabricate provenance if history refs are missing; return explicit unknown/missing-source response.
         - Outcome constructors available: Agent::Outcome.ok(...), Agent::Outcome.error(...), Agent::Outcome.call(value=nil, ...).
         - Prefer Agent::Outcome.ok/error as canonical forms; Agent::Outcome.call is a tolerant success alias.
         - Outcome API idioms: use `outcome.ok?` / `outcome.error?` for branching, then `outcome.value` or `outcome.error_message`. (`success?`/`failure?` are tolerated aliases.)
-        - For tool composition, preserve contract shapes: pass only fields expected by the downstream method (for example, RSS parser gets raw feed string, not fetch envelope Hash).
+        - For tool composition, preserve contract shapes (for example, pass RSS parser raw feed string, not fetch envelope Hash).
         - When consuming tool output hashes, handle both symbol and string keys unless you explicitly normalized keys.
-        - For HTTP fetch operations, prefer https endpoints and handle 3xx redirects with a bounded hop count before failing.
         - External-data success invariant: if code fetches/parses remote data and returns success, include provenance envelope.
         - Provenance envelope shape (tolerant key types): `provenance: { sources: [{ uri:, fetched_at:, retrieval_tool:, retrieval_mode: ("live"|"cached"|"fixture") }] }`.
-        - You may require Ruby standard library (net/http, json, date, socket, etc.) but NOT external gems.
-        - If your design needs non-stdlib gems, declare each one in `dependencies`; keep declarations minimal and non-speculative.
         - delegation does NOT grant new capabilities; child tools inherit the same runtime/tooling limits.
-        - Do NOT delegate recursively to bypass unavailable capabilities.
-        - If blocked by unavailable capability, return a typed non-retriable error outcome instead of fake success.
-        - If output is structurally valid but not useful for caller intent, return `Agent::Outcome.error(error_type: "low_utility", ...)` instead of `Outcome.ok` with placeholder status.
-        - For user requests that explicitly ask for a list/items/results, guidance-only prose without concrete items is `low_utility`, not success.
-        - If request crosses this Tool's boundary, return `Agent::Outcome.error(error_type: "wrong_tool_boundary", ...)` with metadata such as `boundary_axes`, `observed_task_shape`, and optional `suggested_split`.
-        - Compare active `intent_signature` with Tool purpose/capabilities; if mismatched, prefer `wrong_tool_boundary` over low-quality success.
-        - If usefulness must be enforced inline, encode it as machine-checkable `deliverable` constraints (for example `min_items`) rather than relying on status strings.
-        - For dependency-backed execution, results and context must stay JSON-serializable.
-        - Be context-capacity aware: if memory grows large, prefer summarizing/pruning stale data over unbounded accumulation.
+        - Do NOT delegate recursively to bypass unavailable capabilities; return typed non-retriable error instead.
+        - If output is structurally valid but not useful for caller intent, return `Agent::Outcome.error(error_type: "low_utility", ...)`.
+        - Guidance-only prose where concrete items were requested is `low_utility`, not success.
+        - If request crosses this Tool's boundary, return `Agent::Outcome.error(error_type: "wrong_tool_boundary", ...)`.
+        - Compare active `intent_signature` with Tool purpose/capabilities; on mismatch, prefer `wrong_tool_boundary`.
+        - If non-stdlib gems are required, declare minimal `dependencies`; keep outputs/context JSON-serializable.
       RULES
     end
 
@@ -325,10 +395,9 @@ class Agent
         - Infer what methods and behaviors are natural for role '#{@role}'.
         - Method names should be intuitive verbs or queries a caller would expect for this role.
         - Write clean, focused code that fulfills the active intent/contract.
-        - Initialize local accumulators before appending (for example `lines = []`, `response = +""`) before calling `<<`/`push`.
-        - Parameterize inputs only when it improves clarity for the current implementation.
+        - Initialize local accumulators before appending (for example `lines = []`) before calling `<<`/`push`.
+        - Parameterize inputs when it improves clarity and reuse.
         - Do NOT over-generalize into frameworks or speculative abstractions.
-        - If reuse is unlikely or semantics are unclear, keep scope narrow and explicit.
         - Do NOT mutate Agent/Tool objects with metaprogramming (for example `define_singleton_method`); express behavior through normal generated methods and tool/delegate invocation paths.
       RULES
 
@@ -336,25 +405,12 @@ class Agent
                     when 0
                       <<~RULES
                         - Prefer reusable, parameterized interfaces.
-                        - Generalize one step above the immediate task (task-adjacent generality).
+                        - Generalize one step above the immediate task (for example, `fetch_hn_front_page` -> `fetch_url(url)`).
                         - Parameterize obvious inputs (url, query, filepath, etc.); e.g., prefer fetch_url(url) over fetch_specific_article().
                         - At depth 0, for general capabilities (HTTP fetch/parsing/file I/O/text transform), prefer Forge even if direct code is short.
                         - Tool registry is authoritative at `context[:tools]`. Query it directly to find capability-fit candidates.
-                        - Reuse by materializing with `tool("name")` (or explicit `delegate(...)`), not by calling `context[:tools]` entries as executable objects.
-                        - When delegating, strongly prefer an explicit contract:
-                            tool = delegate(
-                              "translator",
-                              purpose: "translate user text accurately",
-                              deliverable: { type: "string" },
-                              acceptance: [{ assert: "output is translated text in target language" }],
-                              failure_policy: { on_error: "return_error" }
-                            )
-                            translation = tool.translate("hello world")
-                            if translation.ok?
-                              result = translation.value
-                            else
-                              result = "translator failed: \#{translation.error_type}"
-                            end
+                        - Reuse by materializing with `tool("name")` (or explicit `delegate(...)`), not by calling metadata entries as executable objects.
+                        - When delegating, prefer explicit contracts (`purpose:`, `deliverable:`, `acceptance:`, `failure_policy:`).
                         - Delegated outcomes expose: ok?, error?, value, value_or(default), error_type, error_message, retriable.
                       RULES
                     when 1
@@ -376,34 +432,29 @@ class Agent
 
     def _user_prompt_self_check(depth:)
       base = <<~CHECK.chomp
-        - Did my code actually perform every action I describe in `result`?
-        - Am I returning real computed data, not placeholder/example data?
-        - If capability blocked execution, did I return Agent::Outcome.error with typed metadata?
-        - If a fetch/parse/external operation failed, did I avoid returning a plain success string that only says it failed?
-        - If I fetched/parsing succeeded technically but produced empty/junk output, did I return `low_utility` instead of `Outcome.ok`?
-        - If I returned success for external data, did I include provenance with sources + retrieval_mode?
-        - If user asked for list/items/results, did I return concrete items instead of guidance-only prose?
-        - If this is a source/provenance follow-up, did I cite concrete source refs from history (`primary_uri`, `retrieval_mode`, `source_count`) instead of generic prose?
-        - Does my stance choice fit current depth policy from the system prompt?
+        - [Truthfulness] Did my code perform every action I described in `result`?
+        - [Truthfulness] Am I returning real computed data (not placeholder/example content)?
+        - [Failure handling] If blocked or failed, did I return typed `Agent::Outcome.error(...)`?
+        - [Data quality] If output is empty/junk or guidance-only where concrete items were requested, did I return `low_utility`?
+        - [Provenance] For external-data success, did I include provenance sources + retrieval_mode?
+        - [History] For source follow-ups, did I cite concrete refs from `context[:conversation_history]` or explicitly state unknown?
+        - [Stance fit] Does my stance match current depth policy?
       CHECK
 
       depth_checks = case depth
                      when 0
                        <<~CHECK.chomp
-                         - At depth 0, if this is a reusable general capability, did I choose Forge over one-off inline code?
-                         - Did I decompose capability from trigger task and check for reusable existing tools first?
-                         - If forging, does the interface maximize future reuse instead of solving only this trigger phrasing?
-                         - If I delegated, was delegation necessary, or could I do this directly in fewer than 10 lines?
+                         - [Depth 0 design] Did I separate trigger from capability and check existing tools before forging?
+                         - [Depth 0 design] If forging/delegating, is the interface parameterized and delegation justified?
                        CHECK
                      when 1
                        <<~CHECK.chomp
-                         - At depth 1, did I default to direct execution (Do) unless local Shape was clearly useful?
-                         - Did I avoid delegation when direct code could solve this quickly?
-                         - If I forged, did the active contract/deliverable clearly require a reusable interface?
+                         - [Depth 1 execution] Did I default to direct execution unless local Shape was clearly useful?
+                         - [Depth 1 execution] If I forged/delegated, did the active contract clearly require it?
                        CHECK
                      else
                        <<~CHECK.chomp
-                         - In worker mode, did I keep execution direct and avoid creating new tools/delegations?
+                         - [Worker mode] Did I keep execution direct and avoid creating new tools/delegations?
                        CHECK
                      end
 
@@ -414,7 +465,7 @@ class Agent
       <<~TOOLS
         Tool Registry Snapshot:
         #{_known_tools_prompt.rstrip}
-        #{_known_tools_usage_hint.rstrip}
+        #{_known_tools_system_usage_hint.rstrip}
       TOOLS
     end
 
@@ -436,15 +487,6 @@ class Agent
         <record_count>#{history.length}</record_count>
         <access_hint>History contents are available in context[:conversation_history]. Inspect via generated Ruby code when needed; prompt does not preload records.</access_hint>
         <record_schema>Each record includes: call_id, timestamp, speaker, method_name, args, kwargs, outcome_summary.</record_schema>
-        <source_refs_hint>When present, outcome_summary may include compact source refs: source_count, primary_uri, retrieval_mode.</source_refs_hint>
-        <query_hint>Prefer canonical fields (`record[:args]`, `record[:method_name]`, `record[:outcome_summary]`); do not rely on ad hoc keys.</query_hint>
-        <source_query_protocol>
-        - If current ask is about source/provenance/how data was obtained:
-          1) filter recent records with source refs in `outcome_summary`,
-          2) prefer the most recent relevant successful record,
-          3) answer with concrete refs (`primary_uri`, `retrieval_mode`, `source_count`),
-          4) if refs are missing, state unknown rather than inferring.
-        </source_query_protocol>
         </conversation_history>
       HISTORY
     end
@@ -486,14 +528,20 @@ class Agent
     def _known_tools_usage_hint
       <<~HINT
         <known_tools_usage>
-        - Tool registry is available in full at `context[:tools]` (authoritative, complete metadata).
-        - `context[:tools]` shape: `{ "tool_name" => { purpose:, methods:, capabilities:, ... } }`.
-        - `<known_tools>` is a non-exhaustive preview for quick scanning.
-        - Match by capability-fit: use `capabilities` when present, and infer from `purpose` + `methods` + `deliverable` when tags are missing.
-        - Query `context[:tools]` directly to find best-fit candidates, then materialize the chosen tool.
+        - `context[:tools]` is the authoritative registry metadata: `{ "tool_name" => { purpose:, methods:, capabilities:, ... } }`.
+        - Match by capability-fit (`purpose` + `methods` + `deliverable`; treat `capabilities` tags as hints).
         - Do NOT call values from `context[:tools]` directly; they are metadata, not executable objects.
         - To reuse a known tool, materialize it with `tool("tool_name")` (preferred) or `delegate("tool_name", ...)`.
         </known_tools_usage>
+      HINT
+    end
+
+    def _known_tools_system_usage_hint
+      <<~HINT
+        <known_tools_system_usage>
+        - Do NOT call values from `context[:tools]` directly; they are metadata, not executable objects.
+        - To reuse a known tool, materialize it with `tool("tool_name")` (preferred) or `delegate("tool_name", ...)`.
+        </known_tools_system_usage>
       HINT
     end
 
@@ -762,16 +810,90 @@ class Agent
       when 0
         <<~EXAMPLES
           <examples>
-          <pattern kind="stateful_operation">
+          <pattern kind="interface_first_forge">
           ```ruby
-          context[:value] = context.fetch(:value, 0) + 1
-          result = context[:value]
+          # Thinking
+          # Decompose: need reusable HTTP fetch capability.
+          # Design: fetch_url(url:, headers: {}) -> { status:, body:, url: }.
+          # Stance: Forge (general capability at depth 0).
+          fetcher = delegate(
+            "web_fetcher",
+            purpose: "fetch content from urls",
+            deliverable: { type: "object", required: ["status", "body", "url"] },
+            acceptance: [{ assert: "status/body/url are present" }],
+            failure_policy: { on_error: "return_error" }
+          )
+
+          target_url = kwargs[:url] || args.first
+          analysis = fetcher.fetch_url(url: target_url, headers: kwargs.fetch(:headers, {}))
+          result = analysis.ok? ? analysis.value : Agent::Outcome.error(
+            error_type: analysis.error_type,
+            error_message: analysis.error_message,
+            retriable: analysis.retriable,
+            tool_role: @role,
+            method_name: "#{name}"
+          )
           ```
           </pattern>
 
-          <pattern kind="read_only_query">
+          <pattern kind="orchestrate_existing_tools">
           ```ruby
-          result = context.fetch(:value, 0)
+          # Thinking
+          # Decompose: need two capabilities (fetch + translate).
+          # Design: orchestrate existing tool interfaces; no new tool.
+          # Stance: Orchestrate.
+          registry = context[:tools] || {}
+          unless registry.key?("web_fetcher") && registry.key?("translator")
+            result = Agent::Outcome.error(
+              error_type: "missing_capability",
+              error_message: "web_fetcher and translator must be available in tool registry",
+              retriable: false,
+              tool_role: @role,
+              method_name: "#{name}"
+            )
+            return
+          end
+
+          target_url = kwargs[:url] || args.first
+          fetcher = tool("web_fetcher")
+          translator = tool("translator")
+          fetched = fetcher.fetch_url(url: target_url)
+
+          unless fetched.ok?
+            result = Agent::Outcome.error(
+              error_type: fetched.error_type,
+              error_message: fetched.error_message,
+              retriable: fetched.retriable,
+              tool_role: @role,
+              method_name: "#{name}"
+            )
+            return
+          end
+
+          payload = fetched.value
+          body = payload[:body] || payload["body"] || ""
+          title = kwargs[:title] || body.lines.first.to_s.strip
+          translated = translator.translate(title, to: kwargs.fetch(:language, "es"))
+          result = translated.ok? ? translated.value : Agent::Outcome.error(
+            error_type: translated.error_type,
+            error_message: translated.error_message,
+            retriable: translated.retriable,
+            tool_role: @role,
+            method_name: "#{name}"
+          )
+          ```
+          </pattern>
+
+          <pattern kind="stateful_role_continuity">
+          ```ruby
+          # Thinking
+          # Decompose: arithmetic on shared role state.
+          # Design: decrement(amount) -> numeric value.
+          # Stance: Do (stateful role method).
+          current = context[:value] || 0
+          delta = kwargs[:amount] || args.first || 1
+          context[:value] = current - delta.to_f
+          result = context[:value]
           ```
           </pattern>
 
@@ -784,108 +906,6 @@ class Agent
             tool_role: @role,
             method_name: "#{name}"
           )
-          ```
-          </pattern>
-
-          <pattern kind="delegation_with_contract">
-          ```ruby
-          tool = delegate(
-            "analyst",
-            purpose: "analyze context data and return concise findings",
-            deliverable: { type: "object", required: ["summary"] },
-            acceptance: [{ assert: "summary is present" }],
-            failure_policy: { on_error: "return_error" }
-          )
-          analysis = tool.summarize(context[:data])
-          result = analysis.ok? ? analysis.value : "analysis failed: \#{analysis.error_type}"
-          ```
-          </pattern>
-
-          <pattern kind="forge_reusable_capability">
-          ```ruby
-          # Depth 0: general capability recognized as reusable, so Forge.
-          web_fetcher = delegate(
-            "web_fetcher",
-            purpose: "fetch and parse content from urls",
-            deliverable: { type: "object", required: ["status", "body"] },
-            acceptance: [{ assert: "status and body are present" }],
-            failure_policy: { on_error: "return_error" }
-          )
-          fetched = web_fetcher.fetch_url("https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en")
-          result = fetched.ok? ? fetched.value : Agent::Outcome.error(
-            error_type: fetched.error_type,
-            error_message: fetched.error_message,
-            retriable: fetched.retriable,
-            tool_role: @role,
-            method_name: "#{name}"
-          )
-          ```
-          </pattern>
-
-          <pattern kind="external_data_success_with_provenance">
-          ```ruby
-          fetcher = tool("web_fetcher")
-          fetched = fetcher.fetch_url("https://example.com/feed")
-          if fetched.ok?
-            payload = fetched.value
-            stories = payload[:items] || payload["items"] || []
-            result = Agent::Outcome.ok(
-              data: stories,
-              provenance: {
-                sources: [
-                  {
-                    uri: "https://example.com/feed",
-                    fetched_at: Time.now.utc.iso8601,
-                    retrieval_tool: "web_fetcher",
-                    retrieval_mode: "live"
-                  }
-                ]
-              }
-            )
-          else
-            result = Agent::Outcome.error(
-              error_type: fetched.error_type,
-              error_message: fetched.error_message,
-              retriable: fetched.retriable,
-              tool_role: @role,
-              method_name: "#{name}"
-            )
-          end
-          ```
-          </pattern>
-
-          <pattern kind="reuse_known_tool">
-          ```ruby
-          # Query full registry metadata from context[:tools], then materialize the best-fit tool.
-          # `capabilities` are optional hints; fall back to purpose/method reasoning when tags are absent.
-          registry = context[:tools] || {}
-          candidate_name, _candidate_meta = registry.max_by do |_tool_name, metadata|
-            caps = Array(metadata[:capabilities] || metadata["capabilities"]).map { |tag| tag.to_s.downcase }
-            purpose = (metadata[:purpose] || metadata["purpose"]).to_s.downcase
-            methods = Array(metadata[:methods] || metadata["methods"]).map { |m| m.to_s.downcase }
-            deliverable = (metadata[:deliverable] || metadata["deliverable"]).inspect.downcase
-            score = 0
-            score += 3 if caps.include?("http_fetch")
-            score += 2 if methods.any? { |m| m.include?("fetch") || m.include?("url") }
-            score += 1 if purpose.match?(/\b(fetch|http|https|url)\b/)
-            score += 1 if deliverable.match?(/\bbody\b/)
-            score
-          end
-          chosen_tool = candidate_name || "web_fetcher"
-          web_fetcher = tool(chosen_tool)
-          fetched = web_fetcher.fetch_url("https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en")
-          if fetched.ok?
-            payload = fetched.value
-            result = payload[:content] || payload["content"] || payload
-          else
-            result = Agent::Outcome.error(
-              error_type: fetched.error_type,
-              error_message: fetched.error_message,
-              retriable: fetched.retriable,
-              tool_role: @role,
-              method_name: "#{name}"
-            )
-          end
           ```
           </pattern>
           </examples>

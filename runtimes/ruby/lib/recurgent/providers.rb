@@ -67,6 +67,8 @@ class Agent
       # OpenAI Responses API does not expose a request timeout option here.
       # Enforce runtime timeout externally so provider_timeout_seconds applies.
       def generate_program(model:, system_prompt:, user_prompt:, tool_schema:, timeout_seconds: nil)
+        normalized_schema = _openai_strict_schema(tool_schema[:input_schema])
+
         request = lambda do
           @client.responses.create(
             model: model,
@@ -79,7 +81,7 @@ class Agent
                 type: :json_schema,
                 name: tool_schema[:name],
                 strict: true,
-                schema: tool_schema[:input_schema]
+                schema: normalized_schema
               }
             }
           )
@@ -91,6 +93,79 @@ class Agent
         raise "No output in OpenAI response" unless text_content
 
         JSON.parse(text_content.text)
+      end
+
+      private
+
+      # OpenAI strict JSON schema requires every object property to be listed
+      # in required. Preserve optional semantics by making optional fields nullable.
+      def _openai_strict_schema(schema)
+        _normalize_schema_node(schema)
+      end
+
+      def _normalize_schema_node(node)
+        case node
+        when Hash
+          normalized = node.transform_values { |value| _normalize_schema_node(value) }
+          _normalize_object_schema!(normalized)
+          normalized
+        when Array
+          node.map { |value| _normalize_schema_node(value) }
+        else
+          node
+        end
+      end
+
+      def _normalize_object_schema!(schema)
+        type_key = _schema_key(schema, "type")
+        return unless schema[type_key] == "object"
+
+        properties_key = _schema_key(schema, "properties")
+        properties = schema[properties_key]
+        return unless properties.is_a?(Hash)
+
+        required_key = _required_key(schema)
+        original_required = Array(schema[required_key]).map(&:to_s)
+
+        properties.each do |property_name, property_schema|
+          next if original_required.include?(property_name.to_s)
+
+          _mark_property_nullable!(property_schema)
+        end
+
+        schema[required_key] = properties.keys.map(&:to_s)
+      end
+
+      def _mark_property_nullable!(property_schema)
+        return unless property_schema.is_a?(Hash)
+
+        type_key = _type_key(property_schema)
+        return if type_key.nil?
+
+        property_schema[type_key] = _nullable_types(property_schema[type_key])
+      end
+
+      def _type_key(schema)
+        return "type" if schema.key?("type")
+        return :type if schema.key?(:type)
+
+        nil
+      end
+
+      def _nullable_types(type_value)
+        types = Array(type_value).map(&:to_s)
+        types << "null" unless types.include?("null")
+        types.length == 1 ? types.first : types
+      end
+
+      def _schema_key(schema, key_name)
+        return key_name if schema.key?(key_name)
+
+        key_name.to_sym
+      end
+
+      def _required_key(schema)
+        schema.key?("required") ? "required" : :required
       end
     end
   end

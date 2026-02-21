@@ -200,7 +200,7 @@ class Agent
       metadata = _toolstore_load_registry_tools[@role.to_s]
       shape_profiles = _role_profile_method_return_shapes(metadata || {})
       shape_profiles.merge!(_role_profile_cached_observations(kind: :return_shape_family))
-      current_shape = _role_profile_value_shape(outcome.value)
+      current_shape = outcome&.ok? ? _role_profile_value_shape(outcome.value) : nil
       unless current_shape.nil?
         shape_profiles[method_name.to_s] = current_shape
         _role_profile_record_observation(kind: :return_shape_family, method_name: method_name, value: current_shape)

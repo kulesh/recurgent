@@ -68,8 +68,9 @@ RSpec.describe Agent::EnvironmentManager do
 
     expect(first[:environment_cache_hit]).to eq(false)
     expect(second[:environment_cache_hit]).to eq(true)
-    expect(commands.size).to eq(2)
+    expect(commands.size).to eq(3)
     expect(commands.map(&:join)).to include(a_string_including("bundlelock"))
+    expect(commands.map(&:join)).to include(a_string_including("bundleconfigset--localpathvendor/bundle"))
     expect(commands.map(&:join)).to include(a_string_including("bundleinstall"))
   end
 
@@ -98,7 +99,7 @@ RSpec.describe Agent::EnvironmentManager do
 
     expect(first[:environment_cache_hit]).to eq(false)
     expect(second[:environment_cache_hit]).to eq(false)
-    expect(commands.size).to eq(4)
+    expect(commands.size).to eq(6)
   end
 
   it "raises dependency_resolution_failed on bundle lock failure" do

@@ -120,7 +120,13 @@ class Agent
     def _run_bundle_install(env_dir)
       _run_bundle_command(
         env_dir,
-        ["install", "--path", "vendor/bundle", "--jobs", "4", "--retry", "2"],
+        ["config", "set", "--local", "path", "vendor/bundle"],
+        Agent::DependencyInstallError,
+        "bundle config set path"
+      )
+      _run_bundle_command(
+        env_dir,
+        ["install", "--jobs", "4", "--retry", "2"],
         Agent::DependencyInstallError,
         "bundle install"
       )
