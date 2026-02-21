@@ -206,7 +206,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-21T07:05:00Z
+Last Updated (UTC): 2026-02-21T21:10:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -301,6 +301,8 @@ Last Updated (UTC): 2026-02-21T07:05:00Z
 - `specs/contract/v1/tolerant-delegation-profile.md` - tolerant delegation profile contract
 - `specs/contract/v1/tolerant-delegation-scenarios.yaml` - tolerant delegation scenario suite (v1)
 - `specs/contract/v1/conformance.md` - runtime harness conformance guidance
+- `specs/contract/v1/recurgent-log-entry.schema.json` - machine-readable schema for one JSONL observability log entry
+- `specs/contract/v1/recurgent-log-stream.schema.json` - schema for JSON-array form of the JSONL log stream
 - `runtimes/ruby/lib/recurgent.rb` - core runtime dispatch, execution, retry, and outcome mapping
 - `runtimes/ruby/lib/recurgent/prompting.rb` - system/user prompt construction and tool schema
 - `runtimes/ruby/lib/recurgent/observability.rb` - JSONL log composition and debug capture

@@ -399,6 +399,7 @@ Read traces as an engineering feedback loop, not just output records.
 
 - [`docs/observability.md`](../observability.md) (field catalog and operator queries)
 - [`docs/architecture.md`](../architecture.md) (where observability fits in lifecycle)
+- [`specs/contract/v1/recurgent-log-entry.schema.json`](../../specs/contract/v1/recurgent-log-entry.schema.json) (machine-readable per-entry schema)
 
 ### Useful commands
 

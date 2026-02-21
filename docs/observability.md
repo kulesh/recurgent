@@ -2,6 +2,34 @@
 
 Recurgent emits JSONL call logs designed for runtime introspection across Ruby and Lua.
 
+## Machine-Readable Schemas
+
+Log schemas are versioned under the contract package:
+
+- Entry schema: [`specs/contract/v1/recurgent-log-entry.schema.json`](../specs/contract/v1/recurgent-log-entry.schema.json)
+- Stream schema: [`specs/contract/v1/recurgent-log-stream.schema.json`](../specs/contract/v1/recurgent-log-stream.schema.json)
+
+Validation example with `ajv-cli`:
+
+```bash
+LOG="${XDG_STATE_HOME:-$HOME/.local/state}/recurgent/recurgent.jsonl"
+jq -s . "$LOG" > /tmp/recurgent-log-stream.json
+
+npx -y ajv-cli validate \
+  --spec=draft2020 \
+  --strict=false \
+  -s specs/contract/v1/recurgent-log-stream.schema.json \
+  -r specs/contract/v1/recurgent-log-entry.schema.json \
+  -d /tmp/recurgent-log-stream.json
+```
+
+Quick "modern contract fields present" check:
+
+```bash
+LOG="${XDG_STATE_HOME:-$HOME/.local/state}/recurgent/recurgent.jsonl"
+jq -c 'select((has("runtime") and has("outcome_status") and has("contract_source")) | not)' "$LOG" | head
+```
+
 ## Live Watcher
 
 Use the shared watcher at repository root:

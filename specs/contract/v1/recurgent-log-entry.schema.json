@@ -1,0 +1,480 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "recurgent-log-entry.schema.json",
+  "title": "Recurgent Log Entry (v1, tolerant)",
+  "description": "Machine-readable schema for one JSONL observability entry. Tolerant by default: known fields are typed, unknown future fields are allowed.",
+  "type": "object",
+  "required": [
+    "timestamp",
+    "role",
+    "model",
+    "method",
+    "args",
+    "kwargs",
+    "code",
+    "duration_ms",
+    "generation_attempt"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string"
+    },
+    "runtime": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "method": {
+      "type": "string",
+      "minLength": 1
+    },
+    "args": {
+      "type": "array"
+    },
+    "kwargs": {
+      "type": "object"
+    },
+    "code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "duration_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "generation_attempt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "contract_source": {
+      "type": "string",
+      "enum": [
+        "none",
+        "hash",
+        "fields",
+        "merged"
+      ]
+    },
+    "trace_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "call_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parent_call_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "depth": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "execution_receiver": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "sandbox",
+        "worker",
+        null
+      ]
+    },
+    "outcome_status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "error"
+      ]
+    },
+    "outcome_retriable": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "outcome_tool_role": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "outcome_method_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "outcome_value_class": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "outcome_error_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "outcome_error_message": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "outcome_error_metadata": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": true
+    },
+    "attempt_id": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "attempt_stage": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "validation_failure_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rollback_applied": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "retry_feedback_injected": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "guardrail_recovery_attempts": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "execution_repair_attempts": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "outcome_repair_attempts": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "outcome_repair_triggered": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "guardrail_retry_exhausted": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "outcome_repair_retry_exhausted": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "solver_shape": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": true
+    },
+    "solver_shape_complete": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "solver_shape_stance": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "solver_shape_promotion_intent": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "promotion_policy_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lifecycle_state": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "candidate",
+        "probation",
+        "durable",
+        "degraded",
+        null
+      ]
+    },
+    "lifecycle_decision": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "promote",
+        "continue_probation",
+        "degrade",
+        "hold",
+        null
+      ]
+    },
+    "promotion_decision_rationale": {
+      "type": [
+        "string",
+        "object",
+        "array",
+        "null"
+      ]
+    },
+    "promotion_shadow_mode": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "promotion_enforced": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "namespace_key_collision_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "namespace_multi_lifetime_key_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "namespace_continuity_violation_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "attempt_failures": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "attempt_id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "stage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "error_class": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "error_message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timestamp": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "call_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "history_record_appended": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "conversation_history_size": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "history_access_detected": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "history_query_patterns": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "content_store_write_applied": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "content_store_write_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "content_store_write_kind": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "content_store_write_bytes": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "content_store_write_digest": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "content_store_write_skipped_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "content_store_eviction_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "content_store_read_hit_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "content_store_read_miss_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "content_store_read_refs": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "content_store_entry_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "content_store_total_bytes": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    }
+  },
+  "additionalProperties": true
+}
