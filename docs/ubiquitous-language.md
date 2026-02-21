@@ -66,6 +66,15 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - `Active Contract Version`: explicit contract/profile version bound to a call and used for validation/evolution interpretation.
 - `Namespace Pressure`: observable drift signal from flat context usage (key collisions, mixed inferred lifetimes, ambiguity-linked continuity violations).
 
+## Response Content Continuity Terms
+
+- `Response Content Continuity`: ability to reliably reference and transform prior turn substance (text/code/object payload), not just metadata.
+- `Content Store`: bounded runtime store for response payloads linked from conversation history.
+- `Content Ref`: stable identifier that points to stored response content.
+- `Content Ref Resolution`: runtime lookup of payload by `content_ref`.
+- `Content Retention Policy`: configured bounds for content continuity (`max_entries`, `max_bytes`, optional TTL).
+- `Content Eviction`: deterministic removal policy (for example oldest-first/LRU) when retention bounds are exceeded.
+
 ## Why These Terms
 
 - They encode intent (problem solving) rather than mechanism (orchestration).
@@ -89,6 +98,7 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - Use `Prescriptive Constraint` only when deterministic pinning is required.
 - Use `State Continuity` when discussing sibling-method contract coherence.
 - Separate awareness from authority: allow observe/propose by default, require explicit approval for enact.
+- Keep response-content continuity separate from conversation-history metadata continuity.
 
 ## Primitive Usage
 
