@@ -57,6 +57,7 @@ This index is organized for fast retrieval:
 - [`docs/adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md`](adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md)
 - [`docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`](adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md)
 - [`docs/adrs/0025-awareness-substrate-and-authority-boundary.md`](adrs/0025-awareness-substrate-and-authority-boundary.md)
+- [`docs/adrs/0026-response-content-continuity-substrate.md`](adrs/0026-response-content-continuity-substrate.md)
 
 ## Implementation Plans
 
@@ -78,6 +79,7 @@ This index is organized for fast retrieval:
 - [`docs/plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md`](plans/solver-shape-reliability-gated-tool-evolution-implementation-plan.md)
 - [`docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md`](plans/contract-first-role-profiles-state-continuity-implementation-plan.md)
 - [`docs/plans/awareness-substrate-authority-boundary-implementation-plan.md`](plans/awareness-substrate-authority-boundary-implementation-plan.md)
+- [`docs/plans/response-content-continuity-implementation-plan.md`](plans/response-content-continuity-implementation-plan.md)
 
 ## Baselines and Operations
 

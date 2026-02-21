@@ -1,364 +1,207 @@
 # ADR 0023: Solver Shape and Reliability-Gated Tool Evolution
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-02-18
+- Updated: 2026-02-20
 
 ## Context
 
-Recurgent already has major reliability building blocks in place:
+Recurgent's early tool evolution behavior relied heavily on prompt policy and implicit heuristics. That produced useful behavior, but promotion/reuse decisions were not consistently represented as auditable runtime data.
 
-1. validation-first retries and transactional lifecycle handling (ADR 0016),
-2. delegated outcome contract validation (ADR 0014),
-3. observational utility semantics (ADR 0017),
-4. cross-session artifact persistence and selection (ADR 0012, ADR 0013),
-5. boundary referral and cohesion telemetry (`wrong_tool_boundary`, `low_utility`) (ADR 0015).
+This ADR established a control plane for automatic shaping/evolution that keeps solver cognition flexible while making promotion policy explicit.
 
-Recent iteration shows a remaining architectural gap for the next phase:
-
-1. Solver behavior is mostly prompt-policy driven (`Do`, `Shape`, `Forge`, `Orchestrate`) rather than represented as a first-class runtime contract.
-2. Automatic tool building works, but "reliable tool" is not yet a single explicit promotion contract with measurable gate criteria.
-3. Runtime has rich telemetry, but lacks one canonical solver-level evidence model to drive promotion and evolution decisions deterministically.
-
-This creates avoidable ambiguity:
-
-1. reliability signals are distributed across multiple stores without one promotion-ready envelope,
-2. solver intent and solver outcome are not explicitly paired in trace schema,
-3. promotion decisions can drift toward heuristics instead of stable lifecycle policy.
-
-This conflicts with project tenets:
-
-1. Agent-first mental model: solver cognition should be inspectable and explicit.
-2. Runtime ergonomics for introspection/prescription/evolution: promotion policy should be visible, typed, and auditable.
-3. Tolerant interfaces by default: solver interfaces should tolerate partial evidence while preserving stable typed outcomes.
-4. Ubiquitous language: Tool Builder/Tool/Worker runtime should have one canonical solver-shape vocabulary.
-
-## Current vs Future (Code Sketches)
-
-### Current State: Stance Mostly Lives in Prompt Policy
-
-Today, stance policy is primarily encoded as prompt text guidance. The model decides behavior from that prose.
-
-```ruby
-# runtimes/ruby/lib/recurgent/prompting.rb (simplified)
-def _stance_policy_prompt(call_context:)
-  depth = call_context&.fetch(:depth, 0) || 0
-  return <<~POLICY if depth == 0
-    Stance Policy (depth 0):
-    - Do
-    - Shape
-    - Forge
-    - Orchestrate
-    - If ambiguous between Do and Forge, choose Forge
-  POLICY
-end
-```
-
-Call execution currently treats solver intent as implicit. We execute generated code and log outcomes, but no first-class solver envelope is produced.
-
-```ruby
-# runtimes/ruby/lib/recurgent/call_execution.rb (simplified)
-def _dispatch_method_call(name, *args, **kwargs)
-  system_prompt = _build_system_prompt(call_context: call_context)
-  user_prompt = _build_user_prompt(name, args, kwargs, call_context: call_context)
-  _execute_dynamic_call(name, args, kwargs, system_prompt, user_prompt, call_context)
-end
-```
-
-### Future State: Solver Shape Is Explicit Data
-
-Solver intent and decision basis become typed runtime data, logged and persisted with the call.
-
-```ruby
-SolverShape = Data.define(
-  :stance,                # :do | :shape | :forge | :orchestrate
-  :capability_summary,    # String
-  :reuse_basis,           # String
-  :contract_intent,       # Hash
-  :promotion_intent       # :none | :local_pattern | :durable_tool_candidate
-)
-
-def build_solver_shape(call_context:, method_name:, known_tools:, contract:)
-  SolverShape.new(
-    stance: :forge,
-    capability_summary: "external_data_retrieval_and_synthesis",
-    reuse_basis: "general capability absent from registry",
-    contract_intent: contract,
-    promotion_intent: :durable_tool_candidate
-  )
-end
-```
-
-### Future State: Promotion Is Reliability-Gated Policy
-
-Automatic tool evolution uses explicit gates and lifecycle transitions.
-
-```ruby
-Scorecard = Data.define(
-  :calls,
-  :contract_passes,
-  :contract_failures,
-  :guardrail_retry_exhausted,
-  :outcome_retry_exhausted,
-  :wrong_tool_boundary_count,
-  :provenance_violations
-)
-
-def durable_gate_v1_pass?(score)
-  pass_rate = score.calls.zero? ? 0.0 : score.contract_passes.to_f / score.calls
-  pass_rate >= 0.95 &&
-    score.guardrail_retry_exhausted.zero? &&
-    score.outcome_retry_exhausted <= 1 &&
-    score.wrong_tool_boundary_count <= 1 &&
-    score.provenance_violations.zero?
-end
-
-def next_lifecycle_state(current:, score:)
-  return :degraded unless durable_gate_v1_pass?(score)
-  return :probation if current == :candidate
-  return :durable if current == :probation
-
-  current
-end
-```
-
-### Future State: Promotion Tracks Artifact Versions, Not Just Tool Names
-
-Promotion state is versioned. New tool implementations compete with incumbents; they do not replace them by default.
-
-```ruby
-# Example lifecycle records
-# web_fetcher@a1b2c3 => :durable   (incumbent)
-# web_fetcher@d4e5f6 => :candidate (new HTML parsing evolution)
-
-def effective_tool_version(tool_name:, versions:)
-  durable = versions.find { |v| v.state == :durable && !v.degraded? }
-  return durable if durable
-
-  versions.find { |v| v.state == :probation } || versions.first
-end
-
-def evaluate_candidate_against_incumbent(candidate:, incumbent:, window:)
-  cand = scorecard(candidate, window: window)
-  base = scorecard(incumbent, window: window)
-
-  return :promote if durable_gate_v1_pass?(cand) && cand.contract_pass_rate >= base.contract_pass_rate
-  return :degrade if cand.guardrail_retry_exhausted > base.guardrail_retry_exhausted
-
-  :continue_probation
-end
-```
-
-### Reasoning Note: Organism, Not Rigid Type System
-
-This ADR does not propose replacing prompt-policy with a closed planner.
-
-1. Prompt policy remains the primary cognitive surface where Tool Builders reason, adapt, and discover new decompositions.
-2. Solver Shape types capture evidence about those decisions so reliability policy can be explicit and auditable.
-3. Reliability gates constrain promotion lifecycle, not thought process or domain semantics.
-
-In short: nuanced reasoning stays open-ended; typed fields make evolution legible and governable.
-
-```ruby
-# Conceptual layering
-# prompt_policy => generates nuanced solver behavior
-# solver_shape  => records what happened in stable fields
-# gate_policy   => decides promote/probation/degrade using scorecard evidence
-#
-# The gate reads evidence; it does not author the solver's reasoning.
-```
+Since drafting, MVP infrastructure has been implemented and validated across phased rollout work documented in [`docs/reports/adr-0023-phase-validation-report.md`](../reports/adr-0023-phase-validation-report.md).
 
 ## Decision
 
-Introduce a first-class Solver Shape contract and make automatic tool evolution reliability-gated by explicit policy.
+Adopt a first-class solver/evolution evidence model with reliability-gated lifecycle transitions.
 
-### 1. Solver Shape Becomes First-Class Runtime Data
+### 1. Solver shape is explicit runtime data
 
-Each dynamic call should produce a typed Solver Shape envelope that captures:
+Each dynamic call captures `solver_shape` with stable fields:
 
-1. chosen stance (`do`, `shape`, `forge`, `orchestrate`),
-2. capability decomposition summary,
-3. reuse vs new-tool decision basis,
-4. contract intent summary (`purpose`, deliverable strictness hints, failure posture),
-5. promotion intent (`none`, `local_pattern`, `durable_tool_candidate`).
+1. `stance`
+2. `capability_summary`
+3. `reuse_basis`
+4. `contract_intent`
+5. `promotion_intent`
 
-This envelope is observational data first. It does not directly mutate domain semantics.
+Capture is observational and does not directly mutate domain semantics.
 
-### 2. Reliability Gate Defines Durable Tool Promotion
+### 2. Promotion lifecycle is version-aware and policy-gated
 
-Tool promotion to durable status must pass explicit reliability gates. V1 gate signals:
+Tool artifacts transition through:
 
-1. contract validation pass rate above threshold,
-2. no unresolved guardrail-exhaustion pattern for the candidate interface,
-3. bounded retry-exhaustion rate,
-4. boundary cohesion signal not repeatedly indicating `wrong_tool_boundary`,
-5. no unresolved provenance-invariant violations for external-data tools (ADR 0021).
+1. `candidate`
+2. `probation`
+3. `durable`
+4. `degraded`
 
-Promotion policy must be deterministic and versioned.
+State is tracked per artifact checksum/version, not just per tool name.
 
-Threshold scope in v1:
+### 3. Promotion policy v1 is explicit
 
-1. Start with global default thresholds across capabilities.
-2. Introduce capability-class-specific profiles only after trace evidence shows persistent misfit with global defaults.
+Current implemented policy contract (`solver_promotion_v1`) gates `probation -> durable` using:
 
-Initial operating defaults (v1):
+1. minimum observation window: `min_calls: 10`, `min_sessions: 2`
+2. `min_contract_pass_rate: 0.95`
+3. `max_guardrail_retry_exhausted: 0`
+4. `max_outcome_retry_exhausted: 0`
+5. `max_wrong_boundary_count: 0`
+6. `max_provenance_violations: 0`
+7. `min_state_key_consistency_ratio: 0.5`
+8. if role-profile observations exist: `min_role_profile_pass_rate: 0.99`
 
-1. `probation -> durable` requires at least 10 calls across at least 2 sessions.
-2. Coherence signal starts with `state_key_consistency_ratio` as the primary metric.
-3. Add richer coherence metrics (for example entropy) only if ratio alone proves insufficient in shadow calibration.
-4. Capability-class-specific threshold specialization triggers only when class-level false-hold or false-promotion rate exceeds 2x global average over a meaningful sample.
+### 4. Shadow and enforcement are separately controlled
 
-### 3. Add a Promotion Lifecycle Lane
+Runtime flags:
 
-Tools move through explicit lifecycle states:
+1. `solver_shape_capture_enabled`
+2. `promotion_shadow_mode_enabled`
+3. `promotion_enforcement_enabled`
 
-1. `candidate`: newly forged or newly reshaped interface,
-2. `probation`: reusable and active, but not yet durable-default,
-3. `durable`: eligible for default reuse and prompt-injection preference,
-4. `degraded`: temporarily down-ranked due to reliability regression.
+Shadow decisions are always logged when shadow mode is enabled. Enforcement controls selection behavior.
 
-State transitions are policy-driven by scorecard evidence, not ad hoc runtime rewrites.
+### 5. Selector and prompt integrate lifecycle evidence
 
-Cold-start rule:
+1. selector prefers non-degraded versions in order: durable -> probation -> candidate
+2. `<known_tools>` prompt rendering includes lifecycle/policy/reliability hints
+3. ranking biases durable up and degraded down
 
-1. Keep `candidate -> probation` lightweight so forge-and-use flow remains immediate.
-2. Apply stronger evidence gating at `probation -> durable`, not at first productive use.
+### 6. Governance and operations are first-class
 
-Lifecycle state is tracked per artifact version, not only per tool name:
+Operator tooling and docs support scorecard inspection, decision inspection, and audited manual lifecycle overrides.
 
-1. multiple versions of the same tool may coexist,
-2. incumbent durable version remains default during candidate/probation evaluation,
-3. promotion replaces default selection only after candidate version clears reliability gate policy,
-4. degraded versions are down-ranked without deleting historical traceability.
+### 7. Composition with ADR 0024 and ADR 0025
 
-### 4. Solver Reliability Scorecard Is Canonical
+1. ADR 0023 measures reliability and lifecycle fitness.
+2. ADR 0024 adds semantic continuity/correctness pressure for role-style interfaces.
+3. ADR 0025 governs awareness and authority boundaries for evolution actions.
 
-Define a canonical per-tool/per-method reliability scorecard aligned with current telemetry:
+## MVP Delivered (Implemented)
 
-1. success and failure counts,
-2. contract validation pass/fail counts,
-3. guardrail and outcome retry exhaustion counts,
-4. user-correction pressure signals,
-5. boundary-referral signals,
-6. provenance compliance signals when applicable,
-7. tool coherence signals (for example shared state-key consistency across sibling methods).
+Delivered in Ruby runtime and docs:
 
-This scorecard is the authoritative input for promotion/demotion lifecycle transitions.
+1. solver-shape capture and observability fields
+2. version-scoped scorecards and lifecycle metadata persistence
+3. promotion shadow engine with policy versioning and rationale logging
+4. enforcement-capable selector path with kill-switch
+5. lifecycle-aware known-tool ranking/prompt hints
+6. operator command surfaces for scorecards/decisions/lifecycle overrides
+7. rollout/maintenance/governance documentation
 
-Scorecards are version-scoped and time-windowed so evolving implementations are judged against current durable baselines rather than aggregate lifetime history.
+Primary implementation and evidence references:
 
-Coherence is treated as an observable property, not a hardcoded type distinction:
+1. [`runtimes/ruby/lib/recurgent/call_state.rb`](../../runtimes/ruby/lib/recurgent/call_state.rb)
+2. [`runtimes/ruby/lib/recurgent/artifact_selector.rb`](../../runtimes/ruby/lib/recurgent/artifact_selector.rb)
+3. [`runtimes/ruby/lib/recurgent/tool_store.rb`](../../runtimes/ruby/lib/recurgent/tool_store.rb)
+4. [`runtimes/ruby/lib/recurgent/known_tool_ranker.rb`](../../runtimes/ruby/lib/recurgent/known_tool_ranker.rb)
+5. [`docs/reports/adr-0023-phase-validation-report.md`](../reports/adr-0023-phase-validation-report.md)
 
-1. v1 uses `state_key_consistency_ratio` as the primary coherence input;
-2. richer metrics are deferred until trace evidence shows insufficient discrimination;
-3. use as promotion input signal, not as standalone rejection unless policy explicitly says so.
+## Deferred / Post-MVP
 
-### 5. Keep Runtime Semantics Observational
+Not fully implemented yet:
 
-This ADR does not change ADR 0017 semantics:
+1. computed `false_promotion` / `false_hold` classification pipeline (ledger counters exist, automated classification loop is not complete)
+2. capability-class threshold specialization engine (global defaults remain active)
+3. domain-capability hardening (for example movie listings quality) which is intentionally outside this ADR's policy scope
 
-1. runtime still does not coerce tool-authored success into error by heuristic interpretation,
-2. reliability gates influence promotion and reuse preference,
-3. boundary validators continue deterministic shape/policy enforcement.
+## Status Quo Baseline
 
-### 6. Continuous Evolution and Re-Promotion
+Baseline (pre-implementation phase 0, see report):
 
-Promotion is not one-time certification.
+1. Full test suite passed (`238 examples, 0 failures`), but no solver-shape/lifecycle policy contract existed in runtime traces.
+2. Calculator baseline scenario could be correct, but semantic quality drift was not encoded as lifecycle evidence.
+3. Assistant scenarios showed truthful failures (`capability_unavailable`) for missing capabilities; no promotion policy lane existed to reason about evolving candidates.
 
-1. durable tools continue to be re-evaluated as traffic and contexts evolve,
-2. newly evolved versions start at `candidate`/`probation`,
-3. selector keeps serving incumbent durable until the new version proves reliability,
-4. rollback is immediate by re-selecting the prior durable version.
+## Expected Improvements
 
-### 7. Tolerant Interface by Default for Solver Envelope
+1. Solver-shape visibility improves from implicit prompt-only behavior to explicit per-call telemetry coverage (`solver_shape` + completeness fields).
+2. Promotion decisions improve from opaque heuristics to explicit policy-versioned lifecycle decisions with rationale fields.
+3. Artifact reuse safety improves via version-aware lifecycle states and deterministic fallback preference order.
+4. Operational auditability improves via inspectable scorecards/decisions and explicit policy toggles.
 
-Solver Shape and scorecard boundaries should remain tolerant where practical:
+## Non-Improvement Expectations
 
-1. symbol/string key tolerance for envelope ingestion and logging,
-2. explicit defaults when optional solver fields are absent,
-3. strict typing only for promotion gate fields required for deterministic transitions.
+1. Runtime does not reinterpret domain `Outcome.ok` into semantic error by heuristic judgment (ADR 0017 remains intact).
+2. This ADR does not introduce domain-specific quality heuristics (news/movies/recipes correctness stays outside policy contract).
+3. This ADR does not grant autonomous policy mutation authority (ADR 0025 authority boundaries remain in force).
+
+## Validation Signals
+
+1. Tests: full Ruby suite remains green during rollout phases.
+2. Traces/logs: presence and stability of `solver_shape*`, `lifecycle_*`, `promotion_*`, and artifact-selection lifecycle fields.
+3. Scorecard evidence: version-scoped counters and policy-version snapshots persist per artifact checksum.
+4. Observation window threshold for durable eligibility: at least 10 calls across at least 2 sessions.
+
+## Rollback or Adjustment Triggers
+
+1. Promotion enforcement causes material regression in stable scenarios -> disable `promotion_enforcement_enabled` and continue shadow-only calibration.
+2. Candidate volatility causes repeated degradation churn -> tighten thresholds or hold at probation while collecting more evidence.
+3. A capability class shows sustained misfit (>2x false-hold/false-promotion vs global baseline once classification is available) -> introduce class-specific thresholds only for that class.
 
 ## Scope
 
 In scope:
 
-1. first-class Solver Shape envelope in runtime telemetry and persisted evolution metadata,
-2. explicit reliability-gated lifecycle states for automatic tool promotion,
-3. canonical scorecard contract that drives transition policy.
+1. solver-shape contract and telemetry
+2. reliability-gated lifecycle policy for artifact versions
+3. selector/prompt integration with lifecycle evidence
+4. operational inspection and control surfaces
 
 Out of scope:
 
-1. domain-specific quality heuristics (news/movies/recipes/etc.),
-2. runtime-autonomous decomposition that bypasses Tool Builder intent,
-3. replacing current delegated contract validation mechanisms.
+1. domain-specific semantic grading
+2. replacing delegated contract validation mechanisms
+3. autonomous runtime policy mutation
 
 ## Consequences
 
 ### Positive
 
-1. "Reliable tool" becomes measurable and auditable.
-2. Solver decisions become inspectable in the same vocabulary as architecture docs.
-3. Promotion/demotion behavior becomes deterministic and easier to tune safely.
-4. Out-of-band evolution pressure uses explicit policy signals instead of diffuse heuristics.
+1. Promotion and reuse policy are explicit, measurable, and auditable.
+2. Evolution decisions are traceable at the same granularity as runtime execution.
+3. Reliability and semantic-correctness layers remain separable and composable.
 
 ### Tradeoffs
 
-1. Additional schema and policy complexity in artifact/pattern persistence layers.
-2. More migration work for traces/tests to include Solver Shape fields.
-3. Promotion gates can delay reuse for tools that are useful but under-observed.
+1. Additional metadata and policy complexity in runtime persistence surfaces.
+2. More operational discipline needed for threshold tuning and rollout governance.
+3. Reliability policy can surface semantic instability but does not solve it alone.
 
 ## Alternatives Considered
 
 1. Keep solver shape implicit in prompt text only.
-   - Rejected: weak introspection and weak policy auditability.
-2. Hard-code planner behavior in runtime and reduce Tool Builder discretion.
-   - Rejected: conflicts with agent-first and Tool Builder-driven evolution tenets.
-3. Promote tools immediately on first successful execution.
-   - Rejected: increases fragile-interface persistence and weakens reliability guarantees.
+   - Rejected: weak auditability and weak policy determinism.
+2. Hard-code rigid planner behavior in runtime.
+   - Rejected: conflicts with Tool Builder autonomy and project tenets.
+3. Promote on first success.
+   - Rejected: insufficient reliability evidence and higher drift risk.
 
 ## Rollout Plan
 
-### Phase 1: Schema and Trace Capture (Observational Only)
+Rollout phases from this ADR are complete as MVP in Ruby runtime:
 
-1. Add Solver Shape envelope fields to call telemetry in non-blocking mode.
-2. Persist scorecard primitives from existing counters without changing promotion behavior.
+1. schema and trace capture
+2. version-scoped scorecards
+3. shadow promotion engine
+4. controlled enforcement path
+5. prompt/selector integration
+6. operations/governance surfaces
 
-### Phase 2: Policy Contract and Thresholds
+Follow-up work continues under separate plans/ADRs for:
 
-1. Define versioned reliability gate policy contract (`v1` thresholds + transition rules).
-2. Add policy snapshot/version fields to scorecard and promotion decisions.
-
-### Phase 3: Shadow Promotion Engine
-
-1. Run lifecycle transitions in shadow mode (`candidate` -> `probation` -> `durable`) without affecting runtime reuse.
-2. Compare shadow transitions against current selection outcomes to detect regressions.
-3. Compare candidate versions against incumbent durable versions for the same tool interface over a fixed observation window.
-4. Calibrate thresholds by explicitly tracking false promotions and false holds before enforcement.
-
-### Phase 4: Controlled Enforcement
-
-1. Enable reliability-gated promotion for newly forged tools.
-2. Keep existing durable artifacts under compatibility mode until sufficient scorecard evidence is available.
-3. Require version-aware switchover and automatic fallback to incumbent durable on regression.
-
-### Phase 5: Prompt and Selector Integration
-
-1. Use lifecycle state and reliability score in known-tools prompt hints.
-2. Bias selector toward durable tools and away from degraded tools.
-
-### Phase 6: Acceptance Baselines and Governance
-
-1. Add deterministic acceptance scenarios for promotion/demotion transitions.
-2. Publish baseline trace slices demonstrating correct lifecycle state movement.
-3. Document operator playbook for threshold tuning and emergency rollback.
+1. semantic continuity contracts (ADR 0024)
+2. awareness/authority substrate evolution (ADR 0025)
+3. quality hardening of specific capability flows
 
 ## Guardrails
 
-1. Promotion gating must never rewrite domain outcome semantics.
-2. Solver Shape remains descriptive/prescriptive metadata, not hidden control flow mutation.
-3. Reliability gate policy versions must be explicit and logged.
-4. Lifecycle transitions must be reversible and traceable.
+1. Promotion gates must not rewrite domain outcomes.
+2. Policy versions and lifecycle decisions must be logged and inspectable.
+3. Lifecycle transitions must be reversible via selector policy and operator controls.
+4. Reliability policy measures stability; semantic correctness requires complementary contracts (ADR 0024 when applicable).
 
-## Open Questions
+## Ubiquitous Language Additions
 
-1. How should "meaningful sample" be parameterized operationally (for example minimum evaluations per class and minimum time horizon)?
-2. Should session diversity enforce strict session-id uniqueness only, or include additional diversity checks (for example distinct trace segments/time windows)?
+No new UL terms introduced beyond those already adopted through ADR 0023/0024/0025 updates in [`docs/ubiquitous-language.md`](../ubiquitous-language.md).

@@ -44,4 +44,5 @@ Use [`docs/plans/TEMPLATE.md`](TEMPLATE.md) for new implementation plans.
 - [`external-data-provenance-implementation-plan.md`](external-data-provenance-implementation-plan.md) - provenance invariants and enforcement
 - [`failed-attempt-exception-telemetry-implementation-plan.md`](failed-attempt-exception-telemetry-implementation-plan.md) - preserve failed-attempt diagnostics in logs/artifacts
 - [`awareness-substrate-authority-boundary-implementation-plan.md`](awareness-substrate-authority-boundary-implementation-plan.md) - bounded awareness rollout with explicit observe/propose/enact authority gates
+- [`response-content-continuity-implementation-plan.md`](response-content-continuity-implementation-plan.md) - bounded response-content store, history content references, and follow-up retrieval reliability
 - [`TEMPLATE.md`](TEMPLATE.md) - canonical implementation-plan structure with measurable outcome contracts
