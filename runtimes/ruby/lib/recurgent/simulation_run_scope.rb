@@ -77,7 +77,23 @@ class Agent
     end
 
     def _safe_segment(value)
-      value.to_s.strip.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-+|-+\z/, "")
+      raw = value.to_s.strip.downcase
+      sanitized = +""
+      dash_open = false
+
+      raw.each_char do |char|
+        if char.between?("a", "z") || char.between?("0", "9")
+          sanitized << char
+          dash_open = false
+        elsif !dash_open
+          sanitized << "-"
+          dash_open = true
+        end
+      end
+
+      sanitized.delete_prefix!("-")
+      sanitized.delete_suffix!("-")
+      sanitized
     end
 
     def _deep_dup_hash(payload)
