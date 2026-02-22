@@ -1,6 +1,6 @@
 # Contract-First Role Profiles and State Continuity Implementation Plan
 
-- Status: draft
+- Status: complete
 - Date: 2026-02-20
 - Scope: [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) rollout (updated after [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md))
 
