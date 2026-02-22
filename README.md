@@ -2,6 +2,15 @@
 
 **An agent runtime that grows software through use.**
 
+### Three Core Ideas
+
+1. **Interface:** Model backed dynamic dispatch
+   Behavior is infered and created at runtime by a backing model.
+2. **Environment:** Agents compose themselves
+   Agents compose themselves by building other agents to delegate work. Humans just sketch intent and boundaries.
+3. **Evolution:** Outcome is shaped, not prescribed
+   Contracts and traces provide directional pressure so emergence stays reliable and intelligible.
+
 Recurgent doesn't produce code. It produces a tool-building organism that produces code. You give it a role and an environment. It discovers what tools it needs, builds them, and gets better over time.
 
 #### A Calculator

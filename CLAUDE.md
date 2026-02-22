@@ -140,6 +140,11 @@ Use `mise` to manage project-specific tools and runtime. Update [`.mise.toml`](.
 - Every bug fix: explain why it occurs, determine if a redesign eliminates a class of bugs, write a regression test
 - Keep [`tmp/`](tmp) for scratchpads; all docs under [`docs/`](docs); don't litter the project directory
 
-## Information Organization
+## Retrieval Over Recall
 
-IMPORTANT: For project-specific information prefer retrieval-led reasoning over pre-training-led reasoning. Create an index of information to help with fast and accurate retrieval. Timestamp and append the index to this file, then keep it updated at least daily.
+Prefer searching the codebase over relying on memory. Key entry points:
+- `docs/adrs/` — architectural decisions (read the ADR before changing related code)
+- `docs/plans/` — implementation plans with phase status
+- `specs/contract/v1/` — machine-checkable contracts and schemas
+- `runtimes/ruby/lib/recurgent/` — all runtime modules (one class per file)
+- `runtimes/ruby/spec/` — tests mirror lib structure; `contract/` holds cross-cutting guards
