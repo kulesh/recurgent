@@ -1,0 +1,499 @@
+{
+  "schema_version": 1,
+  "run_id": "4bcc4722ae127b60081ee879",
+  "recorded_at": "2026-02-22T03:18:09Z",
+  "commit_sha": "9f50b42",
+  "scenario_pack_id": "calculator-core-v1",
+  "scenario_class": "class_1",
+  "seed": 11,
+  "session_id": "phase7a-r8",
+  "mode": "replay",
+  "score_vector": {
+    "correctness": 0.7,
+    "contract_adherence": 0.15,
+    "repair_efficiency": 0.1,
+    "reuse": 0.05,
+    "overall": 1.0
+  },
+  "scorer_version": "simulation_scorer_v1",
+  "artifacts": {
+    "scenario_pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+    "baseline_diff_report_path": "/Users/kulesh/dev/actuator/tmp/simulation/diffs/4bcc4722ae127b60081ee879.json"
+  },
+  "metrics": {
+    "seeds": [
+      11,
+      19,
+      23,
+      31,
+      43
+    ],
+    "replay_stability": 1.0,
+    "per_seed_results": [
+      {
+        "seed": 11,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 19,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          },
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 23,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 31,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 43,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": true,
+        "fixture_present": true
+      }
+    ],
+    "score_components": {
+      "correctness": 1.0,
+      "contract_adherence": 1.0,
+      "repair_efficiency": 1.0,
+      "reuse": 1.0
+    },
+    "score_weights": {
+      "correctness": 0.7,
+      "contract_adherence": 0.15,
+      "repair_efficiency": 0.1,
+      "reuse": 0.05
+    },
+    "trace_validation": {
+      "valid": true,
+      "entry_count": 1
+    },
+    "baseline_diff_report": {
+      "classification": "unchanged",
+      "baseline_run_id": "ee834ba1970b0df23c32691f",
+      "current_run_id": "4bcc4722ae127b60081ee879",
+      "score_delta": 0.0,
+      "gate_deltas": [
+        {
+          "gate": "G0",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G1",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G2",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G3",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G4",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G5",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        }
+      ],
+      "non_actionable_noise": true,
+      "suspected_causes": [
+        "no_material_change"
+      ]
+    }
+  },
+  "gates": {
+    "G0": {
+      "status": "pass",
+      "evaluator_owner": "scenario_contract_validator",
+      "required_artifacts": [
+        "scenario_pack_contract",
+        "oracle_contract",
+        "scoring_profile"
+      ],
+      "message": "scenario pack contract validated",
+      "measured_at": "2026-02-22T03:18:09Z"
+    },
+    "G1": {
+      "status": "pass",
+      "evaluator_owner": "replay_runner",
+      "required_artifacts": [
+        "replay_manifest",
+        "replay_result_vector",
+        "replay_stability_metrics"
+      ],
+      "message": "replay stability=1.0",
+      "measured_at": "2026-02-22T03:18:09Z"
+    },
+    "G2": {
+      "status": "pass",
+      "evaluator_owner": "deterministic_scorer",
+      "required_artifacts": [
+        "score_vector",
+        "score_components",
+        "scorer_version"
+      ],
+      "message": "score vector reproducible against prior replay entry",
+      "measured_at": "2026-02-22T03:18:09Z"
+    },
+    "G3": {
+      "status": "pass",
+      "evaluator_owner": "schema_validator",
+      "required_artifacts": [
+        "trace_log",
+        "trace_schema_report"
+      ],
+      "message": "trace schema validation passed (entries=1)",
+      "measured_at": "2026-02-22T03:18:09Z"
+    },
+    "G4": {
+      "status": "pass",
+      "evaluator_owner": "baseline_diff_engine",
+      "required_artifacts": [
+        "baseline_snapshot",
+        "baseline_diff_report"
+      ],
+      "message": "baseline diff classification=unchanged",
+      "measured_at": "2026-02-22T03:18:09Z"
+    },
+    "G5": {
+      "status": "pass",
+      "evaluator_owner": "ci_gate_runner",
+      "required_artifacts": [
+        "ci_gate_result",
+        "nightly_trend_report"
+      ],
+      "message": "ci readiness gate executed",
+      "measured_at": "2026-02-22T03:18:09Z"
+    }
+  }
+}

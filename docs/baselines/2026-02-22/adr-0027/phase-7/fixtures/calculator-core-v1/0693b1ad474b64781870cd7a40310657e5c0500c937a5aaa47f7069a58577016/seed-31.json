@@ -1,0 +1,65 @@
+{
+  "seed": 31,
+  "pack_id": "calculator-core-v1",
+  "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+  "oracle_results": [
+    {
+      "id": "multiply_chain_correct",
+      "kind": "calculator_expression",
+      "passed": true,
+      "observation": {
+        "status": "ok",
+        "value": 24,
+        "passed": true,
+        "details": {
+          "delta": 0.0,
+          "tolerance": 0.0
+        }
+      }
+    },
+    {
+      "id": "sqrt_expected_precision",
+      "kind": "calculator_expression",
+      "passed": true,
+      "observation": {
+        "status": "ok",
+        "value": 12.0,
+        "passed": true,
+        "details": {
+          "delta": 0.0,
+          "tolerance": 0.000001
+        }
+      }
+    },
+    {
+      "id": "composed_expression_correct",
+      "kind": "calculator_expression",
+      "passed": true,
+      "observation": {
+        "status": "ok",
+        "value": 20,
+        "passed": true,
+        "details": {
+          "delta": 0.0,
+          "tolerance": 0.0
+        }
+      }
+    },
+    {
+      "id": "add_chain_correct",
+      "kind": "calculator_expression",
+      "passed": true,
+      "observation": {
+        "status": "ok",
+        "value": 12,
+        "passed": true,
+        "details": {
+          "delta": 0.0,
+          "tolerance": 0.0
+        }
+      }
+    }
+  ],
+  "pass_count": 4,
+  "total_count": 4
+}
