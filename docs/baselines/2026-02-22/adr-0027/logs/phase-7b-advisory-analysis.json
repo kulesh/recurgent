@@ -1,0 +1,111 @@
+{
+  "generated_at": "2026-02-22T03:43:44Z",
+  "pack_count": 2,
+  "total_replay_runs": 4,
+  "pack_summaries": [
+    {
+      "pack_id": "assistant-continuity-v1",
+      "scenario_class": "class_2_plus",
+      "run_count": 2,
+      "seed_set": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97
+      ],
+      "latest_recorded_at": "2026-02-22T03:43:44Z",
+      "latest_gate_statuses": {
+        "G0": "pass",
+        "G1": "pass",
+        "G2": "pass",
+        "G3": "pass",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "score_trend": {
+        "first": 1.0,
+        "latest": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "delta": 0.0
+      },
+      "failure_signatures": [
+        {
+          "signature": "baseline_diff:no_baseline",
+          "count": 1
+        },
+        {
+          "signature": "gate:G2=advisory",
+          "count": 1
+        },
+        {
+          "signature": "gate:G3=advisory",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "pack_id": "debate-orchestration-v1",
+      "scenario_class": "class_2_plus",
+      "run_count": 2,
+      "seed_set": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97
+      ],
+      "latest_recorded_at": "2026-02-22T03:43:44Z",
+      "latest_gate_statuses": {
+        "G0": "pass",
+        "G1": "pass",
+        "G2": "pass",
+        "G3": "pass",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "score_trend": {
+        "first": 1.0,
+        "latest": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "delta": 0.0
+      },
+      "failure_signatures": [
+        {
+          "signature": "baseline_diff:no_baseline",
+          "count": 1
+        },
+        {
+          "signature": "gate:G2=advisory",
+          "count": 1
+        },
+        {
+          "signature": "gate:G3=advisory",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "global_failure_signatures": [
+    {
+      "signature": "baseline_diff:no_baseline",
+      "count": 2
+    },
+    {
+      "signature": "gate:G2=advisory",
+      "count": 2
+    },
+    {
+      "signature": "gate:G3=advisory",
+      "count": 2
+    }
+  ]
+}

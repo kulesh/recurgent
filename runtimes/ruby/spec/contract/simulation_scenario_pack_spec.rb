@@ -7,15 +7,17 @@ RSpec.describe Agent::SimulationScenarioPack do
   let(:packs_root) { repo_root.join("specs/contract/v1/simulation/scenario-packs") }
   let(:pack_paths) { Dir[File.join(packs_root, "*.yaml")] }
 
-  it "ships at least two class-1 calculator packs" do
-    expect(pack_paths.length).to be >= 2
-    ids = pack_paths.map do |path|
-      payload = Agent::SimulationScenarioPack.load(path)
-      expect(payload.fetch("class")).to eq("class_1")
-      payload.fetch("id")
-    end
+  it "ships class-1 and class-2+ simulation packs" do
+    expect(pack_paths.length).to be >= 4
+    payloads = pack_paths.map { |path| Agent::SimulationScenarioPack.load(path) }
+    ids = payloads.map { |payload| payload.fetch("id") }
 
-    expect(ids).to include("calculator-core-v1", "calculator-edge-v1")
+    class_1_ids = payloads.select { |payload| payload.fetch("class") == "class_1" }.map { |payload| payload.fetch("id") }
+    class_2_ids = payloads.select { |payload| payload.fetch("class") == "class_2_plus" }.map { |payload| payload.fetch("id") }
+
+    expect(class_1_ids).to include("calculator-core-v1", "calculator-edge-v1")
+    expect(class_2_ids).to include("assistant-continuity-v1", "debate-orchestration-v1")
+    expect(ids).to include("calculator-core-v1", "calculator-edge-v1", "assistant-continuity-v1", "debate-orchestration-v1")
   end
 
   it "validates scoring profile and replay contract for each pack" do

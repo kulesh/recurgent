@@ -33,6 +33,8 @@ jobs:
           NIGHTLY_ROOT="../../tmp/simulation/nightly"
           LEDGER_PATH="${NIGHTLY_ROOT}/run-ledger.jsonl"
           TREND_REPORT="${NIGHTLY_ROOT}/nightly-trend-report.json"
+          ADVISORY_JSON="${NIGHTLY_ROOT}/advisory-status.json"
+          ADVISORY_MARKDOWN="${NIGHTLY_ROOT}/simulation-advisory-status-$(date -u +%F).md"
           TRACE_LOG="${NIGHTLY_ROOT}/trace.jsonl"
 
           mkdir -p "${NIGHTLY_ROOT}"
@@ -80,8 +82,53 @@ jobs:
             jq -e '.gates | to_entries | all(.value.status == "pass")' "${pack_out}/replay-2.json" > /dev/null
           }
 
+          run_pack_advisory() {
+            local pack_id="$1"
+            local pack_path="$2"
+            local pack_out="${NIGHTLY_ROOT}/${pack_id}"
+            local fixture_root="${NIGHTLY_ROOT}/fixtures/${pack_id}"
+
+            mkdir -p "${pack_out}" "${fixture_root}"
+
+            bundle exec ruby bin/recurgent-sim \
+              --pack "${pack_path}" \
+              --mode fixture \
+              --seeds "${SEEDS}" \
+              --operational-mode nightly \
+              --nightly-trend-report "${TREND_REPORT}" \
+              --fixture-root "${fixture_root}" \
+              --ledger-path "${LEDGER_PATH}" > "${pack_out}/fixture.json"
+
+            bundle exec ruby bin/recurgent-sim \
+              --pack "${pack_path}" \
+              --mode replay \
+              --seeds "${SEEDS}" \
+              --operational-mode nightly \
+              --nightly-trend-report "${TREND_REPORT}" \
+              --fixture-root "${fixture_root}" \
+              --ledger-path "${LEDGER_PATH}" > "${pack_out}/replay-1.json"
+
+            bundle exec ruby bin/recurgent-sim \
+              --pack "${pack_path}" \
+              --mode replay \
+              --seeds "${SEEDS}" \
+              --trace-log "${TRACE_LOG}" \
+              --operational-mode nightly \
+              --nightly-trend-report "${TREND_REPORT}" \
+              --fixture-root "${fixture_root}" \
+              --ledger-path "${LEDGER_PATH}" > "${pack_out}/replay-2.json"
+          }
+
           run_pack "calculator-core-v1" "../../specs/contract/v1/simulation/scenario-packs/calculator-core-v1.yaml"
           run_pack "calculator-edge-v1" "../../specs/contract/v1/simulation/scenario-packs/calculator-edge-v1.yaml"
+          run_pack_advisory "assistant-continuity-v1" "../../specs/contract/v1/simulation/scenario-packs/assistant-continuity-v1.yaml"
+          run_pack_advisory "debate-orchestration-v1" "../../specs/contract/v1/simulation/scenario-packs/debate-orchestration-v1.yaml"
+
+          bundle exec ruby bin/recurgent-sim-advisory-report \
+            --ledger-path "${LEDGER_PATH}" \
+            --pack-ids "assistant-continuity-v1,debate-orchestration-v1" \
+            --write-json "${ADVISORY_JSON}" \
+            --write-markdown "${ADVISORY_MARKDOWN}" > "${NIGHTLY_ROOT}/advisory-analysis.json"
 
           jq -s '
             {
@@ -103,6 +150,7 @@ jobs:
             echo ""
             echo "- Seed matrix: \`${SEEDS}\`"
             echo "- Trend report: \`${TREND_REPORT}\`"
+            echo "- Advisory report: \`${ADVISORY_MARKDOWN}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload nightly readiness artifacts

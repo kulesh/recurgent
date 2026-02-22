@@ -1,0 +1,67 @@
+version: 1
+id: debate-orchestration-v1
+class: class_2_plus
+description: Advisory pack for debate orchestration coherence and typed boundary handling.
+scoring_profile:
+  id: debate_orchestration_v1
+  weights:
+    correctness: 0.45
+    contract_adherence: 0.2
+    repair_efficiency: 0.2
+    reuse: 0.15
+replay:
+  mode: fixture
+  seeds: [11, 19, 23, 31, 43, 59, 71, 97]
+oracles:
+  - id: panel_coverage_across_rounds
+    kind: debate_orchestration_case
+    input:
+      contributions:
+        - panelist: engineer
+          round: 1
+          stance: pro
+        - panelist: critic
+          round: 1
+          stance: con
+        - panelist: philosopher
+          round: 1
+          stance: caution
+        - panelist: engineer
+          round: 2
+          stance: pro
+        - panelist: critic
+          round: 2
+          stance: con
+        - panelist: philosopher
+          round: 2
+          stance: caution
+      moderation:
+        final_synthesis_present: true
+    expect:
+      min_panelists: 3
+      min_rounds: 2
+      require_final_synthesis: true
+  - id: debate_boundary_typed_error
+    kind: typed_error_boundary_case
+    input:
+      outcome:
+        status: error
+        error_type: wrong_tool_boundary
+        retriable: false
+    expect:
+      allowed_error_types: [wrong_tool_boundary]
+      require_non_retriable: true
+  - id: debate_provenance_shape
+    kind: provenance_envelope_case
+    input:
+      success_payload:
+        provenance:
+          sources:
+            - uri: knowledge_base://debate_context
+              fetched_at: "2026-02-22T00:00:00Z"
+              retrieval_tool: debate_moderator
+              retrieval_mode: knowledge_base
+    expect:
+      min_sources: 1
+      required_source_keys: [uri, fetched_at, retrieval_tool, retrieval_mode]
+      allowed_retrieval_modes: [live, cached, fixture, knowledge_base]

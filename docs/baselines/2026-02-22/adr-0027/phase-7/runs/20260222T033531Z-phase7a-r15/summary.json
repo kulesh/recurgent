@@ -1,0 +1,32 @@
+{
+  "session_id": "phase7a-r15",
+  "recorded_bundle": "/Users/kulesh/dev/actuator/docs/baselines/2026-02-22/adr-0027/phase-7/runs/20260222T033531Z-phase7a-r15",
+  "seeds": [
+    11,
+    19,
+    23,
+    31,
+    43
+  ],
+  "qualifying": true,
+  "packs": {
+    "calculator-core-v1": {
+      "G0": "pass",
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass"
+    },
+    "calculator-edge-v1": {
+      "G0": "pass",
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass"
+    }
+  },
+  "ledger_path": "/Users/kulesh/dev/actuator/docs/baselines/2026-02-22/adr-0027/phase-7/run-ledger.jsonl",
+  "trend_report_path": "/Users/kulesh/dev/actuator/docs/baselines/2026-02-22/adr-0027/phase-7/nightly-trend-report.json"
+}

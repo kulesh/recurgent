@@ -1,0 +1,639 @@
+{
+  "schema_version": 1,
+  "run_id": "c428bb1823e1e199f441b05c",
+  "recorded_at": "2026-02-22T03:43:44Z",
+  "commit_sha": "184ab69",
+  "scenario_pack_id": "assistant-continuity-v1",
+  "scenario_class": "class_2_plus",
+  "seed": 11,
+  "session_id": "f5c10ee81482b0bd",
+  "mode": "replay",
+  "score_vector": {
+    "correctness": 0.5,
+    "contract_adherence": 0.2,
+    "repair_efficiency": 0.15,
+    "reuse": 0.15,
+    "overall": 1.0
+  },
+  "scorer_version": "simulation_scorer_v1",
+  "artifacts": {
+    "scenario_pack_checksum_sha256": "7b2f58b9727316bc1b30004fa0e1f3f828e3ece4c7d54e4f8445f5835a4b0357",
+    "baseline_diff_report_path": "/Users/kulesh/dev/actuator/tmp/simulation/diffs/c428bb1823e1e199f441b05c.json"
+  },
+  "metrics": {
+    "seeds": [
+      11,
+      19,
+      23,
+      31,
+      43,
+      59,
+      71,
+      97
+    ],
+    "replay_stability": 1.0,
+    "per_seed_results": [
+      {
+        "seed": 11,
+        "pack_id": "assistant-continuity-v1",
+        "pack_checksum_sha256": "7b2f58b9727316bc1b30004fa0e1f3f828e3ece4c7d54e4f8445f5835a4b0357",
+        "oracle_results": [
+          {
+            "id": "unavailable_capability_reports_typed_error",
+            "kind": "typed_error_boundary_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "status": "error",
+                "error_type": "capability_unavailable",
+                "retriable": false,
+                "allowed_error_types": [
+                  "capability_unavailable",
+                  "unsupported_capability"
+                ]
+              }
+            }
+          },
+          {
+            "id": "followup_content_ref_resolution",
+            "kind": "assistant_followup_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "query_requires_content_ref": true,
+                "history_ref_count": 1,
+                "resolved_content_ref": "content:abc123",
+                "resolved_from_history": true
+              }
+            }
+          },
+          {
+            "id": "external_data_provenance_envelope",
+            "kind": "provenance_envelope_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "source_count": 1,
+                "min_sources": 1,
+                "missing_key_count": 0,
+                "invalid_mode_count": 0
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 19,
+        "pack_id": "assistant-continuity-v1",
+        "pack_checksum_sha256": "7b2f58b9727316bc1b30004fa0e1f3f828e3ece4c7d54e4f8445f5835a4b0357",
+        "oracle_results": [
+          {
+            "id": "unavailable_capability_reports_typed_error",
+            "kind": "typed_error_boundary_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "status": "error",
+                "error_type": "capability_unavailable",
+                "retriable": false,
+                "allowed_error_types": [
+                  "capability_unavailable",
+                  "unsupported_capability"
+                ]
+              }
+            }
+          },
+          {
+            "id": "external_data_provenance_envelope",
+            "kind": "provenance_envelope_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "source_count": 1,
+                "min_sources": 1,
+                "missing_key_count": 0,
+                "invalid_mode_count": 0
+              }
+            }
+          },
+          {
+            "id": "followup_content_ref_resolution",
+            "kind": "assistant_followup_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "query_requires_content_ref": true,
+                "history_ref_count": 1,
+                "resolved_content_ref": "content:abc123",
+                "resolved_from_history": true
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 23,
+        "pack_id": "assistant-continuity-v1",
+        "pack_checksum_sha256": "7b2f58b9727316bc1b30004fa0e1f3f828e3ece4c7d54e4f8445f5835a4b0357",
+        "oracle_results": [
+          {
+            "id": "unavailable_capability_reports_typed_error",
+            "kind": "typed_error_boundary_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "status": "error",
+                "error_type": "capability_unavailable",
+                "retriable": false,
+                "allowed_error_types": [
+                  "capability_unavailable",
+                  "unsupported_capability"
+                ]
+              }
+            }
+          },
+          {
+            "id": "followup_content_ref_resolution",
+            "kind": "assistant_followup_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "query_requires_content_ref": true,
+                "history_ref_count": 1,
+                "resolved_content_ref": "content:abc123",
+                "resolved_from_history": true
+              }
+            }
+          },
+          {
+            "id": "external_data_provenance_envelope",
+            "kind": "provenance_envelope_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "source_count": 1,
+                "min_sources": 1,
+                "missing_key_count": 0,
+                "invalid_mode_count": 0
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 31,
+        "pack_id": "assistant-continuity-v1",
+        "pack_checksum_sha256": "7b2f58b9727316bc1b30004fa0e1f3f828e3ece4c7d54e4f8445f5835a4b0357",
+        "oracle_results": [
+          {
+            "id": "unavailable_capability_reports_typed_error",
+            "kind": "typed_error_boundary_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "status": "error",
+                "error_type": "capability_unavailable",
+                "retriable": false,
+                "allowed_error_types": [
+                  "capability_unavailable",
+                  "unsupported_capability"
+                ]
+              }
+            }
+          },
+          {
+            "id": "external_data_provenance_envelope",
+            "kind": "provenance_envelope_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "source_count": 1,
+                "min_sources": 1,
+                "missing_key_count": 0,
+                "invalid_mode_count": 0
+              }
+            }
+          },
+          {
+            "id": "followup_content_ref_resolution",
+            "kind": "assistant_followup_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "query_requires_content_ref": true,
+                "history_ref_count": 1,
+                "resolved_content_ref": "content:abc123",
+                "resolved_from_history": true
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 43,
+        "pack_id": "assistant-continuity-v1",
+        "pack_checksum_sha256": "7b2f58b9727316bc1b30004fa0e1f3f828e3ece4c7d54e4f8445f5835a4b0357",
+        "oracle_results": [
+          {
+            "id": "external_data_provenance_envelope",
+            "kind": "provenance_envelope_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "source_count": 1,
+                "min_sources": 1,
+                "missing_key_count": 0,
+                "invalid_mode_count": 0
+              }
+            }
+          },
+          {
+            "id": "unavailable_capability_reports_typed_error",
+            "kind": "typed_error_boundary_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "status": "error",
+                "error_type": "capability_unavailable",
+                "retriable": false,
+                "allowed_error_types": [
+                  "capability_unavailable",
+                  "unsupported_capability"
+                ]
+              }
+            }
+          },
+          {
+            "id": "followup_content_ref_resolution",
+            "kind": "assistant_followup_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "query_requires_content_ref": true,
+                "history_ref_count": 1,
+                "resolved_content_ref": "content:abc123",
+                "resolved_from_history": true
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 59,
+        "pack_id": "assistant-continuity-v1",
+        "pack_checksum_sha256": "7b2f58b9727316bc1b30004fa0e1f3f828e3ece4c7d54e4f8445f5835a4b0357",
+        "oracle_results": [
+          {
+            "id": "external_data_provenance_envelope",
+            "kind": "provenance_envelope_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "source_count": 1,
+                "min_sources": 1,
+                "missing_key_count": 0,
+                "invalid_mode_count": 0
+              }
+            }
+          },
+          {
+            "id": "unavailable_capability_reports_typed_error",
+            "kind": "typed_error_boundary_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "status": "error",
+                "error_type": "capability_unavailable",
+                "retriable": false,
+                "allowed_error_types": [
+                  "capability_unavailable",
+                  "unsupported_capability"
+                ]
+              }
+            }
+          },
+          {
+            "id": "followup_content_ref_resolution",
+            "kind": "assistant_followup_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "query_requires_content_ref": true,
+                "history_ref_count": 1,
+                "resolved_content_ref": "content:abc123",
+                "resolved_from_history": true
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 71,
+        "pack_id": "assistant-continuity-v1",
+        "pack_checksum_sha256": "7b2f58b9727316bc1b30004fa0e1f3f828e3ece4c7d54e4f8445f5835a4b0357",
+        "oracle_results": [
+          {
+            "id": "followup_content_ref_resolution",
+            "kind": "assistant_followup_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "query_requires_content_ref": true,
+                "history_ref_count": 1,
+                "resolved_content_ref": "content:abc123",
+                "resolved_from_history": true
+              }
+            }
+          },
+          {
+            "id": "unavailable_capability_reports_typed_error",
+            "kind": "typed_error_boundary_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "status": "error",
+                "error_type": "capability_unavailable",
+                "retriable": false,
+                "allowed_error_types": [
+                  "capability_unavailable",
+                  "unsupported_capability"
+                ]
+              }
+            }
+          },
+          {
+            "id": "external_data_provenance_envelope",
+            "kind": "provenance_envelope_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "source_count": 1,
+                "min_sources": 1,
+                "missing_key_count": 0,
+                "invalid_mode_count": 0
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 97,
+        "pack_id": "assistant-continuity-v1",
+        "pack_checksum_sha256": "7b2f58b9727316bc1b30004fa0e1f3f828e3ece4c7d54e4f8445f5835a4b0357",
+        "oracle_results": [
+          {
+            "id": "unavailable_capability_reports_typed_error",
+            "kind": "typed_error_boundary_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "status": "error",
+                "error_type": "capability_unavailable",
+                "retriable": false,
+                "allowed_error_types": [
+                  "capability_unavailable",
+                  "unsupported_capability"
+                ]
+              }
+            }
+          },
+          {
+            "id": "external_data_provenance_envelope",
+            "kind": "provenance_envelope_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "source_count": 1,
+                "min_sources": 1,
+                "missing_key_count": 0,
+                "invalid_mode_count": 0
+              }
+            }
+          },
+          {
+            "id": "followup_content_ref_resolution",
+            "kind": "assistant_followup_case",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "passed": true,
+              "details": {
+                "query_requires_content_ref": true,
+                "history_ref_count": 1,
+                "resolved_content_ref": "content:abc123",
+                "resolved_from_history": true
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      }
+    ],
+    "score_components": {
+      "correctness": 1.0,
+      "contract_adherence": 1.0,
+      "repair_efficiency": 1.0,
+      "reuse": 1.0
+    },
+    "score_weights": {
+      "correctness": 0.5,
+      "contract_adherence": 0.2,
+      "repair_efficiency": 0.15,
+      "reuse": 0.15
+    },
+    "trace_validation": {
+      "valid": true,
+      "entry_count": 1
+    },
+    "baseline_diff_report": {
+      "classification": "improved",
+      "baseline_run_id": "813972bb0bcd55b7bcd83103",
+      "current_run_id": "c428bb1823e1e199f441b05c",
+      "score_delta": 0.0,
+      "gate_deltas": [
+        {
+          "gate": "G0",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G1",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G2",
+          "from": "advisory",
+          "to": "pass",
+          "rank_delta": 1
+        },
+        {
+          "gate": "G3",
+          "from": "advisory",
+          "to": "pass",
+          "rank_delta": 1
+        },
+        {
+          "gate": "G4",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G5",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        }
+      ],
+      "non_actionable_noise": false,
+      "suspected_causes": [
+        "gate_improvement:G2,G3"
+      ]
+    }
+  },
+  "gates": {
+    "G0": {
+      "status": "pass",
+      "evaluator_owner": "scenario_contract_validator",
+      "required_artifacts": [
+        "scenario_pack_contract",
+        "oracle_contract",
+        "scoring_profile"
+      ],
+      "message": "scenario pack contract validated",
+      "measured_at": "2026-02-22T03:43:44Z"
+    },
+    "G1": {
+      "status": "pass",
+      "evaluator_owner": "replay_runner",
+      "required_artifacts": [
+        "replay_manifest",
+        "replay_result_vector",
+        "replay_stability_metrics"
+      ],
+      "message": "replay stability=1.0",
+      "measured_at": "2026-02-22T03:43:44Z"
+    },
+    "G2": {
+      "status": "pass",
+      "evaluator_owner": "deterministic_scorer",
+      "required_artifacts": [
+        "score_vector",
+        "score_components",
+        "scorer_version"
+      ],
+      "message": "score vector reproducible against prior replay entry",
+      "measured_at": "2026-02-22T03:43:44Z"
+    },
+    "G3": {
+      "status": "pass",
+      "evaluator_owner": "schema_validator",
+      "required_artifacts": [
+        "trace_log",
+        "trace_schema_report"
+      ],
+      "message": "trace schema validation passed (entries=1)",
+      "measured_at": "2026-02-22T03:43:44Z"
+    },
+    "G4": {
+      "status": "pass",
+      "evaluator_owner": "baseline_diff_engine",
+      "required_artifacts": [
+        "baseline_snapshot",
+        "baseline_diff_report"
+      ],
+      "message": "baseline diff classification=improved",
+      "measured_at": "2026-02-22T03:43:44Z"
+    },
+    "G5": {
+      "status": "pass",
+      "evaluator_owner": "ci_gate_runner",
+      "required_artifacts": [
+        "ci_gate_result",
+        "nightly_trend_report"
+      ],
+      "message": "nightly readiness run configured (trend_report=../../tmp/simulation/nightly-advisory-local/nightly-trend-report.json)",
+      "measured_at": "2026-02-22T03:43:44Z"
+    }
+  }
+}
