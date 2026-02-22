@@ -206,7 +206,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-22T05:48:00Z
+Last Updated (UTC): 2026-02-22T18:04:06Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -223,6 +223,11 @@ Last Updated (UTC): 2026-02-22T05:48:00Z
 - `docs/product-specs/idea-brief.md` - concept vision, rationale, demos, future direction
 - `docs/product-specs/recursim-product-spec.md` - product specification for Recursim simulator focused on robustness and reliable emergence in self-contained systems
 - `docs/simulation-readiness.md` - operational commands and diagnostics for simulation readiness gates (`G0`-`G5`) including CI/nightly modes
+- `docs/recursim/README.md` - Recursim framework documentation map for simulation concepts, lane behavior, shaping mechanisms, and tutorials
+- `docs/recursim/glossary.md` - Recursim terms for packs, lanes, seeds, run scopes, oracles, and gate statuses
+- `docs/recursim/deterministic-replay-live-shadow.md` - conceptual model of deterministic lane, replay semantics, and live-shadow execution behavior
+- `docs/recursim/agent-shaping-mechanisms.md` - catalog of runtime and simulation mechanisms used to shape agent behavior
+- `docs/recursim/tutorial-evolving-scientific-calculator.md` - step-by-step workflow for evolving calculator capability with simulation evidence
 - `docs/observability.md` - mechanistic interpretability model, shared log schema, and live watcher usage
 - `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary and naming rules
 - `docs/tolerant-delegation-interfaces.md` - canonical tolerant delegation interface guidance and examples

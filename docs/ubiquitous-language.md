@@ -83,6 +83,14 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - `Oracle Contract`: machine-checkable correctness/utility assertions for one scenario.
 - `Replay Stability`: degree to which fixed-seed simulation reruns produce identical score vectors and trace outcomes.
 - `Baseline Diff`: structured comparison between current simulation run and a pinned baseline run.
+- `Deterministic Lane`: simulation lane focused on reproducibility using fixture/replay semantics.
+- `Live-Shadow Lane`: simulation lane that executes real runtime behavior in run-scoped isolation while remaining advisory-first.
+- `Run Scope`: isolated execution namespace for one simulation run (state/toolstore/tmp roots).
+- `Run Scope ID`: stable run identifier carried in simulation artifacts and ledger entries.
+- `Replay Comparator`: lane-specific reproducibility rule (payload identity for deterministic lane; oracle-verdict reproducibility for live-shadow lane).
+- `Oracle Verdict Reproducibility`: replay stability measure for live-shadow where oracle pass/fail outcomes remain consistent across comparable runs.
+- `Class-1 Pack`: simulation pack eligible to become gating after readiness criteria are satisfied.
+- `Advisory Pack`: simulation pack intentionally non-gating until explicit promotion decision.
 
 ## Why These Terms
 

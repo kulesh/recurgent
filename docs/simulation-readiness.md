@@ -1,6 +1,7 @@
 # Simulation Readiness Operations
 
 This document explains how to run and interpret local simulation readiness checks for `G0`-`G5`.
+For conceptual orientation, start with [`docs/recursim/README.md`](recursim/README.md).
 
 ## Gate Semantics (`G0`-`G5`)
 

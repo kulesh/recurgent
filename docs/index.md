@@ -14,6 +14,7 @@ This index is organized for fast retrieval:
 - [`docs/ubiquitous-language.md`](ubiquitous-language.md) - canonical Tool Builder/Tool vocabulary
 - [`docs/observability.md`](observability.md) - log schema, trace model, and live watcher usage
 - [`docs/simulation-readiness.md`](simulation-readiness.md) - operator commands for simulation gates (`G0`-`G5`), replay checks, baseline diffs, and CI/nightly operationalization
+- [`docs/recursim/README.md`](recursim/README.md) - Recursim framework overview, glossary, lane model, and evolution tutorial
 - [`docs/adrs/README.md`](adrs/README.md) - architecture decision index
 - [`docs/adrs/TEMPLATE.md`](adrs/TEMPLATE.md) - ADR template with baseline, expected-improvement, validation, and rollback sections
 - [`docs/plans/TEMPLATE.md`](plans/TEMPLATE.md) - implementation-plan template with phase-level improvement contracts
@@ -30,6 +31,14 @@ This index is organized for fast retrieval:
 
 - [`docs/tutorials/README.md`](tutorials/README.md) - tutorial map
 - [`docs/tutorials/personal-assistant-progressive.md`](tutorials/personal-assistant-progressive.md) - progressive walkthrough from minimal assistant to profile-aware, observable, governed runtime behavior
+
+## Recursim
+
+- [`docs/recursim/README.md`](recursim/README.md) - Recursim documentation map
+- [`docs/recursim/glossary.md`](recursim/glossary.md) - simulation framework terms (`pack`, `lane`, `deterministic`, `replay`, `live-shadow`)
+- [`docs/recursim/agent-shaping-mechanisms.md`](recursim/agent-shaping-mechanisms.md) - mechanisms that shape agent behavior in Recurgent
+- [`docs/recursim/deterministic-replay-live-shadow.md`](recursim/deterministic-replay-live-shadow.md) - lane semantics and why deterministic/replay/live-shadow exist
+- [`docs/recursim/tutorial-evolving-scientific-calculator.md`](recursim/tutorial-evolving-scientific-calculator.md) - step-by-step scientific calculator evolution workflow
 
 ## Architecture Decisions
 
