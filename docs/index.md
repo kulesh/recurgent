@@ -58,6 +58,7 @@ This index is organized for fast retrieval:
 - [`docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md`](adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md)
 - [`docs/adrs/0025-awareness-substrate-and-authority-boundary.md`](adrs/0025-awareness-substrate-and-authority-boundary.md)
 - [`docs/adrs/0026-response-content-continuity-substrate.md`](adrs/0026-response-content-continuity-substrate.md)
+- [`docs/adrs/0027-simulation-preparedness-and-readiness-gates.md`](adrs/0027-simulation-preparedness-and-readiness-gates.md)
 
 ## Implementation Plans
 
@@ -80,6 +81,7 @@ This index is organized for fast retrieval:
 - [`docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md`](plans/contract-first-role-profiles-state-continuity-implementation-plan.md)
 - [`docs/plans/awareness-substrate-authority-boundary-implementation-plan.md`](plans/awareness-substrate-authority-boundary-implementation-plan.md)
 - [`docs/plans/response-content-continuity-implementation-plan.md`](plans/response-content-continuity-implementation-plan.md)
+- [`docs/plans/simulation-preparedness-implementation-plan.md`](plans/simulation-preparedness-implementation-plan.md)
 
 ## Baselines and Operations
 

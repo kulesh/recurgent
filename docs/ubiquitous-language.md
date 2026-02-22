@@ -75,6 +75,15 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - `Content Retention Policy`: configured bounds for content continuity (`max_entries`, `max_bytes`, optional TTL).
 - `Content Eviction`: deterministic removal policy (for example oldest-first/LRU) when retention bounds are exceeded.
 
+## Simulation Preparedness Terms
+
+- `Simulation Preparedness`: explicit readiness posture indicating whether automated simulation is producing trustworthy, actionable signals.
+- `Readiness Gate`: measurable precondition that must pass before a simulation class is used as a release/evolution control signal.
+- `Scenario Pack`: versioned simulation input bundle defining task set, oracle assertions, and scoring settings.
+- `Oracle Contract`: machine-checkable correctness/utility assertions for one scenario.
+- `Replay Stability`: degree to which fixed-seed simulation reruns produce identical score vectors and trace outcomes.
+- `Baseline Diff`: structured comparison between current simulation run and a pinned baseline run.
+
 ## Why These Terms
 
 - They encode intent (problem solving) rather than mechanism (orchestration).
@@ -99,6 +108,7 @@ This project uses the following canonical language for LLM-to-LLM problem solvin
 - Use `State Continuity` when discussing sibling-method contract coherence.
 - Separate awareness from authority: allow observe/propose by default, require explicit approval for enact.
 - Keep response-content continuity separate from conversation-history metadata continuity.
+- Use simulation gating vocabulary (`readiness gate`, `replay stability`, `baseline diff`) instead of ad hoc quality labels.
 
 ## Primitive Usage
 
