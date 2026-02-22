@@ -1,0 +1,113 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+require "securerandom"
+require "time"
+require "fileutils"
+require_relative "../lib/recurgent"
+
+options = {
+  out_root: File.expand_path("../tmp/simulation/phase-7", __dir__),
+  seeds: "11,19,23,31,43",
+  operational_mode: "ci"
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bin/recurgent-sim-window-run [options]"
+  opts.on("--out-root PATH", "Root path for phase-7 artifacts") { |value| options[:out_root] = value }
+  opts.on("--seeds CSV", "Seed list (e.g. 11,19,23,31,43)") { |value| options[:seeds] = value }
+  opts.on("--session-id ID", "Optional explicit session id") { |value| options[:session_id] = value }
+  opts.on("--operational-mode MODE", "Operational mode (default: ci)") { |value| options[:operational_mode] = value }
+  opts.on("--help", "Show this help") do
+    puts opts
+    exit 0
+  end
+end
+
+parser.parse!(ARGV)
+
+out_root = File.expand_path(options.fetch(:out_root))
+session_id = options[:session_id].to_s.strip
+session_id = SecureRandom.hex(8) if session_id.empty?
+seeds = options.fetch(:seeds).split(",").map(&:strip).reject(&:empty?).map(&:to_i)
+now_tag = Time.now.utc.strftime("%Y%m%dT%H%M%SZ")
+
+ledger_path = File.join(out_root, "run-ledger.jsonl")
+trace_log_path = File.join(out_root, "trace.jsonl")
+trend_path = File.join(out_root, "nightly-trend-report.json")
+bundle_dir = File.join(out_root, "runs", "#{now_tag}-#{session_id}")
+
+FileUtils.mkdir_p(bundle_dir)
+unless File.exist?(trace_log_path)
+  trace_entry = {
+    timestamp: "2026-02-22T00:00:00.000Z",
+    role: "simulation_runner",
+    model: "deterministic",
+    method: "run_pack",
+    args: [],
+    kwargs: {},
+    code: "result = 1",
+    duration_ms: 1.0,
+    generation_attempt: 1
+  }
+  File.write(trace_log_path, "#{JSON.generate(trace_entry)}\n")
+end
+
+runner = Agent::SimulationRunner.new(
+  fixture_root: File.join(out_root, "fixtures"),
+  ledger_path: ledger_path,
+  operational_mode: options.fetch(:operational_mode),
+  nightly_trend_report_path: trend_path
+)
+
+core_pack = File.expand_path("../../../specs/contract/v1/simulation/scenario-packs/calculator-core-v1.yaml", __dir__)
+edge_pack = File.expand_path("../../../specs/contract/v1/simulation/scenario-packs/calculator-edge-v1.yaml", __dir__)
+
+run_and_write = lambda do |name, pack_path, mode, trace: false|
+  result = runner.run_pack(
+    pack_path: pack_path,
+    mode: mode,
+    session_id: session_id,
+    seeds: seeds,
+    trace_log_path: trace ? trace_log_path : nil
+  )
+  File.write(File.join(bundle_dir, "#{name}.json"), JSON.pretty_generate(result))
+  result
+end
+
+replay_with_bootstrap = lambda do |name, pack_path|
+  replay = run_and_write.call("#{name}-replay", pack_path, "replay", trace: true)
+  return replay unless replay.dig("gates", "G2", "status") == "advisory"
+
+  replay_path = File.join(bundle_dir, "#{name}-replay.json")
+  warmup_path = File.join(bundle_dir, "#{name}-replay-warmup.json")
+  FileUtils.mv(replay_path, warmup_path)
+  run_and_write.call("#{name}-replay", pack_path, "replay", trace: true)
+end
+
+run_and_write.call("core-fixture", core_pack, "fixture")
+core_replay = replay_with_bootstrap.call("core", core_pack)
+run_and_write.call("edge-fixture", edge_pack, "fixture")
+edge_replay = replay_with_bootstrap.call("edge", edge_pack)
+
+gates_pass = [core_replay, edge_replay].all? do |result|
+  result.fetch("gates").values.all? { |gate| gate.fetch("status") == "pass" }
+end
+
+summary = {
+  session_id: session_id,
+  recorded_bundle: bundle_dir,
+  seeds: seeds,
+  qualifying: gates_pass,
+  packs: {
+    "calculator-core-v1" => core_replay.fetch("gates").transform_values { |gate| gate.fetch("status") },
+    "calculator-edge-v1" => edge_replay.fetch("gates").transform_values { |gate| gate.fetch("status") }
+  },
+  ledger_path: ledger_path,
+  trend_report_path: trend_path
+}
+
+File.write(File.join(bundle_dir, "summary.json"), JSON.pretty_generate(summary))
+puts JSON.pretty_generate(summary)

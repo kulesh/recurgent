@@ -1,0 +1,51 @@
+{
+  "seed": 31,
+  "pack_id": "calculator-edge-v1",
+  "pack_checksum_sha256": "642d42e7c9a128b19c249171af38b16d7f2d05c7027711ee73231bd92368ca91",
+  "oracle_results": [
+    {
+      "id": "divide_by_zero_reports_error",
+      "kind": "calculator_error_case",
+      "passed": true,
+      "observation": {
+        "status": "error",
+        "error_type": "zero_division",
+        "passed": true,
+        "details": {
+          "expected_error_type": "zero_division",
+          "message": "divided by 0"
+        }
+      }
+    },
+    {
+      "id": "sqrt_negative_reports_domain_error",
+      "kind": "calculator_error_case",
+      "passed": true,
+      "observation": {
+        "status": "error",
+        "error_type": "domain_error",
+        "passed": true,
+        "details": {
+          "expected_error_type": "domain_error",
+          "message": "Numerical argument is out of domain - sqrt"
+        }
+      }
+    },
+    {
+      "id": "malformed_expression_reports_parse_error",
+      "kind": "calculator_error_case",
+      "passed": true,
+      "observation": {
+        "status": "error",
+        "error_type": "parse_error",
+        "passed": true,
+        "details": {
+          "expected_error_type": "parse_error",
+          "message": "expression contains unsupported characters"
+        }
+      }
+    }
+  ],
+  "pass_count": 3,
+  "total_count": 3
+}

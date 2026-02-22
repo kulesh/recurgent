@@ -273,12 +273,9 @@ Goals:
 
 Implementation:
 
-1. Run stabilization window (`20` consecutive runs, `5` seeds, `2` sessions, `3` days).
-2. Publish readiness decision record:
-   - class-1 gate status,
-   - unresolved risks,
-   - recommended next-scope.
-3. Add assistant/debate packs under advisory mode (non-gating).
+1. Execute stabilization window runbook (`20` consecutive qualifying runs, `>= 5` seeds, `>= 2` sessions, `>= 3` UTC days).
+2. Publish class-1 readiness decision record from observed evidence.
+3. Add assistant/debate packs under advisory mode (non-gating) only after class-1 decision record is published.
 
 Phase Improvement Contract:
 
@@ -290,6 +287,153 @@ Exit criteria:
 
 1. Observation window criteria satisfied and documented.
 2. Class-2+ remains advisory until explicit promotion decision.
+
+### Phase 7a Runbook: Stabilization Window Execution
+
+Canonical seed set (minimum):
+
+1. `11,19,23,31,43` (minimum required `5` seeds).
+2. Optional expanded set for higher confidence: `11,19,23,31,43,59,71,97`.
+
+Run cadence:
+
+1. Execute at least `20` qualifying class-1 runs.
+2. Spread runs across at least `3` distinct UTC dates (minimum floor).
+3. Ensure at least `2` distinct session IDs in aggregated ledgers.
+4. Recommended planning horizon: `4-5` days to absorb reset events.
+5. Target pace guideline (when stable): `7 + 7 + 6` qualifying runs over `3` days.
+6. Do not treat `3` days as a hard schedule target; treat it as the ADR minimum threshold.
+
+Per-run command contract (local/manual baseline procedure):
+
+```bash
+cd runtimes/ruby
+mise exec -- ruby bin/recurgent-sim \
+  --pack ../../specs/contract/v1/simulation/scenario-packs/calculator-core-v1.yaml \
+  --mode fixture \
+  --seeds 11,19,23,31,43 \
+  --operational-mode ci \
+  --nightly-trend-report ../../tmp/simulation/phase-7/nightly-trend-report.json \
+  --fixture-root ../../tmp/simulation/phase-7/core-fixtures \
+  --ledger-path ../../tmp/simulation/phase-7/run-ledger.jsonl
+
+mise exec -- ruby bin/recurgent-sim \
+  --pack ../../specs/contract/v1/simulation/scenario-packs/calculator-core-v1.yaml \
+  --mode replay \
+  --seeds 11,19,23,31,43 \
+  --trace-log ../../tmp/simulation/phase-7/trace.jsonl \
+  --operational-mode ci \
+  --nightly-trend-report ../../tmp/simulation/phase-7/nightly-trend-report.json \
+  --fixture-root ../../tmp/simulation/phase-7/core-fixtures \
+  --ledger-path ../../tmp/simulation/phase-7/run-ledger.jsonl
+
+mise exec -- ruby bin/recurgent-sim \
+  --pack ../../specs/contract/v1/simulation/scenario-packs/calculator-edge-v1.yaml \
+  --mode fixture \
+  --seeds 11,19,23,31,43 \
+  --operational-mode ci \
+  --nightly-trend-report ../../tmp/simulation/phase-7/nightly-trend-report.json \
+  --fixture-root ../../tmp/simulation/phase-7/edge-fixtures \
+  --ledger-path ../../tmp/simulation/phase-7/run-ledger.jsonl
+
+mise exec -- ruby bin/recurgent-sim \
+  --pack ../../specs/contract/v1/simulation/scenario-packs/calculator-edge-v1.yaml \
+  --mode replay \
+  --seeds 11,19,23,31,43 \
+  --trace-log ../../tmp/simulation/phase-7/trace.jsonl \
+  --operational-mode ci \
+  --nightly-trend-report ../../tmp/simulation/phase-7/nightly-trend-report.json \
+  --fixture-root ../../tmp/simulation/phase-7/edge-fixtures \
+  --ledger-path ../../tmp/simulation/phase-7/run-ledger.jsonl
+```
+
+Notes:
+
+1. `ci` mode is used for qualifying window evidence (`G5=pass` in readiness semantics).
+2. `nightly` mode remains useful for trend publication but should not be mixed into qualifying-window counters.
+
+Run qualification rule:
+
+1. A run counts toward the stabilization window only if both class-1 packs have replay entries with `G0..G5=pass`.
+2. Required artifacts must exist:
+   - replay output JSON for both packs,
+   - ledger append with gate results,
+   - baseline diff report path,
+   - trace validation summary.
+
+Consecutive-window reset policy:
+
+1. Reset consecutive counter to `0` if any qualifying-run candidate has:
+   - any class-1 gate failure (`G0..G5`) in replay mode,
+   - missing/invalid artifact bundle,
+   - schema validation failure (`G3!=pass`),
+   - replay stability failure (`G1!=pass`).
+2. Reset window when semantics materially change:
+   - scenario pack checksum changes,
+   - scorer version changes,
+   - readiness policy contract version changes.
+3. Allow reruns for infrastructure transient errors only if no qualifying evidence was recorded.
+
+### Phase 7a Output: Readiness Decision Record
+
+Decision record path:
+
+1. `docs/reports/simulation-readiness-decision-<YYYY-MM-DD>.md`
+
+Required sections:
+
+1. `Window Summary`
+   - start/end UTC timestamps,
+   - qualifying run count,
+   - distinct seeds,
+   - distinct sessions,
+   - distinct UTC days.
+2. `Gate Status Summary`
+   - per-gate pass rates (`G0..G5`),
+   - replay stability distribution (`G1`),
+   - score reproducibility distribution (`G2`).
+3. `Evidence Index`
+   - ledger file paths,
+   - trend report paths,
+   - CI/nightly run URLs,
+   - phase validation links.
+4. `Unresolved Risks`
+   - deterministic semantics gaps,
+   - external-source variability,
+   - operational flakiness signals.
+5. `Readiness Decision`
+   - `class_1_stable: true|false`,
+   - rationale,
+   - promotion recommendation for scope expansion.
+6. `Next Scope Recommendation`
+   - whether to start class-2 advisory packs,
+   - explicitly non-gating status confirmation.
+
+### Phase 7b: Class-2 Advisory Expansion
+
+Entry criteria:
+
+1. Phase 7a decision record published.
+2. Class-1 readiness marked stable (`class_1_stable: true`) or explicit override approved by maintainers.
+
+Implementation:
+
+1. Add advisory scenario packs under `specs/contract/v1/simulation/scenario-packs/` for:
+   - assistant continuity/source-follow-up,
+   - debate orchestration coherence.
+2. Run advisory packs in nightly workflow only.
+3. Preserve non-gating behavior:
+   - advisory failures must not fail PR merge gates.
+
+Advisory reporting format:
+
+1. Produce `docs/reports/simulation-advisory-status-<YYYY-MM-DD>.md` with:
+   - pack ID and class,
+   - run count and seeds,
+   - gate snapshot (informational),
+   - score trend deltas,
+   - top failure signatures and frequencies,
+   - recommended contract/runtime hardening actions.
 
 ## CI Integration Tasks
 

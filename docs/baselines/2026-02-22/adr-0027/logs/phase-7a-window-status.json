@@ -1,0 +1,287 @@
+{
+  "window_requirements": {
+    "required_runs": 20,
+    "min_seed_count": 5,
+    "min_session_count": 2,
+    "min_day_count": 3,
+    "required_packs": [
+      "calculator-core-v1",
+      "calculator-edge-v1"
+    ],
+    "required_gates": [
+      "G0",
+      "G1",
+      "G2",
+      "G3",
+      "G4",
+      "G5"
+    ]
+  },
+  "observed": {
+    "session_count": 8,
+    "qualifying_session_count": 8,
+    "trailing_consecutive_qualifying": 8,
+    "distinct_seed_count": 5,
+    "distinct_day_count": 1
+  },
+  "window_met": false,
+  "reset_events": [],
+  "session_records": [
+    {
+      "session_id": "phase7a-r1",
+      "recorded_at": "2026-02-22T03:18:09Z",
+      "day": "2026-02-22",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43
+      ],
+      "pack_gate_statuses": {
+        "calculator-core-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        },
+        "calculator-edge-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        }
+      },
+      "qualifying": true,
+      "reasons": []
+    },
+    {
+      "session_id": "phase7a-r2",
+      "recorded_at": "2026-02-22T03:18:09Z",
+      "day": "2026-02-22",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43
+      ],
+      "pack_gate_statuses": {
+        "calculator-core-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        },
+        "calculator-edge-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        }
+      },
+      "qualifying": true,
+      "reasons": []
+    },
+    {
+      "session_id": "phase7a-r3",
+      "recorded_at": "2026-02-22T03:18:09Z",
+      "day": "2026-02-22",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43
+      ],
+      "pack_gate_statuses": {
+        "calculator-core-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        },
+        "calculator-edge-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        }
+      },
+      "qualifying": true,
+      "reasons": []
+    },
+    {
+      "session_id": "phase7a-r4",
+      "recorded_at": "2026-02-22T03:18:09Z",
+      "day": "2026-02-22",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43
+      ],
+      "pack_gate_statuses": {
+        "calculator-core-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        },
+        "calculator-edge-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        }
+      },
+      "qualifying": true,
+      "reasons": []
+    },
+    {
+      "session_id": "phase7a-r5",
+      "recorded_at": "2026-02-22T03:18:09Z",
+      "day": "2026-02-22",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43
+      ],
+      "pack_gate_statuses": {
+        "calculator-core-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        },
+        "calculator-edge-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        }
+      },
+      "qualifying": true,
+      "reasons": []
+    },
+    {
+      "session_id": "phase7a-r6",
+      "recorded_at": "2026-02-22T03:18:09Z",
+      "day": "2026-02-22",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43
+      ],
+      "pack_gate_statuses": {
+        "calculator-core-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        },
+        "calculator-edge-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        }
+      },
+      "qualifying": true,
+      "reasons": []
+    },
+    {
+      "session_id": "phase7a-r7",
+      "recorded_at": "2026-02-22T03:18:09Z",
+      "day": "2026-02-22",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43
+      ],
+      "pack_gate_statuses": {
+        "calculator-core-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        },
+        "calculator-edge-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        }
+      },
+      "qualifying": true,
+      "reasons": []
+    },
+    {
+      "session_id": "phase7a-r8",
+      "recorded_at": "2026-02-22T03:18:09Z",
+      "day": "2026-02-22",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43
+      ],
+      "pack_gate_statuses": {
+        "calculator-core-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        },
+        "calculator-edge-v1": {
+          "G0": "pass",
+          "G1": "pass",
+          "G2": "pass",
+          "G3": "pass",
+          "G4": "pass",
+          "G5": "pass"
+        }
+      },
+      "qualifying": true,
+      "reasons": []
+    }
+  ]
+}

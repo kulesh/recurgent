@@ -1,0 +1,125 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+require "time"
+require "fileutils"
+require_relative "../lib/recurgent"
+
+options = {
+  ledger_path: File.expand_path("../tmp/simulation/phase-7/run-ledger.jsonl", __dir__),
+  required_runs: 20,
+  min_seed_count: 5,
+  min_session_count: 2,
+  min_day_count: 3,
+  required_packs: "calculator-core-v1,calculator-edge-v1",
+  required_gates: "G0,G1,G2,G3,G4,G5"
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bin/recurgent-sim-window-status [options]"
+  opts.on("--ledger-path PATH", "Simulation ledger JSONL path") { |value| options[:ledger_path] = value }
+  opts.on("--required-runs N", Integer, "Required consecutive qualifying runs (default: 20)") do |value|
+    options[:required_runs] = value
+  end
+  opts.on("--min-seed-count N", Integer, "Minimum distinct seed count (default: 5)") { |value| options[:min_seed_count] = value }
+  opts.on("--min-session-count N", Integer, "Minimum qualifying session count (default: 2)") do |value|
+    options[:min_session_count] = value
+  end
+  opts.on("--min-day-count N", Integer, "Minimum distinct UTC day count (default: 3)") { |value| options[:min_day_count] = value }
+  opts.on("--required-packs CSV", "Required class-1 pack ids") { |value| options[:required_packs] = value }
+  opts.on("--required-gates CSV", "Required gate ids") { |value| options[:required_gates] = value }
+  opts.on("--write-json PATH", "Write analysis JSON to path") { |value| options[:write_json] = value }
+  opts.on("--write-decision-record PATH", "Write readiness decision markdown to path") do |value|
+    options[:write_decision_record] = value
+  end
+  opts.on("--help", "Show this help") do
+    puts opts
+    exit 0
+  end
+end
+
+parser.parse!(ARGV)
+
+analyzer = Agent::SimulationStabilizationWindow.new(
+  ledger_path: options.fetch(:ledger_path),
+  required_runs: options.fetch(:required_runs),
+  min_seed_count: options.fetch(:min_seed_count),
+  min_session_count: options.fetch(:min_session_count),
+  min_day_count: options.fetch(:min_day_count),
+  required_packs: options.fetch(:required_packs).split(",").map(&:strip).reject(&:empty?),
+  required_gates: options.fetch(:required_gates).split(",").map(&:strip).reject(&:empty?)
+)
+
+analysis = analyzer.analyze
+puts JSON.pretty_generate(analysis)
+
+if options[:write_json]
+  json_path = File.expand_path(options[:write_json])
+  FileUtils.mkdir_p(File.dirname(json_path))
+  File.write(json_path, JSON.pretty_generate(analysis))
+end
+
+if options[:write_decision_record]
+  record_path = File.expand_path(options[:write_decision_record])
+  FileUtils.mkdir_p(File.dirname(record_path))
+  now = Time.now.utc
+
+  observed = analysis.fetch("observed")
+  reqs = analysis.fetch("window_requirements")
+  window_met = analysis.fetch("window_met")
+
+  markdown = <<~MD
+    # Simulation Readiness Decision (Phase 7a)
+
+    - Generated at (UTC): #{now.iso8601}
+    - Ledger: `#{options.fetch(:ledger_path)}`
+
+    ## Window Summary
+
+    - Required consecutive qualifying runs: #{reqs.fetch("required_runs")}
+    - Required distinct seeds: #{reqs.fetch("min_seed_count")}
+    - Required qualifying sessions: #{reqs.fetch("min_session_count")}
+    - Required distinct UTC days: #{reqs.fetch("min_day_count")}
+    - Observed consecutive qualifying runs: #{observed.fetch("trailing_consecutive_qualifying")}
+    - Observed distinct seeds: #{observed.fetch("distinct_seed_count")}
+    - Observed qualifying sessions: #{observed.fetch("qualifying_session_count")}
+    - Observed distinct UTC days: #{observed.fetch("distinct_day_count")}
+
+    ## Gate Status Summary
+
+    - This decision is computed from replay entries requiring `#{reqs.fetch("required_gates").join(", ")}` to be `pass` for each required pack.
+    - Required packs: `#{reqs.fetch("required_packs").join(", ")}`
+    - Qualifying session records analyzed: #{observed.fetch("qualifying_session_count")}
+    - Reset events observed: #{analysis.fetch("reset_events").length}
+
+    ## Evidence Index
+
+    - Analysis JSON: `#{options[:write_json] || "(not written)"}`.
+    - Decision source ledger: `#{options.fetch(:ledger_path)}`
+    - Session-level details: included under `session_records` in analysis JSON.
+
+    ## Unresolved Risks
+
+    - Calculator semantic stability gaps remain outside gate mechanics (`solve/history` in example traces).
+    - External-source variability in assistant scenarios remains class-2 advisory scope.
+    - Observation window may reset on any class-1 gate failure.
+
+    ## Readiness Decision
+
+    - `class_1_stable: #{window_met}`
+    - Rationale:
+      - window_met=#{window_met}
+      - trailing_consecutive_qualifying=#{observed.fetch("trailing_consecutive_qualifying")}
+      - distinct_seed_count=#{observed.fetch("distinct_seed_count")}
+      - qualifying_session_count=#{observed.fetch("qualifying_session_count")}
+      - distinct_day_count=#{observed.fetch("distinct_day_count")}
+
+    ## Next Scope Recommendation
+
+    - Start class-2 advisory expansion only when `class_1_stable: true` (or explicit maintainer override).
+    - Keep class-2 packs non-gating during advisory period.
+  MD
+  File.write(record_path, markdown)
+end
