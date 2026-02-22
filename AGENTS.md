@@ -206,7 +206,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-21T21:10:00Z
+Last Updated (UTC): 2026-02-21T22:05:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -248,6 +248,7 @@ Last Updated (UTC): 2026-02-21T21:10:00Z
 - `docs/plans/contract-first-role-profiles-state-continuity-implementation-plan.md` - phased implementation plan for ADR 0024 coordination-first role profiles, state continuity guard, and profile-compliance-aware promotion gating
 - `docs/plans/awareness-substrate-authority-boundary-implementation-plan.md` - phased implementation plan for ADR 0025 bounded awareness substrate, proposal artifacts, and explicit authority gate enforcement
 - `docs/plans/response-content-continuity-implementation-plan.md` - phased implementation plan for ADR 0026 bounded response-content store and history-linked content reference retrieval
+- `docs/plans/simulation-preparedness-implementation-plan.md` - phased implementation plan for ADR 0027 simulation readiness gates (`G0`-`G5`) and CI/nightly enforcement before simulator-driven evolution is treated as a control signal
 - `docs/baselines/2026-02-15/README.md` - baseline trace capture instructions and fixtures before artifact persistence rollout
 - `docs/baselines/2026-02-20/adr-0024/phase-0-validation.md` - ADR 0024 phase 0 validation results for suite, calculator, assistant, and trace diagnosis
 - `docs/baselines/2026-02-20/adr-0024/phase-1-validation.md` - ADR 0024 phase 1 validation results for suite, calculator, assistant, and trace diagnosis
@@ -294,6 +295,7 @@ Last Updated (UTC): 2026-02-21T21:10:00Z
 - `docs/adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md` - proposed opt-in role-profile contract and continuity guard to separate semantic correctness from reliability ranking
 - `docs/adrs/0025-awareness-substrate-and-authority-boundary.md` - proposed bounded self-awareness substrate (L1-L3) with explicit authority boundary (observe/propose/enact) and governance-safe evolution semantics
 - `docs/adrs/0026-response-content-continuity-substrate.md` - proposed fourth continuity layer for bounded response-content storage and history-linked content references for follow-up transforms
+- `docs/adrs/0027-simulation-preparedness-and-readiness-gates.md` - proposed readiness-gate contract for trustworthy automated simulation before simulator-driven evolution is used as primary control signal
 - `specs/contract/README.md` - contract package overview and usage model
 - `specs/contract/v1/agent-contract.md` - normative Agent behavior contract (v1)
 - `specs/contract/v1/programs.yaml` - abstract generated-program semantic catalog

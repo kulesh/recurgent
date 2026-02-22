@@ -45,4 +45,5 @@ Use [`docs/plans/TEMPLATE.md`](TEMPLATE.md) for new implementation plans.
 - [`failed-attempt-exception-telemetry-implementation-plan.md`](failed-attempt-exception-telemetry-implementation-plan.md) - preserve failed-attempt diagnostics in logs/artifacts
 - [`awareness-substrate-authority-boundary-implementation-plan.md`](awareness-substrate-authority-boundary-implementation-plan.md) - bounded awareness rollout with explicit observe/propose/enact authority gates
 - [`response-content-continuity-implementation-plan.md`](response-content-continuity-implementation-plan.md) - bounded response-content store, history content references, and follow-up retrieval reliability
+- [`simulation-preparedness-implementation-plan.md`](simulation-preparedness-implementation-plan.md) - readiness-gated simulation rollout (`G0`-`G5`) with replay, schema, baseline-diff, and CI enforcement
 - [`TEMPLATE.md`](TEMPLATE.md) - canonical implementation-plan structure with measurable outcome contracts
