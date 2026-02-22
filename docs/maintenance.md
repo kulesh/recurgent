@@ -77,7 +77,7 @@ Overrides are appended to `lifecycle.manual_overrides` for auditability.
 4. Optionally force downgrade candidate checksums to `degraded`.
 5. Re-enable enforcement only after scorecard and trace review.
 
-## Proposal Operations (ADR 0025)
+## Proposal Operations ([ADR 0025](adrs/0025-awareness-substrate-and-authority-boundary.md))
 
 Proposal artifacts are audited control-plane records. Treat them as immutable history with explicit status transitions only.
 

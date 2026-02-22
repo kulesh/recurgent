@@ -25,15 +25,15 @@ This report covers Phase 7a implementation and validation after introducing:
 
 ## Artifact Index
 
-- RuboCop: `docs/baselines/2026-02-22/adr-0027/logs/phase-7-rubocop.txt`
-- RSpec: `docs/baselines/2026-02-22/adr-0027/logs/phase-7-rspec.txt`
-- Calculator stdout: `docs/baselines/2026-02-22/adr-0027/logs/phase-7-calculator.txt`
-- Calculator trace: `docs/baselines/2026-02-22/adr-0027/logs/phase-7-calculator.jsonl`
-- Assistant stdout: `docs/baselines/2026-02-22/adr-0027/logs/phase-7-assistant.txt`
-- Assistant trace: `docs/baselines/2026-02-22/adr-0027/logs/phase-7-assistant.jsonl`
-- Window runs: `docs/baselines/2026-02-22/adr-0027/logs/phase-7a-window-run-1.json` .. `phase-7a-window-run-8.json`
-- Window status: `docs/baselines/2026-02-22/adr-0027/logs/phase-7a-window-status.json`
-- Decision record: `docs/reports/simulation-readiness-decision-2026-02-22.md`
+- RuboCop: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7-rubocop.txt`](logs/phase-7-rubocop.txt)
+- RSpec: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7-rspec.txt`](logs/phase-7-rspec.txt)
+- Calculator stdout: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7-calculator.txt`](logs/phase-7-calculator.txt)
+- Calculator trace: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7-calculator.jsonl`](logs/phase-7-calculator.jsonl)
+- Assistant stdout: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7-assistant.txt`](logs/phase-7-assistant.txt)
+- Assistant trace: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7-assistant.jsonl`](logs/phase-7-assistant.jsonl)
+- Window runs: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7a-window-run-1.json`](logs/phase-7a-window-run-1.json) .. `phase-7a-window-run-8.json`
+- Window status: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7a-window-status.json`](logs/phase-7a-window-status.json)
+- Decision record: [`docs/reports/simulation-readiness-decision-2026-02-22.md`](../../../reports/simulation-readiness-decision-2026-02-22.md)
 
 ## Validation Results
 

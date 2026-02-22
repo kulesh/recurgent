@@ -51,7 +51,7 @@ Conventional frameworks require predefined tool schemas and static interfaces.
 
 ### Solution
 
-ADR 0001 establishes `method_missing` as the dynamic boundary.
+[ADR 0001](adrs/0001-core-dispatch-via-method-missing.md) establishes `method_missing` as the dynamic boundary.
 
 Before (static interface world):
 
@@ -94,8 +94,8 @@ Without a provider abstraction and typed errors, runtime behavior becomes vendor
 
 ### Solution
 
-1. ADR 0002: provider abstraction + model routing.
-2. ADR 0003: typed `Outcome` envelope (`ok`/`error`, `error_type`, `error_message`, retriable flag).
+1. [ADR 0002](adrs/0002-provider-abstraction-and-model-routing.md): provider abstraction + model routing.
+2. [ADR 0003](adrs/0003-error-handling-contract.md): typed `Outcome` envelope (`ok`/`error`, `error_type`, `error_message`, retriable flag).
 
 Before (opaque failures):
 
@@ -133,7 +133,7 @@ Align runtime semantics with how agents actually solve problems.
 
 ### Solution
 
-ADR 0008 defines canonical UL:
+[ADR 0008](adrs/0008-tool-builder-tool-language-and-tolerant-delegations.md) defines canonical UL:
 
 1. `Tool Builder`: top-level problem owner.
 2. `Tool`: delegated sub-capability agent.
@@ -157,8 +157,8 @@ As Ruby and Lua evolve, implementation details can diverge from behavior contrac
 
 ### Solution
 
-1. ADR 0006: monorepo runtime boundaries ([`runtimes/ruby`](../runtimes/ruby), [`runtimes/lua`](../runtimes/lua)).
-2. ADR 0007: runtime-agnostic contract package under [`specs/contract/v1`](../specs/contract/v1).
+1. [ADR 0006](adrs/0006-monorepo-runtime-boundaries.md): monorepo runtime boundaries ([`runtimes/ruby`](../runtimes/ruby), [`runtimes/lua`](../runtimes/lua)).
+2. [ADR 0007](adrs/0007-runtime-agnostic-contract-spec.md): runtime-agnostic contract package under [`specs/contract/v1`](../specs/contract/v1).
 
 Important split:
 
@@ -181,8 +181,8 @@ Stdlib-only generation is too limiting; in-process gem mutation is unsafe and no
 
 ### Solution
 
-1. ADR 0010: generated program contract includes `code` + `dependencies`.
-2. ADR 0011: deterministic `env_id` and effective-manifest execution rules.
+1. [ADR 0010](adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md): generated program contract includes `code` + `dependencies`.
+2. [ADR 0011](adrs/0011-env-cache-policy-and-effective-manifest-execution.md): deterministic `env_id` and effective-manifest execution rules.
 3. Implementation plan: worker isolation + JSON boundary.
 
 Before:
@@ -221,8 +221,8 @@ Without persistence, each restart relearns the same tools.
 
 ### Solution
 
-1. ADR 0012: cross-session tool registry + artifact store.
-2. ADR 0013: cacheability gating + pattern memory.
+1. [ADR 0012](adrs/0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md): cross-session tool registry + artifact store.
+2. [ADR 0013](adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md): cacheability gating + pattern memory.
 
 Key idea:
 
@@ -245,11 +245,11 @@ Guarantee that delegation boundaries are structurally honest and evolution-frien
 
 ### Solution ladder:
 
-1. ADR 0014: delegated outcome contract validation + tolerant canonicalization.
-2. ADR 0015: boundary referrals (`wrong_tool_boundary`, `low_utility`) + evolution signals.
-3. ADR 0017: runtime remains observational for utility semantics (no heuristic success->error rewriting).
-4. ADR 0021: external-data successes must include provenance.
-5. ADR 0022: normalize exhausted guardrail message at user boundary while preserving internal diagnostics.
+1. [ADR 0014](adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md): delegated outcome contract validation + tolerant canonicalization.
+2. [ADR 0015](adrs/0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md): boundary referrals (`wrong_tool_boundary`, `low_utility`) + evolution signals.
+3. [ADR 0017](adrs/0017-contract-driven-utility-failures-and-observational-runtime.md): runtime remains observational for utility semantics (no heuristic success->error rewriting).
+4. [ADR 0021](adrs/0021-external-data-provenance-invariant.md): external-data successes must include provenance.
+5. [ADR 0022](adrs/0022-guardrail-exhaustion-boundary-normalization.md): normalize exhausted guardrail message at user boundary while preserving internal diagnostics.
 
 Before (shape drift leaks):
 
@@ -279,7 +279,7 @@ Pre-ADR behavior could fail fast on recoverable guardrails and leak failed-attem
 
 ### Solution
 
-ADR 0016 + follow-on telemetry plan:
+[ADR 0016](adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) + follow-on telemetry plan:
 
 1. Generate -> validate -> execute lifecycle.
 2. Attempt isolation with commit-on-success.
@@ -317,8 +317,8 @@ Need stronger context access, but recursive APIs were premature.
 
 ### Solution
 
-1. ADR 0018 proposed recursive primitives (`ContextView`, `recurse`).
-2. ADR 0019 deliberately deferred recursion and shipped structured conversation history first.
+1. [ADR 0018](adrs/0018-contextview-and-recursive-context-exploration-v1.md) proposed recursive primitives (`ContextView`, `recurse`).
+2. [ADR 0019](adrs/0019-structured-conversation-history-first-and-recursion-deferral.md) deliberately deferred recursion and shipped structured conversation history first.
 
 Pragmatic consequence: history is first-class runtime data (`context[:conversation_history]`) and observable in traces.
 
@@ -334,7 +334,7 @@ Turn "tool seems good" into explicit, auditable lifecycle policy.
 
 Reliability evidence existed but was diffuse and not connected to one canonical promotion contract.
 
-### Solution (ADR 0023)
+### Solution ([ADR 0023](adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md))
 
 1. Capture `solver_shape` as first-class telemetry (`stance`, `capability_summary`, `reuse_basis`, `contract_intent`, `promotion_intent`).
 2. Maintain version-scoped scorecards.
@@ -364,7 +364,7 @@ Prevent sibling-method drift for role-style agents.
 
 Reliability can be high even when methods disagree on shared state conventions (`:memory` vs `:value`).
 
-### Solution (ADR 0024)
+### Solution ([ADR 0024](adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md))
 
 1. Opt-in `RoleProfile` contracts.
 2. Default coordination constraints (agreement required, value not pre-pinned).
@@ -411,7 +411,7 @@ Expose self-awareness without permitting hidden self-mutation.
 
 Without an explicit authority boundary, reflective behavior can drift into uncontrolled policy mutation.
 
-### Solution (ADR 0025)
+### Solution ([ADR 0025](adrs/0025-awareness-substrate-and-authority-boundary.md))
 
 Design rule: separate awareness from authority.
 

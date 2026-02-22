@@ -1,7 +1,7 @@
 # Simulation Readiness Decision (Phase 7a)
 
 - Generated at (UTC): 2026-02-22T03:35:32Z
-- Ledger: `../../docs/baselines/2026-02-22/adr-0027/phase-7/run-ledger.jsonl`
+- Ledger: [`../../docs/baselines/2026-02-22/adr-0027/phase-7/run-ledger.jsonl`](../baselines/2026-02-22/adr-0027/phase-7/run-ledger.jsonl)
 
 ## Window Summary
 
@@ -23,8 +23,8 @@
 
 ## Evidence Index
 
-- Analysis JSON: `../../docs/baselines/2026-02-22/adr-0027/logs/phase-7a-window-status.json`.
-- Decision source ledger: `../../docs/baselines/2026-02-22/adr-0027/phase-7/run-ledger.jsonl`
+- Analysis JSON: [`../../docs/baselines/2026-02-22/adr-0027/logs/phase-7a-window-status.json`](../baselines/2026-02-22/adr-0027/logs/phase-7a-window-status.json).
+- Decision source ledger: [`../../docs/baselines/2026-02-22/adr-0027/phase-7/run-ledger.jsonl`](../baselines/2026-02-22/adr-0027/phase-7/run-ledger.jsonl)
 - Session-level details: included under `session_records` in analysis JSON.
 
 ## Unresolved Risks

@@ -10,15 +10,15 @@
   - `mise exec -- ruby bin/recurgent-sim --pack ... --trace-log <valid>`
   - `mise exec -- ruby bin/recurgent-sim --pack ... --trace-log <invalid>`
 - Artifacts:
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-4-rubocop.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-4-rspec.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-4-calculator.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-4-calculator.jsonl`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-4-assistant.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-4-assistant.jsonl`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-4-sim-trace-pass.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-4-sim-trace-fail.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-4-sim-run-ledger.jsonl`
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-4-rubocop.txt`](logs/phase-4-rubocop.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-4-rspec.txt`](logs/phase-4-rspec.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-4-calculator.txt`](logs/phase-4-calculator.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-4-calculator.jsonl`](logs/phase-4-calculator.jsonl)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-4-assistant.txt`](logs/phase-4-assistant.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-4-assistant.jsonl`](logs/phase-4-assistant.jsonl)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-4-sim-trace-pass.json`](logs/phase-4-sim-trace-pass.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-4-sim-trace-fail.json`](logs/phase-4-sim-trace-fail.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-4-sim-run-ledger.jsonl`](logs/phase-4-sim-run-ledger.jsonl)
 
 ## Lint and Test Suite
 

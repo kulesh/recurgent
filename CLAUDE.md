@@ -69,7 +69,7 @@ user code → method_missing(name, *args, **kwargs)
     → return `result` variable from evaluated code
 ```
 
-**Provider abstraction** (`Agent::Providers` in `runtimes/ruby/lib/recurgent/providers.rb`):
+**Provider abstraction** (`Agent::Providers` in [`runtimes/ruby/lib/recurgent/providers.rb`](runtimes/ruby/lib/recurgent/providers.rb)):
 - `Providers::Anthropic` — wraps Anthropic Messages API with tool_choice
 - `Providers::OpenAI` — wraps OpenAI Responses API with json_schema structured output
 - Each provider implements `generate_code(model:, system_prompt:, user_prompt:, tool_schema:) → String`
@@ -77,7 +77,7 @@ user code → method_missing(name, *args, **kwargs)
 - Explicit `provider:` keyword override for OpenAI-compatible local servers
 - Lazy require: `require "anthropic"` or `require "openai"` only when the provider is instantiated
 
-**Call logging** (in `runtimes/ruby/lib/recurgent.rb`):
+**Call logging** (in [`runtimes/ruby/lib/recurgent.rb`](runtimes/ruby/lib/recurgent.rb)):
 - `Agent.default_log_path` — class method returning XDG-compliant JSONL path
 - Constructor kwargs: `log: Agent.default_log_path, debug: false`
 - `_log_call` — builds and appends JSONL entry; silently rescues all errors
@@ -118,9 +118,9 @@ ruby examples/debate.rb
 ruby examples/philosophy_debate.rb
 ```
 
-## Code Quality Configuration (in `runtimes/ruby/.rubocop.yml`)
+## Code Quality Configuration (in [`runtimes/ruby/.rubocop.yml`](runtimes/ruby/.rubocop.yml))
 
-- **RuboCop**: line length 150, double quotes, new cops enabled. `Security/Eval` excluded for `runtimes/ruby/lib/recurgent.rb`.
+- **RuboCop**: line length 150, double quotes, new cops enabled. `Security/Eval` excluded for [`runtimes/ruby/lib/recurgent.rb`](runtimes/ruby/lib/recurgent.rb).
 - **RSpec**: random order, verified partial doubles, monkey patching disabled.
 
 ## Dependencies
@@ -130,15 +130,15 @@ ruby examples/philosophy_debate.rb
 - Default model: `claude-sonnet-4-5-20250929`
 - Dev dependencies: `rspec ~> 3.0`, `rubocop ~> 1.0`, `rake ~> 13.0`
 
-Use `mise` to manage project-specific tools and runtime. Update `.mise.toml` and docs when adding/removing dependencies.
+Use `mise` to manage project-specific tools and runtime. Update [`.mise.toml`](.mise.toml) and docs when adding/removing dependencies.
 
 ## Development Guidelines
 
 - Use DDD to create ubiquitous language, TDD to build testable components, BDD to write acceptance tests
 - Changes to implementation and changes to tests MUST BE separated by a test suite run
-- Document Architecture Decision Records in `docs/adrs/`
+- Document Architecture Decision Records in [`docs/adrs/`](docs/adrs)
 - Every bug fix: explain why it occurs, determine if a redesign eliminates a class of bugs, write a regression test
-- Keep `tmp/` for scratchpads; all docs under `docs/`; don't litter the project directory
+- Keep [`tmp/`](tmp) for scratchpads; all docs under [`docs/`](docs); don't litter the project directory
 
 ## Information Organization
 

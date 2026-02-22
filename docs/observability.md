@@ -121,7 +121,7 @@ Promotion lifecycle fields (recommended for shadow/enforcement audits):
 - `artifact_selected_checksum`
 - `artifact_selected_lifecycle_state`
 
-Context-scope pressure fields (recommended for ADR 0025 evidence gate):
+Context-scope pressure fields (recommended for [ADR 0025](adrs/0025-awareness-substrate-and-authority-boundary.md) evidence gate):
 
 - `namespace_key_collision_count` (pairwise sibling-method key collisions for active role)
 - `namespace_multi_lifetime_key_count` (keys observed with more than one inferred lifetime profile)
@@ -169,7 +169,7 @@ bin/recurgent-tools decisions "news_aggregator" "get_headlines" --limit 20
 bin/recurgent-tools namespace-pressure "calculator"
 ```
 
-## Context Scope Evidence Gate (ADR 0025 Phase 5)
+## Context Scope Evidence Gate ([ADR 0025](adrs/0025-awareness-substrate-and-authority-boundary.md) Phase 5)
 
 Use namespace-pressure metrics to decide whether a follow-up context-scope migration ADR is justified.
 

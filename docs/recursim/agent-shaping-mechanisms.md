@@ -6,7 +6,7 @@ Recurgent shapes agents through pressure and evidence, not by hardcoding per-tas
 
 | Mechanism | Primary Surface | What It Shapes | Typical Signal |
 |---|---|---|---|
-| Prompt policy + runtime environment model | `runtimes/ruby/lib/recurgent/prompting.rb` | interface generalization, stance choice, tool reuse behavior | over-specialized methods, delegation loops |
+| Prompt policy + runtime environment model | [`runtimes/ruby/lib/recurgent/prompting.rb`](../../runtimes/ruby/lib/recurgent/prompting.rb) | interface generalization, stance choice, tool reuse behavior | over-specialized methods, delegation loops |
 | Delegation contracts | `purpose`, `deliverable`, `acceptance`, `failure_policy` | child-tool IO boundaries and expected behavior | outcome contract mismatches |
 | Outcome/guardrail lanes | validation + repair loops | truthfulness, boundary integrity, regeneration behavior | guardrail retry exhaustion |
 | Role profiles | shared-state and return-family constraints | sibling-method coherence for role-style agents | continuity violations, drift types |

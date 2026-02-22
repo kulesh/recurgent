@@ -5,7 +5,7 @@
 
 ## Scope
 
-This rollup evaluates ADR-0024 implementation phases against expected improvements from the implementation plan:
+This rollup evaluates [ADR-0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) implementation phases against expected improvements from the implementation plan:
 
 1. explicit role-profile contract binding,
 2. continuity drift observability and recoverable enforcement,
@@ -31,7 +31,7 @@ This rollup evaluates ADR-0024 implementation phases against expected improvemen
 2. Continuity guard is integrated with recoverable lanes.
    - Coordination and prescriptive constraints are evaluated.
    - Enforced violations route through retry feedback with deterministic correction hints.
-3. Governance lifecycle is connected to ADR-0025 authority/proposal lanes.
+3. Governance lifecycle is connected to [ADR-0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) authority/proposal lanes.
    - Approved `role_profile_update` proposals can publish, activate, and rollback profiles.
    - Applied mutations are persisted and auditable.
 4. Promotion coupling now consumes profile-compliance evidence.
@@ -46,7 +46,7 @@ This rollup evaluates ADR-0024 implementation phases against expected improvemen
      - Phase 5: `multiply(4)` returned `0`, runtime context drifted to `8`.
      - Phase 6: runtime context drift remained (`8` vs expected `32`).
 2. Assistant movie query remains unavailable.
-   - This is expected capability boundary behavior (`capability_unavailable`) and not an ADR-0024 regression.
+   - This is expected capability boundary behavior (`capability_unavailable`) and not an [ADR-0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) regression.
 3. News aggregation remains variable under live retrieval conditions.
    - Phase 3 had partial coverage.
    - Latest Phase 6 run produced source-specific failures for Google News and Yahoo paths while NYT succeeded.
@@ -69,7 +69,7 @@ This rollup evaluates ADR-0024 implementation phases against expected improvemen
 
 ## Key Learning
 
-The implementation delivered the ADR-0024 substrate, but example-level correctness improvements depend on explicit profile adoption in runtime flows. Reliability gates and observability are necessary but insufficient for semantic correctness without active role contracts.
+The implementation delivered the [ADR-0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) substrate, but example-level correctness improvements depend on explicit profile adoption in runtime flows. Reliability gates and observability are necessary but insufficient for semantic correctness without active role contracts.
 
 ## Recommended Follow-on Remediation
 

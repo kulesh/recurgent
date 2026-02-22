@@ -2,11 +2,11 @@
 
 - Status: draft
 - Date: 2026-02-18
-- Scope: ADR 0023 rollout (solver-shape evidence model + version-aware promotion lifecycle)
+- Scope: [ADR 0023](../adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md) rollout (solver-shape evidence model + version-aware promotion lifecycle)
 
 ## Objective
 
-Implement ADR 0023 so Recurgent can evolve tools continuously while promoting defaults only when reliability is demonstrated.
+Implement [ADR 0023](../adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md) so Recurgent can evolve tools continuously while promoting defaults only when reliability is demonstrated.
 
 Primary outcomes:
 
@@ -20,7 +20,7 @@ Primary outcomes:
 1. Do not replace Tool Builder reasoning with a rigid typed planner.
 2. Do not add runtime-autonomous decomposition that bypasses Tool Builder intent.
 3. Do not introduce domain-specific policy lanes for news/movies/recipes.
-4. Do not change ADR 0017 observational semantics for domain outcomes.
+4. Do not change [ADR 0017](../adrs/0017-contract-driven-utility-failures-and-observational-runtime.md) observational semantics for domain outcomes.
 
 ## Design Constraints
 
@@ -408,8 +408,8 @@ Exit criteria:
 
 ### Regression Tests
 
-1. No change to ADR 0017 semantics (no success->error semantic coercion).
-2. No change to top-level guardrail normalization behavior (ADR 0022).
+1. No change to [ADR 0017](../adrs/0017-contract-driven-utility-failures-and-observational-runtime.md) semantics (no success->error semantic coercion).
+2. No change to top-level guardrail normalization behavior ([ADR 0022](../adrs/0022-guardrail-exhaustion-boundary-normalization.md)).
 3. Existing examples continue to run (`calculator`, `assistant`, `debate`).
 
 ## Metrics and Quality Gates
@@ -464,7 +464,7 @@ Release gate for enforcement phases:
 
 ## Completion Checklist
 
-1. ADR 0023 is linked from this plan and remains internally consistent.
+1. [ADR 0023](../adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md) is linked from this plan and remains internally consistent.
 2. Solver-shape fields are emitted and documented.
 3. Version-scoped scorecards persist and are queryable.
 4. Shadow policy decisions are visible in logs.

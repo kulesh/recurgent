@@ -11,7 +11,7 @@ This tutorial walks through a disciplined loop for evolving calculator behavior 
 ## Prerequisites
 
 - repository set up (`mise`, Ruby deps),
-- working knowledge of `docs/simulation-readiness.md`,
+- working knowledge of [`docs/simulation-readiness.md`](../simulation-readiness.md),
 - provider key set for live-shadow steps.
 
 ## Step 0: Establish Baseline Class-1 Evidence

@@ -2,11 +2,11 @@
 
 ## Objective
 
-Implement ADR 0013 so persisted artifacts remain durable without semantic cache poisoning, while enabling emergent promotion by giving the Agent explicit pattern memory.
+Implement [ADR 0013](../adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md) so persisted artifacts remain durable without semantic cache poisoning, while enabling emergent promotion by giving the Agent explicit pattern memory.
 
 This plan preserves:
 
-1. Stable artifact identity (`role + method_name`) from ADR 0012.
+1. Stable artifact identity (`role + method_name`) from [ADR 0012](../adrs/0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md).
 2. Agent-first promotion decisions (runtime provides observations, not decisions).
 3. Tolerant interface behavior and typed Outcome semantics.
 
@@ -36,7 +36,7 @@ Already implemented:
 4. Dynamic dispatch method set (`ask`, `chat`, `discuss`, `host`) as non-cacheable by default.
 5. Call-level logging fields for cacheability.
 
-Remaining for ADR 0013 completion:
+Remaining for [ADR 0013](../adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md) completion:
 
 1. Pattern extraction and persistence.
 2. `<recent_patterns>` prompt injection.
@@ -303,4 +303,4 @@ Constraints:
 4. [ ] Observability fields and watcher support updated.
 5. [ ] End-to-end news sequence validated with trace evidence.
 6. [ ] Baseline comparison committed: pre/post pattern-memory traces for Google/Yahoo/NYT showing promotion behavior change.
-7. [ ] ADR 0013 status reviewed for `accepted` transition after stable rollout.
+7. [ ] [ADR 0013](../adrs/0013-cacheability-gating-and-pattern-memory-for-tool-promotion.md) status reviewed for `accepted` transition after stable rollout.

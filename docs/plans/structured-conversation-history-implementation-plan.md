@@ -2,13 +2,13 @@
 
 ## Objective
 
-Implement ADR 0019 by introducing a first-class, structured `context[:conversation_history]` in the Ruby runtime, expose it clearly in prompt policy, and gather evidence about how Tool Builders naturally use history before introducing recursion primitives.
+Implement [ADR 0019](../adrs/0019-structured-conversation-history-first-and-recursion-deferral.md) by introducing a first-class, structured `context[:conversation_history]` in the Ruby runtime, expose it clearly in prompt policy, and gather evidence about how Tool Builders naturally use history before introducing recursion primitives.
 
 Target outcomes:
 
 1. Every dynamic call appends a consistent, structured history record.
 2. Generated code can read `context[:conversation_history]` directly with no new runtime helper APIs.
-3. Observability captures history-usage signals to guide future decisions on ADR 0018 (`ContextView`/`recurse`).
+3. Observability captures history-usage signals to guide future decisions on [ADR 0018](../adrs/0018-contextview-and-recursive-context-exploration-v1.md) (`ContextView`/`recurse`).
 4. Existing delegation, contract validation, guardrails, and artifact policies remain unchanged.
 
 ## Design Alignment
@@ -291,7 +291,7 @@ Exit criteria:
 
 Goals:
 
-1. Ship safely and gather evidence for ADR 0018 decision point.
+1. Ship safely and gather evidence for [ADR 0018](../adrs/0018-contextview-and-recursive-context-exploration-v1.md) decision point.
 
 Tasks:
 
@@ -356,7 +356,7 @@ After merge:
 
 1. Track history usage telemetry for at least one iteration window.
 2. Summarize observed decomposition patterns.
-3. Reassess ADR 0018 with evidence.
+3. Reassess [ADR 0018](../adrs/0018-contextview-and-recursive-context-exploration-v1.md) with evidence.
 
 ## Success Metrics
 

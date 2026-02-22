@@ -15,7 +15,7 @@
 
 ### Changes
 
-- Baseline validation capture for ADR 0025 rollout (no runtime behavior changes yet).
+- Baseline validation capture for [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) rollout (no runtime behavior changes yet).
 - Validation artifacts captured under [`tmp/phase-validation-0025/phase-0/`](../../tmp/phase-validation-0025/phase-0).
 
 ### Validation
@@ -60,7 +60,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0025/phase-0/recurgent.jsonl` (`17` entries)
+- Log file: [`tmp/phase-validation-0025/phase-0/recurgent.jsonl`](../../tmp/phase-validation-0025/phase-0/recurgent.jsonl) (`17` entries)
 - Trace summary:
   - Roles:
     - `calculator`: `8` entries
@@ -141,7 +141,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0025/phase-1/recurgent.jsonl` (`17` entries)
+- Log file: [`tmp/phase-validation-0025/phase-1/recurgent.jsonl`](../../tmp/phase-validation-0025/phase-1/recurgent.jsonl) (`17` entries)
 - Self-model telemetry checks:
   - `self_model` present on all `17` entries.
   - `awareness_level` logged as `l3` on all entries.
@@ -215,7 +215,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0025/phase-2/recurgent.jsonl` (`17` entries)
+- Log file: [`tmp/phase-validation-0025/phase-2/recurgent.jsonl`](../../tmp/phase-validation-0025/phase-2/recurgent.jsonl) (`17` entries)
 - Trace summary:
   - Top-level outcomes:
     - calculator `8` calls: all `ok`
@@ -295,7 +295,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0025/phase-3/recurgent.jsonl` (`16` entries)
+- Log file: [`tmp/phase-validation-0025/phase-3/recurgent.jsonl`](../../tmp/phase-validation-0025/phase-3/recurgent.jsonl) (`16` entries)
 - Trace summary:
   - Top-level calls:
     - calculator `8` calls: all `ok`
@@ -368,7 +368,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0025/phase-4/recurgent.jsonl` (`14` entries)
+- Log file: [`tmp/phase-validation-0025/phase-4/recurgent.jsonl`](../../tmp/phase-validation-0025/phase-4/recurgent.jsonl) (`14` entries)
 - Trace summary:
   - Roles:
     - `calculator`: `8`
@@ -443,7 +443,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0025/phase-5/recurgent.jsonl` (`11` entries)
+- Log file: [`tmp/phase-validation-0025/phase-5/recurgent.jsonl`](../../tmp/phase-validation-0025/phase-5/recurgent.jsonl) (`11` entries)
 - Trace summary:
   - Roles:
     - `calculator`: `8`
@@ -519,7 +519,7 @@ Re-run the full validation loop after observed provider connectivity instability
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0025/connection-rerun-20260219/recurgent.jsonl` (`18` entries)
+- Log file: [`tmp/phase-validation-0025/connection-rerun-20260219/recurgent.jsonl`](../../tmp/phase-validation-0025/connection-rerun-20260219/recurgent.jsonl) (`18` entries)
 - Trace summary:
   - Roles:
     - `calculator`: `8`

@@ -10,15 +10,15 @@
   - `mise exec -- ruby bin/recurgent-sim --pack ... --mode fixture`
   - `mise exec -- ruby bin/recurgent-sim --pack ... --mode replay`
 - Artifacts:
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-2-rubocop.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-2-rspec.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-2-calculator.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-2-calculator.jsonl`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-2-assistant.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-2-assistant.jsonl`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-2-sim-fixture.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-2-sim-replay.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-2-sim-run-ledger.jsonl`
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-2-rubocop.txt`](logs/phase-2-rubocop.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-2-rspec.txt`](logs/phase-2-rspec.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-2-calculator.txt`](logs/phase-2-calculator.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-2-calculator.jsonl`](logs/phase-2-calculator.jsonl)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-2-assistant.txt`](logs/phase-2-assistant.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-2-assistant.jsonl`](logs/phase-2-assistant.jsonl)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-2-sim-fixture.json`](logs/phase-2-sim-fixture.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-2-sim-replay.json`](logs/phase-2-sim-replay.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-2-sim-run-ledger.jsonl`](logs/phase-2-sim-run-ledger.jsonl)
 
 ## Lint and Test Suite
 

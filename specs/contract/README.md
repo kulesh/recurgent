@@ -35,13 +35,13 @@ specs/contract/
 
 Each runtime should implement a local contract harness that:
 
-1. Loads `v1/scenarios.yaml` and `v1/tolerant-delegation-scenarios.yaml`.
+1. Loads [`v1/scenarios.yaml`](v1/scenarios.yaml) and [`v1/tolerant-delegation-scenarios.yaml`](v1/tolerant-delegation-scenarios.yaml).
 2. Maps `program_id` values to runtime-local generated code (Ruby or Lua).
 3. Executes scenarios against that runtime's `Agent`.
 4. Reports pass/fail per scenario id.
 
 ## Versioning
 
-- `v1/` is the current baseline.
+- [`v1/`](v1) is the current baseline.
 - New incompatible contract changes require a new version directory (`v2/`).
 - Runtime implementations should explicitly declare which contract version they pass.

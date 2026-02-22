@@ -2,7 +2,7 @@
 
 - Status: draft
 - Date: 2026-02-16
-- Scope: ADR 0016 augmentation (internal lifecycle observability only)
+- Scope: [ADR 0016](../adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) augmentation (internal lifecycle observability only)
 
 ## Goal
 
@@ -14,7 +14,7 @@ Primary outcome:
 
 Non-goals:
 
-1. No change to user-facing error text or boundary normalization semantics (ADR 0022 unchanged).
+1. No change to user-facing error text or boundary normalization semantics ([ADR 0022](../adrs/0022-guardrail-exhaustion-boundary-normalization.md) unchanged).
 2. No category-specific behavior for provenance/external data.
 
 ## Design Summary
@@ -155,6 +155,6 @@ Acceptance:
 1. Risk: noisy/oversized logs.
    - Mitigation: truncation + max-entry cap.
 2. Risk: accidental user-facing leakage.
-   - Mitigation: keep emission in internal log/artifact paths only; preserve ADR 0022 boundary behavior.
+   - Mitigation: keep emission in internal log/artifact paths only; preserve [ADR 0022](../adrs/0022-guardrail-exhaustion-boundary-normalization.md) boundary behavior.
 3. Risk: inconsistent stage attribution.
    - Mitigation: central stage constants + tests per lane.

@@ -11,10 +11,10 @@ Planned contract parity with Ruby runtime:
 
 Canonical contract source:
 
-- `../../specs/contract/v1/agent-contract.md`
-- `../../specs/contract/v1/scenarios.yaml`
+- [`../../specs/contract/v1/agent-contract.md`](../../specs/contract/v1/agent-contract.md)
+- [`../../specs/contract/v1/scenarios.yaml`](../../specs/contract/v1/scenarios.yaml)
 
 Shared observability tooling:
 
-- `../../bin/recurgent-watch` consumes runtime JSONL logs when Lua emits the common log fields.
-- `../../docs/observability.md` documents required/recommended keys.
+- [`../../bin/recurgent-watch`](../../bin/recurgent-watch) consumes runtime JSONL logs when Lua emits the common log fields.
+- [`../../docs/observability.md`](../../docs/observability.md) documents required/recommended keys.

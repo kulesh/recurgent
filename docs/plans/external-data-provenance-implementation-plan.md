@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement ADR 0021 so any external-data success is evidence-backed, source-attributable, and evolution-friendly without violating ADR 0017 (no semantic coercion).
+Implement [ADR 0021](../adrs/0021-external-data-provenance-invariant.md) so any external-data success is evidence-backed, source-attributable, and evolution-friendly without violating [ADR 0017](../adrs/0017-contract-driven-utility-failures-and-observational-runtime.md) (no semantic coercion).
 
 This plan preserves project tenets:
 
@@ -32,10 +32,10 @@ Out of scope:
 
 What already exists:
 
-1. Validation-first fresh generation and guardrail retry lanes (ADR 0016).
-2. Outcome boundary contract validation (ADR 0014).
-3. Observational runtime utility semantics (ADR 0017).
-4. Structured conversation history with canonical schema (ADR 0019).
+1. Validation-first fresh generation and guardrail retry lanes ([ADR 0016](../adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md)).
+2. Outcome boundary contract validation ([ADR 0014](../adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md)).
+3. Observational runtime utility semantics ([ADR 0017](../adrs/0017-contract-driven-utility-failures-and-observational-runtime.md)).
+4. Structured conversation history with canonical schema ([ADR 0019](../adrs/0019-structured-conversation-history-first-and-recursion-deferral.md)).
 
 Observed gaps:
 
@@ -48,7 +48,7 @@ Observed gaps:
 1. Provenance enforcement must be a validation/guardrail invariant, not runtime success->error rewriting.
 2. Guardrail detection for external-data behavior must be conservative and inspectable in v1.
 3. Provenance schema must remain generic across domains.
-4. Conversation history must remain compact (ADR 0019 context-capacity constraints).
+4. Conversation history must remain compact ([ADR 0019](../adrs/0019-structured-conversation-history-first-and-recursion-deferral.md) context-capacity constraints).
 5. Rollout must tolerate legacy artifacts and converge through repair.
 
 ## Delivery Strategy
@@ -346,7 +346,7 @@ Mitigation: compact history refs; keep full provenance only in logs/artifacts.
 
 ## Completion Checklist
 
-1. ADR 0021 accepted and indexed.
+1. [ADR 0021](../adrs/0021-external-data-provenance-invariant.md) accepted and indexed.
 2. Prompt guidance includes provenance invariant and examples.
 3. Guardrail enforcement active for fresh + persisted execution paths.
 4. Provenance constraints validated at delegated outcome boundary.

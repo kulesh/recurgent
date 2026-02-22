@@ -35,4 +35,4 @@ Adopt a runtime-partitioned monorepo layout:
 - Rejected: scales poorly and creates ownership ambiguity as runtimes multiply.
 
 2. Split into separate repositories per runtime.
-- Rejected: duplicates docs/ADRs and increases coordination cost for contract alignment.
+- Rejected: duplicates [`docs/adrs/`](../adrs) and increases coordination cost for contract alignment.

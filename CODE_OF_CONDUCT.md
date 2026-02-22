@@ -24,4 +24,4 @@ Maintainers may remove content, close PRs/issues, and restrict participation for
 
 ## Reporting
 
-Report conduct concerns through repository maintainers via private channel defined in `SECURITY.md` or repository contacts.
+Report conduct concerns through repository maintainers via private channel defined in [`SECURITY.md`](SECURITY.md) or repository contacts.

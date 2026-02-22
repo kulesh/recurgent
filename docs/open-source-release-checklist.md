@@ -24,7 +24,7 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 ## 3. Repository Hygiene
 
 - [x] Remove accidental local/dev artifacts (scratch files, tmp outputs, local state dumps).
-- [x] Ensure `.gitignore` excludes local logs, tokens, generated binaries, and editor artifacts.
+- [x] Ensure [`.gitignore`](../.gitignore) excludes local logs, tokens, generated binaries, and editor artifacts.
 - [ ] Confirm no secrets in history and working tree (`gitleaks` clean).
 - [x] Ensure no sensitive issue data is left in local tracker exports intended for publish.
 - [x] Validate top-level structure is intentional ([`README.md`](../README.md), [`docs/`](.), [`runtimes/`](../runtimes), [`specs/`](../specs), [`bin/`](../bin)).
@@ -146,7 +146,7 @@ Completed locally on 2026-02-18:
 - Hygiene:
   - Purged local [`.beads/`](../.beads) state.
   - Removed generated article artifacts from [`runtimes/ruby/`](../runtimes/ruby).
-  - Added ignore rules for generated article outputs in `.gitignore`.
+  - Added ignore rules for generated article outputs in [`.gitignore`](../.gitignore).
 - Security automation notes:
   - GitHub Dependabot vulnerability alerts enabled for the repository.
   - Branch protection enforces required checks: `Ruby test and lint`, `Enforce PR template and issue-first policy`, `bundler-audit`, `gitleaks`.

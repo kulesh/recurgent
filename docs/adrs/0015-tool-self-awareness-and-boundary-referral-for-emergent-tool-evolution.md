@@ -9,7 +9,7 @@ Recent live traces showed a recurring failure class:
 
 1. A Tool can return structurally valid data (`Outcome.ok`) that is semantically low value for caller intent.
 2. A Tool can be asked to perform work across capability boundaries it does not own (for example, HTTP transport plus extraction semantics).
-3. Current runtime contract enforcement (ADR 0014) validates `deliverable` shape, but does not yet evaluate whether output satisfied the spirit of the contract.
+3. Current runtime contract enforcement ([ADR 0014](0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md)) validates `deliverable` shape, but does not yet evaluate whether output satisfied the spirit of the contract.
 4. The Tool Builder receives weak signals ("execution failed" or noisy successes) instead of clear decomposition signals.
 
 The project tenets require:
@@ -95,7 +95,7 @@ The Tool Builder uses this signal to:
 
 Inline behavior on active calls:
 
-1. enforce deliverable boundary checks (ADR 0014);
+1. enforce deliverable boundary checks ([ADR 0014](0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md));
 2. allow Tool self-referral (`wrong_tool_boundary`) and usefulness signaling (`low_utility`);
 3. perform immediate repair/retry only for implementation failures that block the current call;
 4. avoid heavy architectural reasoning in-line when deterministic completion is possible.

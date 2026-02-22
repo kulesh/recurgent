@@ -21,7 +21,7 @@ Maintainers own roadmap direction, review standards, release decisions, and enfo
 
 Maintainers cut releases and publish release notes/changelog updates.
 
-## Proposal Governance (ADR 0025)
+## Proposal Governance ([ADR 0025](adrs/0025-awareness-substrate-and-authority-boundary.md))
 
 Proposal artifacts are the only machine path from awareness to potential runtime mutation.
 

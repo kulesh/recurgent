@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement ADR 0012 so Tool and method capabilities persist across sessions and evolve based on runtime fitness rather than prompt lineage.
+Implement [ADR 0012](../adrs/0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) so Tool and method capabilities persist across sessions and evolve based on runtime fitness rather than prompt lineage.
 
 This plan turns "Tool Builders create durable Tools that compound over time" into a concrete runtime mechanism.
 
@@ -27,7 +27,7 @@ Out of scope:
 1. Stable artifact identity is `role + method_name`.
 2. `prompt_version` is metadata/staleness signal, not a lookup key.
 3. Persisted artifacts do not receive elevated trust, privileges, or capabilities.
-4. Existing dependency/environment contracts from ADR 0010/0011 remain authoritative.
+4. Existing dependency/environment contracts from [ADR 0010](../adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md)/0011 remain authoritative.
 5. Tolerant `Outcome` semantics remain the dynamic-call contract.
 6. File persistence uses atomic write semantics to avoid partial artifacts under concurrent writers.
 
@@ -415,7 +415,7 @@ Rollback plan:
 
 Prerequisites:
 
-1. ADR 0012 accepted.
+1. [ADR 0012](../adrs/0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) accepted.
 2. Existing prompting depth/known-tools mechanisms in place.
 3. Existing tolerant `Outcome` and syntax validation path available.
 

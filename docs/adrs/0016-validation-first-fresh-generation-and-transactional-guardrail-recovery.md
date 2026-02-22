@@ -10,7 +10,7 @@ Recent traces exposed a lifecycle gap in fresh generation (non-persisted path):
 1. Guardrails correctly block invalid approaches (for example, singleton method mutation on delegated Tools).
 2. The same guardrail failure currently terminates the call instead of guiding bounded regeneration.
 3. Failed attempts can partially mutate `context` before the guardrail fires, polluting subsequent retries.
-4. Existing repair flow (ADR 0012) applies to persisted artifacts after execution failure, not to fresh code before successful execution.
+4. Existing repair flow ([ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md)) applies to persisted artifacts after execution failure, not to fresh code before successful execution.
 5. Generated code can swallow runtime exceptions and return retriable `Outcome.error`, which currently bypasses fresh-path retry/repair lanes.
 6. When fresh execution is repaired successfully, the log often preserves only counters (`execution_repair_attempts`) but not the failed-attempt exception message/class that triggered repair.
 
@@ -148,7 +148,7 @@ When a fresh call requires retry/repair, runtime MUST persist structured failed-
 3. These diagnostics are internal-only:
    - available in logs/artifact metadata,
    - never surfaced directly to top-level user messages,
-   - compatible with ADR 0022 boundary normalization.
+   - compatible with [ADR 0022](0022-guardrail-exhaustion-boundary-normalization.md) boundary normalization.
 4. Telemetry capture must be append-only within a call attempt sequence and deterministic across retries.
 
 These signals feed out-of-band quality analysis without widening hot-path complexity.
@@ -167,7 +167,7 @@ In scope:
 
 Out of scope:
 
-1. changing persisted artifact repair policy from ADR 0012;
+1. changing persisted artifact repair policy from [ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md);
 2. runtime-autonomous tool decomposition/refactoring;
 3. domain-specific scraping heuristics;
 4. model-specific prompt optimization unrelated to lifecycle state machine.
@@ -203,8 +203,8 @@ Out of scope:
    - Rejected: blocks iterative self-correction and wastes recoverable attempts.
 2. Relax guardrails to warnings only
    - Rejected: permits policy bypass and harms persistence/contract integrity.
-3. Expand ADR 0012 instead of a new ADR
-   - Rejected: ADR 0012 is persisted-artifact lifecycle; this decision governs fresh-generation validation lifecycle.
+3. Expand [ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) instead of a new ADR
+   - Rejected: [ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) is persisted-artifact lifecycle; this decision governs fresh-generation validation lifecycle.
 4. Retry without transaction isolation
    - Rejected: unsafe due to partial context pollution between attempts.
 5. Make Tool code self-orchestrate retries after returning `Outcome.error`
@@ -253,7 +253,7 @@ Out of scope:
 5. Terminal guardrails bypass retry and return typed outcomes immediately.
 6. `guardrail_retry_exhausted` contributes to adaptive failure pressure for tool-health/evolution telemetry.
 7. `outcome_repair_retry_exhausted` contributes to adaptive failure pressure for tool-health/evolution telemetry.
-8. Failed-attempt diagnostics remain internal; user-boundary surfaces stay normalized per ADR 0022.
+8. Failed-attempt diagnostics remain internal; user-boundary surfaces stay normalized per [ADR 0022](0022-guardrail-exhaustion-boundary-normalization.md).
 
 ## Open Questions
 

@@ -2,17 +2,17 @@
 
 - Date: 2026-02-22
 - Source artifacts:
-  - `docs/baselines/2026-02-22/adr-0027/phase-0-validation.md`
-  - `docs/baselines/2026-02-22/adr-0027/phase-1-validation.md`
-  - `docs/baselines/2026-02-22/adr-0027/phase-2-validation.md`
-  - `docs/baselines/2026-02-22/adr-0027/phase-3-validation.md`
-  - `docs/baselines/2026-02-22/adr-0027/phase-4-validation.md`
-  - `docs/baselines/2026-02-22/adr-0027/phase-5-validation.md`
-  - `docs/baselines/2026-02-22/adr-0027/phase-6-validation.md`
+  - [`docs/baselines/2026-02-22/adr-0027/phase-0-validation.md`](../baselines/2026-02-22/adr-0027/phase-0-validation.md)
+  - [`docs/baselines/2026-02-22/adr-0027/phase-1-validation.md`](../baselines/2026-02-22/adr-0027/phase-1-validation.md)
+  - [`docs/baselines/2026-02-22/adr-0027/phase-2-validation.md`](../baselines/2026-02-22/adr-0027/phase-2-validation.md)
+  - [`docs/baselines/2026-02-22/adr-0027/phase-3-validation.md`](../baselines/2026-02-22/adr-0027/phase-3-validation.md)
+  - [`docs/baselines/2026-02-22/adr-0027/phase-4-validation.md`](../baselines/2026-02-22/adr-0027/phase-4-validation.md)
+  - [`docs/baselines/2026-02-22/adr-0027/phase-5-validation.md`](../baselines/2026-02-22/adr-0027/phase-5-validation.md)
+  - [`docs/baselines/2026-02-22/adr-0027/phase-6-validation.md`](../baselines/2026-02-22/adr-0027/phase-6-validation.md)
 
 ## Scope
 
-This rollup evaluates ADR-0027 implementation against the declared outcomes:
+This rollup evaluates [ADR-0027](../adrs/0027-simulation-preparedness-and-readiness-gates.md) implementation against the declared outcomes:
 
 1. class-1 simulation governed by explicit readiness gates (`G0`-`G5`),
 2. replayable/diffable/schema-valid run evidence,
@@ -75,7 +75,7 @@ This rollup evaluates ADR-0027 implementation against the declared outcomes:
 
 1. Readiness infrastructure now reliably measures quality signals; it does not itself repair runtime semantics.
 2. Seed/fixture parity is a hard precondition for replayability and must be explicit in nightly automation.
-3. Gate sequencing from ADR-0027 is correct in practice:
+3. Gate sequencing from [ADR-0027](../adrs/0027-simulation-preparedness-and-readiness-gates.md) is correct in practice:
    - `G0` before `G2` (score consistency only meaningful with explicit oracles),
    - `G1` before `G4` (diffs are only actionable under deterministic replay conditions).
 4. Example instability is now easier to classify:
@@ -85,12 +85,12 @@ This rollup evaluates ADR-0027 implementation against the declared outcomes:
 
 ## Readiness Conclusion
 
-ADR-0027 implementation is complete for Phase 0-6 feature scope. Recurgent now has a functional readiness-gate substrate (`G0`-`G5`) with contracts, runner support, and CI/nightly operational hooks.
+[ADR-0027](../adrs/0027-simulation-preparedness-and-readiness-gates.md) implementation is complete for Phase 0-6 feature scope. Recurgent now has a functional readiness-gate substrate (`G0`-`G5`) with contracts, runner support, and CI/nightly operational hooks.
 
 Project state is now suitable to begin disciplined simulation-driven iteration, with one caveat: semantic improvements still require targeted runtime/tool/profile work; the simulation stack provides evidence and regression pressure, not automatic semantic correction.
 
 ## Recommended Next Steps
 
-1. Start the ADR-0027 observation window protocol (20+ class-1 runs across 3+ days) and publish a run-health dashboard snapshot.
+1. Start the [ADR-0027](../adrs/0027-simulation-preparedness-and-readiness-gates.md) observation window protocol (20+ class-1 runs across 3+ days) and publish a run-health dashboard snapshot.
 2. Add a deterministic calculator-history scenario pack to make the persistent `history` failure an explicit scored regression.
 3. Add fixture-backed assistant packs (news/recipe variants) to separate external drift from runtime/tool behavior in class-2 advisory runs.

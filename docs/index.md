@@ -97,12 +97,12 @@ This index is organized for fast retrieval:
 ## Baselines and Operations
 
 - [`docs/baselines/2026-02-15/README.md`](baselines/2026-02-15/README.md) - baseline trace fixtures
-- [`docs/baselines/2026-02-20/adr-0024/phase-rollup.json`](baselines/2026-02-20/adr-0024/phase-rollup.json) - ADR 0024 phase-by-phase validation rollup
-- [`docs/baselines/2026-02-22/adr-0027/phase-0-validation.md`](baselines/2026-02-22/adr-0027/phase-0-validation.md) - ADR 0027 phase 0 validation report with required suite/example trace diagnostics
-- [`docs/baselines/2026-02-22/adr-0027/phase-5-validation.md`](baselines/2026-02-22/adr-0027/phase-5-validation.md) - ADR 0027 phase 5 baseline-diff validation with required suite/example trace diagnostics
-- [`docs/baselines/2026-02-22/adr-0027/phase-6-validation.md`](baselines/2026-02-22/adr-0027/phase-6-validation.md) - ADR 0027 phase 6 CI/nightly operationalization validation with required suite/example trace diagnostics
-- [`docs/reports/adr-0024-phase-validation-rollup.md`](reports/adr-0024-phase-validation-rollup.md) - ADR 0024 expected-vs-observed validation analysis
-- [`docs/reports/adr-0027-phase-validation-rollup.md`](reports/adr-0027-phase-validation-rollup.md) - ADR 0027 expected-vs-observed validation analysis across phases 0-6
+- [`docs/baselines/2026-02-20/adr-0024/phase-rollup.json`](baselines/2026-02-20/adr-0024/phase-rollup.json) - [ADR 0024](adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) phase-by-phase validation rollup
+- [`docs/baselines/2026-02-22/adr-0027/phase-0-validation.md`](baselines/2026-02-22/adr-0027/phase-0-validation.md) - [ADR 0027](adrs/0027-simulation-preparedness-and-readiness-gates.md) phase 0 validation report with required suite/example trace diagnostics
+- [`docs/baselines/2026-02-22/adr-0027/phase-5-validation.md`](baselines/2026-02-22/adr-0027/phase-5-validation.md) - [ADR 0027](adrs/0027-simulation-preparedness-and-readiness-gates.md) phase 5 baseline-diff validation with required suite/example trace diagnostics
+- [`docs/baselines/2026-02-22/adr-0027/phase-6-validation.md`](baselines/2026-02-22/adr-0027/phase-6-validation.md) - [ADR 0027](adrs/0027-simulation-preparedness-and-readiness-gates.md) phase 6 CI/nightly operationalization validation with required suite/example trace diagnostics
+- [`docs/reports/adr-0024-phase-validation-rollup.md`](reports/adr-0024-phase-validation-rollup.md) - [ADR 0024](adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) expected-vs-observed validation analysis
+- [`docs/reports/adr-0027-phase-validation-rollup.md`](reports/adr-0027-phase-validation-rollup.md) - [ADR 0027](adrs/0027-simulation-preparedness-and-readiness-gates.md) expected-vs-observed validation analysis across phases 0-6
 - [`docs/reports/adr-0024-scope-hardcut-validation-report.md`](reports/adr-0024-scope-hardcut-validation-report.md) - validation report for scope-first role-profile hard cut and required calculator/assistant traces
 - [`docs/runtime-configuration.md`](runtime-configuration.md) - runtime configuration reference for dependency policy, lifecycle toggles, toolstore roots, and authority settings
 - [`docs/roadmap.md`](roadmap.md) - near/mid/long-term roadmap

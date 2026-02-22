@@ -232,7 +232,7 @@ This makes persistence decisions auditable and tunable.
 ## Guardrails
 
 1. Artifact execution remains subject to existing runtime capability boundaries.
-2. Dependency manifests remain validated/normalized under ADR 0010/0011 rules.
+2. Dependency manifests remain validated/normalized under [ADR 0010](0010-dependency-aware-generated-programs-and-environment-contract-v1.md)/0011 rules.
 3. Persisted artifacts must pass syntax validation before execution.
 4. Failed persisted artifacts must not short-circuit tolerant Outcome behavior.
 5. Persisted artifacts execute under the same sandbox and capability boundaries as freshly generated code; persistence does not elevate trust or privileges.

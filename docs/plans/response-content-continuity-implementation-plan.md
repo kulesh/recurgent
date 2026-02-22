@@ -2,7 +2,7 @@
 
 - Status: draft
 - Date: 2026-02-21
-- Scope: ADR 0026 response content continuity substrate
+- Scope: [ADR 0026](../adrs/0026-response-content-continuity-substrate.md) response content continuity substrate
 
 ## Objective
 
@@ -174,7 +174,7 @@ Implementation:
 1. Emit content continuity fields in logs and report docs.
 2. Add counters: writes, hits, misses, evictions, expired refs.
 3. Tune defaults using observation window evidence.
-4. Integrate retention-policy mutations into ADR 0025 proposal/authority governance path.
+4. Integrate retention-policy mutations into [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) proposal/authority governance path.
 5. Update docs with troubleshooting and expected failure semantics.
 
 Phase Improvement Contract:
@@ -219,7 +219,7 @@ Exit criteria:
 
 ## Completion Criteria
 
-1. ADR 0026 acceptance criteria are met and evidenced.
+1. [ADR 0026](../adrs/0026-response-content-continuity-substrate.md) acceptance criteria are met and evidenced.
 2. Follow-up content transformations pass at target success rate in observation window.
 3. Store boundedness and prompt-size constraints hold in stress tests.
 4. Documentation and UL updates are merged and indexed.

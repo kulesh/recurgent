@@ -2,24 +2,24 @@
 
 - Status: draft
 - Date: 2026-02-20
-- Scope: ADR 0024 rollout (updated after ADR 0025)
+- Scope: [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) rollout (updated after [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md))
 
 ## Objective
 
-Implement ADR 0024 as the semantic-coherence layer for role-style agents, with coordination-first constraints and explicit authority-gated profile lifecycle operations.
+Implement [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) as the semantic-coherence layer for role-style agents, with coordination-first constraints and explicit authority-gated profile lifecycle operations.
 
 Primary outcomes:
 
 1. Role semantics are explicit, versioned, and opt-in via `RoleProfile`.
 2. Continuity drift (state-key/signature/shape disagreement across sibling methods) is observable, explainable, and repairable.
 3. Constraint enforcement defaults to environmental coordination over role-wide scope, not prescriptive pinning.
-4. Profile lifecycle mutations are proposal-based and authority-gated through ADR 0025 lanes.
-5. Promotion decisions for profile-enabled roles combine reliability evidence (ADR 0023) with profile compliance evidence (ADR 0024).
+4. Profile lifecycle mutations are proposal-based and authority-gated through [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) lanes.
+5. Promotion decisions for profile-enabled roles combine reliability evidence ([ADR 0023](../adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md)) with profile compliance evidence ([ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md)).
 6. Methods-first profile schema is removed (clean break); runtime/docs/examples adopt scope-first contracts only.
 
 ## Status Quo Baseline
 
-Baseline observations before ADR 0024 enforcement (from [`docs/reports/adr-0025-phase-validation-report.md`](../reports/adr-0025-phase-validation-report.md) and recent trace runs):
+Baseline observations before [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) enforcement (from [`docs/reports/adr-0025-phase-validation-report.md`](../reports/adr-0025-phase-validation-report.md) and recent trace runs):
 
 1. Reliability and awareness evidence can look healthy while role semantics drift (for example, calculator produced an incorrect algebra result in reruns).
 2. Tool-level guardrail and retry mechanisms are active, but they do not guarantee sibling-method state continuity for role-style interfaces.
@@ -36,7 +36,7 @@ Baseline observations before ADR 0024 enforcement (from [`docs/reports/adr-0025-
 
 1. Non-profile tools remain on reliability-only lifecycle policy and do not require role profile adoption.
 2. Tolerant interface behavior for existing non-profile capabilities remains unchanged.
-3. ADR 0025 authority boundaries remain unchanged (`enact` denied by default without explicit approval).
+3. [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) authority boundaries remain unchanged (`enact` denied by default without explicit approval).
 
 ## Validation Signals and Thresholds
 
@@ -57,15 +57,15 @@ Baseline observations before ADR 0024 enforcement (from [`docs/reports/adr-0025-
 
 1. No automatic runtime inference of "this agent is a role".
 2. No domain-specific semantic grader beyond authored profile constraints.
-3. No bypass of ADR 0025 authority gates for profile creation, versioning, or mode changes.
+3. No bypass of [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) authority gates for profile creation, versioning, or mode changes.
 4. No forced prescriptive canonical key/shape in coordination mode.
 5. No backward-compatibility layer for legacy methods-first role-profile schema.
 
 ## Design Constraints
 
 1. Separate reliability from correctness:
-   - Reliability: execution stability and success signals (ADR 0023).
-   - Correctness: role continuity/profile compliance (ADR 0024).
+   - Reliability: execution stability and success signals ([ADR 0023](../adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md)).
+   - Correctness: role continuity/profile compliance ([ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md)).
 2. Coordination mode is default:
    - enforce agreement among siblings,
    - do not dictate specific key names/shapes.
@@ -84,13 +84,13 @@ Baseline observations before ADR 0024 enforcement (from [`docs/reports/adr-0025-
 
 Already available:
 
-1. ADR 0023 reliability scorecards and lifecycle states.
-2. ADR 0025 awareness substrate, proposal artifacts, and authority gates.
-3. Existing recoverable guardrail retry lanes (ADR 0014/0016).
+1. [ADR 0023](../adrs/0023-solver-shape-and-reliability-gated-tool-evolution.md) reliability scorecards and lifecycle states.
+2. [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) awareness substrate, proposal artifacts, and authority gates.
+3. Existing recoverable guardrail retry lanes ([ADR 0014](../adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md)/0016).
 
 Dependency rule:
 
-1. ADR 0024 enforcement paths must call ADR 0025 authority checks for any profile mutation.
+1. [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) enforcement paths must call [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) authority checks for any profile mutation.
 2. Continuity checks run in validation lanes; mutation authority remains outside hot-path runtime decisions.
 
 ## Ubiquitous Language Deliverables
@@ -144,7 +144,7 @@ Suggested files:
 
 Phase Improvement Contract:
 
-1. Baseline snapshot: pre-ADR-0024 traces with no typed continuity evidence.
+1. Baseline snapshot: pre-[ADR-0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) traces with no typed continuity evidence.
 2. Expected delta: baseline evidence is captured and indexed with known drift exemplars.
 3. Observed delta: to be recorded in `docs/baselines/<date>/adr-0024/phase-0-validation.md`.
 
@@ -280,7 +280,7 @@ Exit criteria:
 
 Goals:
 
-1. Enforce ADR 0025 governance for all profile lifecycle mutations.
+1. Enforce [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) governance for all profile lifecycle mutations.
 2. Ensure profile updates are explicit, auditable, and reviewable.
 
 Implementation:
@@ -456,7 +456,7 @@ Evidence location convention:
 
 ## Completion Criteria
 
-ADR 0024 is complete when all are true:
+[ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) is complete when all are true:
 
 1. Role profiles are opt-in, versioned, and authority-governed.
 2. Continuity drift is visible in shadow and recoverable in enforcement.

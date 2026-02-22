@@ -60,7 +60,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation/phase-0/xdg/recurgent/recurgent.jsonl` (`18` entries)
+- Log file: [`tmp/phase-validation/phase-0/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation/phase-0/xdg/recurgent/recurgent.jsonl) (`18` entries)
 - Calculator trace (8 entries, all `ok`, depth `0`):
   - Methods executed: `add`, `multiply`, `sqrt`, `sqrt`, `factorial`, `convert`, `solve`, `history`
   - Program source: all `generated`, no retries/exhaustion events.
@@ -134,7 +134,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation/phase-1/xdg/recurgent/recurgent.jsonl` (`18` entries)
+- Log file: [`tmp/phase-validation/phase-1/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation/phase-1/xdg/recurgent/recurgent.jsonl) (`18` entries)
 - Solver-shape telemetry verification:
   - `solver_shape` present on all 18 entries.
   - `solver_shape_complete=true` on all 18 entries.
@@ -209,7 +209,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation/phase-2/xdg/recurgent/recurgent.jsonl` (`17` entries)
+- Log file: [`tmp/phase-validation/phase-2/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation/phase-2/xdg/recurgent/recurgent.jsonl) (`17` entries)
 - Solver-shape telemetry remains complete:
   - `solver_shape` present on all entries.
   - `solver_shape_complete=true` on all entries.
@@ -291,7 +291,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation/phase-3/xdg/recurgent/recurgent.jsonl` (`15` entries)
+- Log file: [`tmp/phase-validation/phase-3/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation/phase-3/xdg/recurgent/recurgent.jsonl) (`15` entries)
 - Lifecycle telemetry verification:
   - `lifecycle_state` present on all 15 entries.
   - Decision values observed: `continue_probation`, `hold`.
@@ -360,7 +360,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation/phase-4/xdg/recurgent/recurgent.jsonl` (`13` entries)
+- Log file: [`tmp/phase-validation/phase-4/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation/phase-4/xdg/recurgent/recurgent.jsonl) (`13` entries)
 - Lifecycle/decision evidence:
   - All logged top-level calls show lifecycle decisions (`continue_probation`) with `promotion_shadow_mode=true`.
   - Artifact selection metadata fields exist in schema but were empty this run (`artifact_hit=0`), so enforcement path did not trigger in examples.
@@ -426,7 +426,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation/phase-5/xdg/recurgent/recurgent.jsonl` (`14` entries)
+- Log file: [`tmp/phase-validation/phase-5/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation/phase-5/xdg/recurgent/recurgent.jsonl) (`14` entries)
 - Runtime trace:
   - Roles observed: `calculator` (8), `rss_feed_reader` (3), assistant (3).
   - Assistant statuses: `ok`, `capability_unavailable`, `ok`.
@@ -498,7 +498,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation/phase-6/xdg/recurgent/recurgent.jsonl` (`15` entries)
+- Log file: [`tmp/phase-validation/phase-6/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation/phase-6/xdg/recurgent/recurgent.jsonl) (`15` entries)
 - Trace summary:
   - Roles: `calculator` (8), assistant (3), `stable_finance_tool` (3), `movie_listings` (1).
   - Assistant statuses: `ok`, `capability_unavailable`, `ok`.

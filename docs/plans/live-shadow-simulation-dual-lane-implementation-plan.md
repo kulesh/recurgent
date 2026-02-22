@@ -2,11 +2,11 @@
 
 - Status: draft
 - Date: 2026-02-22
-- Scope: ADR 0028 live-shadow simulation lane on top of ADR 0027 deterministic readiness lane
+- Scope: [ADR 0028](../adrs/0028-live-shadow-simulation-and-dual-lane-evidence.md) live-shadow simulation lane on top of [ADR 0027](../adrs/0027-simulation-preparedness-and-readiness-gates.md) deterministic readiness lane
 
 ## Objective
 
-Operationalize ADR 0028 so Recurgent can measure runtime semantic behavior (live-shadow) without degrading deterministic readiness reliability.
+Operationalize [ADR 0028](../adrs/0028-live-shadow-simulation-and-dual-lane-evidence.md) so Recurgent can measure runtime semantic behavior (live-shadow) without degrading deterministic readiness reliability.
 
 Primary outcomes:
 
@@ -16,8 +16,8 @@ Primary outcomes:
 
 ## Status Quo Baseline
 
-1. Simulation runner is deterministic-oracle only (`runtimes/ruby/lib/recurgent/simulation_runner.rb`) and does not execute live runtime flows.
-2. Phase-7 evidence confirms deterministic infrastructure maturity but ongoing semantic instability in live examples (`docs/baselines/2026-02-22/adr-0027/phase-7b-validation-report.md`).
+1. Simulation runner is deterministic-oracle only ([`runtimes/ruby/lib/recurgent/simulation_runner.rb`](../../runtimes/ruby/lib/recurgent/simulation_runner.rb)) and does not execute live runtime flows.
+2. Phase-7 evidence confirms deterministic infrastructure maturity but ongoing semantic instability in live examples ([`docs/baselines/2026-02-22/adr-0027/phase-7b-validation-report.md`](../baselines/2026-02-22/adr-0027/phase-7b-validation-report.md)).
 3. Run ledger currently captures gate/score evidence, but not live-shadow lane metadata and token/cost telemetry for runtime-executed calls.
 
 ## Expected Improvements
@@ -35,7 +35,7 @@ Primary outcomes:
 
 1. This plan does not auto-repair failing runtime semantics.
 2. This plan does not promote live-shadow to gating before explicit promotion decision criteria are met.
-3. This plan does not relax ADR 0025 authority boundaries (`observe/propose/enact` separation remains unchanged).
+3. This plan does not relax [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) authority boundaries (`observe/propose/enact` separation remains unchanged).
 
 ## Validation Signals and Thresholds
 
@@ -91,11 +91,11 @@ Goals:
 
 Implementation:
 
-1. Update scenario-pack schema (`specs/contract/v1/simulation-scenario-pack.schema.json`):
+1. Update scenario-pack schema ([`specs/contract/v1/simulation-scenario-pack.schema.json`](../../specs/contract/v1/simulation-scenario-pack.schema.json)):
    - `execution.lane` (`deterministic` | `live_shadow`),
    - `execution.isolation` (`run_scoped`),
    - `scenario.role`, `scenario.script[]` fields for live-shadow.
-2. Update run-ledger schema (`specs/contract/v1/simulation-run-ledger.schema.json`):
+2. Update run-ledger schema ([`specs/contract/v1/simulation-run-ledger.schema.json`](../../specs/contract/v1/simulation-run-ledger.schema.json)):
    - `execution_lane`,
    - `run_scope_id`,
    - `usage_telemetry` object (`provider`, `model`, `input_tokens`, `output_tokens`, `total_tokens`, `estimated_cost_usd`, `availability`).
@@ -215,7 +215,7 @@ Implementation:
    - `run_scope_id`,
    - `usage_telemetry`.
 2. Collect usage telemetry from provider responses where available; populate explicit `unknown` markers where unavailable.
-3. Preserve ADR 0027 gate semantics; apply live-shadow in advisory mode by policy.
+3. Preserve [ADR 0027](../adrs/0027-simulation-preparedness-and-readiness-gates.md) gate semantics; apply live-shadow in advisory mode by policy.
 4. Ensure baseline diff and trend reports include lane dimension.
 
 Phase Improvement Contract:
@@ -269,9 +269,9 @@ Implementation:
 1. Extend advisory report tooling for lane-split summaries.
 2. Add operator commands for live-shadow runs and lane-comparison outputs.
 3. Update documentation:
-   - `docs/simulation-readiness.md` live-shadow runbook,
+   - [`docs/simulation-readiness.md`](../simulation-readiness.md) live-shadow runbook,
    - docs indexes/plan maps,
-   - UL additions from ADR 0028.
+   - UL additions from [ADR 0028](../adrs/0028-live-shadow-simulation-and-dual-lane-evidence.md).
 
 Phase Improvement Contract:
 
@@ -332,7 +332,7 @@ Phase Improvement Contract:
 
 Exit criteria:
 
-1. Decision record published under `docs/reports/`.
+1. Decision record published under [`docs/reports/`](../reports).
 2. Maintainer decision references explicit thresholds and artifacts.
 
 ## Phase Validation Protocol (After Every Phase)
@@ -340,7 +340,7 @@ Exit criteria:
 Execute and archive these validations after each phase implementation:
 
 1. Entire Ruby test suite (`bundle exec rspec`).
-2. Calculator example run (`runtimes/ruby/examples/calculator.rb`) with outcome correctness notes.
+2. Calculator example run ([`runtimes/ruby/examples/calculator.rb`](../../runtimes/ruby/examples/calculator.rb)) with outcome correctness notes.
 3. Personal assistant run with required prompts:
    - top news (Google News, Yahoo! News, NYT),
    - action-adventure movies in theaters,
@@ -379,7 +379,7 @@ Execute and archive these validations after each phase implementation:
 
 ## Completion Criteria
 
-1. ADR 0028 phases 0-8 complete with phase-by-phase validation artifacts.
+1. [ADR 0028](../adrs/0028-live-shadow-simulation-and-dual-lane-evidence.md) phases 0-8 complete with phase-by-phase validation artifacts.
 2. Dual-lane evidence is produced in a shared ledger with complete lane + telemetry fields.
 3. Deterministic class-1 gating remains healthy and unchanged.
 4. Live-shadow advisory promotion decision is documented and auditable.

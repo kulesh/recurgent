@@ -20,9 +20,9 @@ This conflicts with project tenets:
 
 Related decisions:
 
-1. ADR 0014 enforces delegated `deliverable` shape at outcome boundaries.
-2. ADR 0015 introduces `low_utility` and `wrong_tool_boundary` as typed referral/usefulness outcomes.
-3. ADR 0012 provides persisted repair/regeneration once failures are explicit.
+1. [ADR 0014](0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md) enforces delegated `deliverable` shape at outcome boundaries.
+2. [ADR 0015](0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md) introduces `low_utility` and `wrong_tool_boundary` as typed referral/usefulness outcomes.
+3. [ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) provides persisted repair/regeneration once failures are explicit.
 
 ## Decision
 
@@ -34,7 +34,7 @@ Runtime MUST NOT convert `Outcome.ok` into `Outcome.error` purely from heuristic
 
 Allowed runtime transformations:
 
-1. tolerant shape/key canonicalization (ADR 0014),
+1. tolerant shape/key canonicalization ([ADR 0014](0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md)),
 2. contract-shape violation mapping to typed `contract_violation`,
 3. serialization/transport normalization.
 
@@ -96,7 +96,7 @@ Out of scope:
 
 1. runtime-autonomous tool decomposition/splitting;
 2. domain-specific heuristics for websites/sources;
-3. replacing delegated boundary validation from ADR 0014.
+3. replacing delegated boundary validation from [ADR 0014](0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md).
 
 ## Consequences
 

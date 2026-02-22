@@ -8,12 +8,12 @@
   - `mise exec -- env XDG_STATE_HOME=... ruby examples/calculator.rb`
   - `mise exec -- env XDG_STATE_HOME=... ruby examples/assistant.rb`
 - Artifacts:
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-1-rubocop.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-1-rspec.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-1-calculator.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-1-calculator.jsonl`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-1-assistant.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-1-assistant.jsonl`
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-1-rubocop.txt`](logs/phase-1-rubocop.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-1-rspec.txt`](logs/phase-1-rspec.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-1-calculator.txt`](logs/phase-1-calculator.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-1-calculator.jsonl`](logs/phase-1-calculator.jsonl)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-1-assistant.txt`](logs/phase-1-assistant.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-1-assistant.jsonl`](logs/phase-1-assistant.jsonl)
 
 ## Lint and Test Suite
 
@@ -122,12 +122,12 @@ Expected:
 
 Observed:
 
-1. Added `calculator-core-v1` and `calculator-edge-v1` under `specs/contract/v1/simulation/scenario-packs/`.
+1. Added `calculator-core-v1` and `calculator-edge-v1` under [`specs/contract/v1/simulation/scenario-packs/`](../../../../specs/contract/v1/simulation/scenario-packs).
 2. Added schema and loader/validator with tests:
-   - `specs/contract/v1/simulation-scenario-pack.schema.json`
-   - `runtimes/ruby/lib/recurgent/simulation_pack_contract.rb`
-   - `runtimes/ruby/lib/recurgent/simulation_scenario_pack.rb`
-   - `runtimes/ruby/spec/contract/simulation_scenario_pack_spec.rb`
+   - [`specs/contract/v1/simulation-scenario-pack.schema.json`](../../../../specs/contract/v1/simulation-scenario-pack.schema.json)
+   - [`runtimes/ruby/lib/recurgent/simulation_pack_contract.rb`](../../../../runtimes/ruby/lib/recurgent/simulation_pack_contract.rb)
+   - [`runtimes/ruby/lib/recurgent/simulation_scenario_pack.rb`](../../../../runtimes/ruby/lib/recurgent/simulation_scenario_pack.rb)
+   - [`runtimes/ruby/spec/contract/simulation_scenario_pack_spec.rb`](../../../../runtimes/ruby/spec/contract/simulation_scenario_pack_spec.rb)
 3. Full suite remains green.
 
 Phase conclusion:
