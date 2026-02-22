@@ -1,0 +1,236 @@
+{
+  "generated_at": "2026-02-22T02:00:21Z",
+  "runs": [
+    {
+      "run_id": "a0c080b85afc3f492e168e35",
+      "scenario_pack_id": "calculator-core-v1",
+      "mode": "fixture",
+      "overall_score": 1.0,
+      "gates": {
+        "G0": "pass",
+        "G1": "advisory",
+        "G2": "advisory",
+        "G3": "advisory",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "baseline_diff": "no_baseline",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97
+      ]
+    },
+    {
+      "run_id": "cde5d86362babd4d426bc114",
+      "scenario_pack_id": "calculator-core-v1",
+      "mode": "replay",
+      "overall_score": 1.0,
+      "gates": {
+        "G0": "pass",
+        "G1": "pass",
+        "G2": "advisory",
+        "G3": "advisory",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "baseline_diff": "no_baseline",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97
+      ]
+    },
+    {
+      "run_id": "54cc3dc0eca9f31f15f66ec6",
+      "scenario_pack_id": "calculator-core-v1",
+      "mode": "replay",
+      "overall_score": 1.0,
+      "gates": {
+        "G0": "pass",
+        "G1": "pass",
+        "G2": "pass",
+        "G3": "pass",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "baseline_diff": "improved",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97
+      ]
+    },
+    {
+      "run_id": "661b8ef4c13ded1b7725b3c0",
+      "scenario_pack_id": "calculator-edge-v1",
+      "mode": "fixture",
+      "overall_score": 1.0,
+      "gates": {
+        "G0": "pass",
+        "G1": "advisory",
+        "G2": "advisory",
+        "G3": "advisory",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "baseline_diff": "no_baseline",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97
+      ]
+    },
+    {
+      "run_id": "3ec5b4e8e14cf505287d9a7f",
+      "scenario_pack_id": "calculator-edge-v1",
+      "mode": "replay",
+      "overall_score": 1.0,
+      "gates": {
+        "G0": "pass",
+        "G1": "pass",
+        "G2": "advisory",
+        "G3": "advisory",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "baseline_diff": "no_baseline",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97
+      ]
+    },
+    {
+      "run_id": "6ca89f2dd2d8303998792776",
+      "scenario_pack_id": "calculator-edge-v1",
+      "mode": "replay",
+      "overall_score": 1.0,
+      "gates": {
+        "G0": "pass",
+        "G1": "pass",
+        "G2": "pass",
+        "G3": "pass",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "baseline_diff": "improved",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97
+      ]
+    },
+    {
+      "run_id": "dcf3a9278d9b6eadbee4403c",
+      "scenario_pack_id": "calculator-core-v1",
+      "mode": "fixture",
+      "overall_score": 1.0,
+      "gates": {
+        "G0": "pass",
+        "G1": "advisory",
+        "G2": "advisory",
+        "G3": "advisory",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "baseline_diff": "no_baseline",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97,
+        101,
+        131
+      ]
+    },
+    {
+      "run_id": "a3ddfe5cd4b1e88f9cf9697e",
+      "scenario_pack_id": "calculator-core-v1",
+      "mode": "replay",
+      "overall_score": 1.0,
+      "gates": {
+        "G0": "pass",
+        "G1": "pass",
+        "G2": "advisory",
+        "G3": "pass",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "baseline_diff": "no_baseline",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97,
+        101,
+        131
+      ]
+    },
+    {
+      "run_id": "184a083c23f91030bbd2a777",
+      "scenario_pack_id": "calculator-core-v1",
+      "mode": "replay",
+      "overall_score": 1.0,
+      "gates": {
+        "G0": "pass",
+        "G1": "pass",
+        "G2": "pass",
+        "G3": "pass",
+        "G4": "pass",
+        "G5": "pass"
+      },
+      "baseline_diff": "improved",
+      "seeds": [
+        11,
+        19,
+        23,
+        31,
+        43,
+        59,
+        71,
+        97,
+        101,
+        131
+      ]
+    }
+  ]
+}

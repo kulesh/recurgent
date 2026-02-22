@@ -1,0 +1,657 @@
+{
+  "schema_version": 1,
+  "run_id": "09d9dff9e5f87b2ff3355a86",
+  "recorded_at": "2026-02-22T01:28:28Z",
+  "commit_sha": "ad69974",
+  "scenario_pack_id": "calculator-core-v1",
+  "scenario_class": "class_1",
+  "seed": 11,
+  "session_id": "c1634daa87dbc3c7",
+  "mode": "replay",
+  "score_vector": {
+    "correctness": 0.7,
+    "contract_adherence": 0.15,
+    "repair_efficiency": 0.1,
+    "reuse": 0.05,
+    "overall": 1.0
+  },
+  "scorer_version": "simulation_scorer_v1",
+  "artifacts": {
+    "scenario_pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016"
+  },
+  "metrics": {
+    "seeds": [
+      11,
+      19,
+      23,
+      31,
+      43,
+      59,
+      71,
+      97
+    ],
+    "replay_stability": 0.0,
+    "per_seed_results": [
+      {
+        "seed": 11,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": false,
+        "fixture_present": false
+      },
+      {
+        "seed": 19,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          },
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": false,
+        "fixture_present": false
+      },
+      {
+        "seed": 23,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": false,
+        "fixture_present": false
+      },
+      {
+        "seed": 31,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": false,
+        "fixture_present": false
+      },
+      {
+        "seed": 43,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": false,
+        "fixture_present": false
+      },
+      {
+        "seed": 59,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": false,
+        "fixture_present": false
+      },
+      {
+        "seed": 71,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": false,
+        "fixture_present": false
+      },
+      {
+        "seed": 97,
+        "pack_id": "calculator-core-v1",
+        "pack_checksum_sha256": "0693b1ad474b64781870cd7a40310657e5c0500c937a5aaa47f7069a58577016",
+        "oracle_results": [
+          {
+            "id": "multiply_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 24.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "composed_expression_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 20.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "add_chain_correct",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.0
+              }
+            }
+          },
+          {
+            "id": "sqrt_expected_precision",
+            "kind": "calculator_expression",
+            "passed": true,
+            "observation": {
+              "status": "ok",
+              "value": 12.0,
+              "passed": true,
+              "details": {
+                "delta": 0.0,
+                "tolerance": 0.000001
+              }
+            }
+          }
+        ],
+        "pass_count": 4,
+        "total_count": 4,
+        "replay_match": false,
+        "fixture_present": false
+      }
+    ],
+    "score_components": {
+      "correctness": 1.0,
+      "contract_adherence": 1.0,
+      "repair_efficiency": 1.0,
+      "reuse": 1.0
+    },
+    "score_weights": {
+      "correctness": 0.7,
+      "contract_adherence": 0.15,
+      "repair_efficiency": 0.1,
+      "reuse": 0.05
+    },
+    "trace_validation": {
+      "valid": false,
+      "entry_count": 1,
+      "first_invalid_entry_index": 0,
+      "first_invalid_field_path": "$",
+      "first_invalid_reason": "missing required fields: timestamp, role, model, method, args, kwargs, code, duration_ms, generation_attempt"
+    }
+  },
+  "gates": {
+    "G0": {
+      "status": "pass",
+      "evaluator_owner": "scenario_contract_validator",
+      "required_artifacts": [
+        "scenario_pack_contract",
+        "oracle_contract",
+        "scoring_profile"
+      ],
+      "message": "scenario pack contract validated",
+      "measured_at": "2026-02-22T01:28:28Z"
+    },
+    "G1": {
+      "status": "fail",
+      "evaluator_owner": "replay_runner",
+      "required_artifacts": [
+        "replay_manifest",
+        "replay_result_vector",
+        "replay_stability_metrics"
+      ],
+      "message": "replay stability=0.0",
+      "measured_at": "2026-02-22T01:28:28Z"
+    },
+    "G2": {
+      "status": "pass",
+      "evaluator_owner": "deterministic_scorer",
+      "required_artifacts": [
+        "score_vector",
+        "score_components",
+        "scorer_version"
+      ],
+      "message": "score vector reproducible against prior replay entry",
+      "measured_at": "2026-02-22T01:28:28Z"
+    },
+    "G3": {
+      "status": "fail",
+      "evaluator_owner": "schema_validator",
+      "required_artifacts": [
+        "trace_log",
+        "trace_schema_report"
+      ],
+      "message": "trace schema validation failed at $ (entry 0): missing required fields: timestamp, role, model, method, args, kwargs, code, duration_ms, generation_attempt",
+      "measured_at": "2026-02-22T01:28:28Z"
+    },
+    "G4": {
+      "status": "not_applicable",
+      "evaluator_owner": "baseline_diff_engine",
+      "required_artifacts": [
+        "baseline_snapshot",
+        "baseline_diff_report"
+      ],
+      "message": "gate not implemented in this phase",
+      "measured_at": "2026-02-22T01:28:28Z"
+    },
+    "G5": {
+      "status": "not_applicable",
+      "evaluator_owner": "ci_gate_runner",
+      "required_artifacts": [
+        "ci_gate_result",
+        "nightly_trend_report"
+      ],
+      "message": "gate not implemented in this phase",
+      "measured_at": "2026-02-22T01:28:28Z"
+    }
+  }
+}

@@ -1,0 +1,34 @@
+=== Calculator ===
+Model: claude-sonnet-4-5-20250929
+
+No Math module. No formulas. No operator overloading.
+Just a name and method calls. The LLM figures out the rest.
+
+-> calc.memory = 5
+
+-> calc.add(3)
+8.0
+
+-> calc.multiply(4)
+32.0
+
+-> calc.sqrt(latest_result)
+5.656854249492381
+
+-> calc.runtime_context[:memory] || calc.runtime_context[:value]
+5.656854249492381
+
+-> calc.sqrt(144)
+5.656854249492381
+
+-> calc.factorial(10)
+3628800
+
+-> calc.convert(100, from: 'celsius', to: 'fahrenheit')
+212.0
+
+-> calc.solve('2x + 5 = 17')
+[guardrail_retry_exhausted] This request couldn't be completed after multiple attempts.
+
+-> calc.history
+[{call_id: "fad20bb4fed88900", timestamp: "2026-02-22T01:06:12.091Z", speaker: "user", method_name: "add", args: [3], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float", content_ref: "content:6d6cf747162ea2c1cee422fb", content_kind: "number", content_bytes: 3, content_digest: "sha256:7b1bd53949b752d143d871408483b5382371b5bc48d195d0c040ec93cfa2748b"}, trace_id: "6f6caf2896a69c26a7d6af49", parent_call_id: nil, depth: 0, duration_ms: 16358.0}, {call_id: "f30d21ec7a39a797", timestamp: "2026-02-22T01:06:27.687Z", speaker: "user", method_name: "multiply", args: [4], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float", content_ref: "content:4d33ea582da689d287b104d9", content_kind: "number", content_bytes: 4, content_digest: "sha256:e83763df0a559307f28925481113a83c93a96030b384473a8194531fa17c0c38"}, trace_id: "6f6caf2896a69c26a7d6af49", parent_call_id: nil, depth: 0, duration_ms: 15588.2}, {call_id: "02e51b4e2473664a", timestamp: "2026-02-22T01:06:40.313Z", speaker: "user", method_name: "sqrt", args: [32.0], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float", content_ref: "content:aae43ceed9f1ac68d60ecf81", content_kind: "number", content_bytes: 17, content_digest: "sha256:3dce2dc12cd9acaa1bd1ef4dd94a93336874b2d1f553276da579ffe787c37886"}, trace_id: "6f6caf2896a69c26a7d6af49", parent_call_id: nil, depth: 0, duration_ms: 12618.9}, {call_id: "e821dc15cd4ff96c", timestamp: "2026-02-22T01:06:40.318Z", speaker: "user", method_name: "sqrt", args: [144], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float", content_ref: "content:00702d2b9779ea59b8bcabfb", content_kind: "number", content_bytes: 17, content_digest: "sha256:3dce2dc12cd9acaa1bd1ef4dd94a93336874b2d1f553276da579ffe787c37886"}, trace_id: "6f6caf2896a69c26a7d6af49", parent_call_id: nil, depth: 0, duration_ms: 2.0}, {call_id: "ebf7abb9cc0a1dc0", timestamp: "2026-02-22T01:07:00.207Z", speaker: "user", method_name: "factorial", args: [10], kwargs: {}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Integer", content_ref: "content:229f63f2ae03230a69bdb2b9", content_kind: "number", content_bytes: 7, content_digest: "sha256:4b8c4c67c5066c2d71cc7650eeb3f6e774e9cbbcea3252eacba190af6e87b0f9"}, trace_id: "6f6caf2896a69c26a7d6af49", parent_call_id: nil, depth: 0, duration_ms: 19886.9}, {call_id: "b97a2e0d915810e8", timestamp: "2026-02-22T01:07:25.399Z", speaker: "user", method_name: "convert", args: [100], kwargs: {from: "celsius", to: "fahrenheit"}, outcome_summary: {status: "ok", ok: true, retriable: false, value_class: "Float", content_ref: "content:b068ebf4f32591579817363f", content_kind: "number", content_bytes: 5, content_digest: "sha256:cbce07d8c6a4613fc6df675a431492488592034dfe7d9f07e09a9db54ddaf07d"}, trace_id: "6f6caf2896a69c26a7d6af49", parent_call_id: nil, depth: 0, duration_ms: 25187.7}, {call_id: "6abd8cffb635bb13", timestamp: "2026-02-22T01:07:57.174Z", speaker: "user", method_name: "solve", args: ["2x + 5 = 17"], kwargs: {}, outcome_summary: {status: "error", ok: false, error_type: "guardrail_retry_exhausted", retriable: false}, trace_id: "6f6caf2896a69c26a7d6af49", parent_call_id: nil, depth: 0, duration_ms: 31769.4}, {call_id: "8d3561502850f778", timestamp: "2026-02-22T01:08:13.952Z", speaker: "user", method_name: "history", args: [], kwargs: {}, outcome_summary: {status: "error", ok: false, error_type: "guardrail_retry_exhausted", retriable: false}, trace_id: "6f6caf2896a69c26a7d6af49", parent_call_id: nil, depth: 0, duration_ms: 16772.7}]

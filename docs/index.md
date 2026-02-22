@@ -13,6 +13,7 @@ This index is organized for fast retrieval:
 - [`docs/onboarding.md`](onboarding.md) - setup, workflow, quality gates
 - [`docs/ubiquitous-language.md`](ubiquitous-language.md) - canonical Tool Builder/Tool vocabulary
 - [`docs/observability.md`](observability.md) - log schema, trace model, and live watcher usage
+- [`docs/simulation-readiness.md`](simulation-readiness.md) - operator commands for simulation gates (`G0`-`G5`), replay checks, baseline diffs, and CI/nightly operationalization
 - [`docs/adrs/README.md`](adrs/README.md) - architecture decision index
 - [`docs/adrs/TEMPLATE.md`](adrs/TEMPLATE.md) - ADR template with baseline, expected-improvement, validation, and rollback sections
 - [`docs/plans/TEMPLATE.md`](plans/TEMPLATE.md) - implementation-plan template with phase-level improvement contracts
@@ -87,7 +88,11 @@ This index is organized for fast retrieval:
 
 - [`docs/baselines/2026-02-15/README.md`](baselines/2026-02-15/README.md) - baseline trace fixtures
 - [`docs/baselines/2026-02-20/adr-0024/phase-rollup.json`](baselines/2026-02-20/adr-0024/phase-rollup.json) - ADR 0024 phase-by-phase validation rollup
+- [`docs/baselines/2026-02-22/adr-0027/phase-0-validation.md`](baselines/2026-02-22/adr-0027/phase-0-validation.md) - ADR 0027 phase 0 validation report with required suite/example trace diagnostics
+- [`docs/baselines/2026-02-22/adr-0027/phase-5-validation.md`](baselines/2026-02-22/adr-0027/phase-5-validation.md) - ADR 0027 phase 5 baseline-diff validation with required suite/example trace diagnostics
+- [`docs/baselines/2026-02-22/adr-0027/phase-6-validation.md`](baselines/2026-02-22/adr-0027/phase-6-validation.md) - ADR 0027 phase 6 CI/nightly operationalization validation with required suite/example trace diagnostics
 - [`docs/reports/adr-0024-phase-validation-rollup.md`](reports/adr-0024-phase-validation-rollup.md) - ADR 0024 expected-vs-observed validation analysis
+- [`docs/reports/adr-0027-phase-validation-rollup.md`](reports/adr-0027-phase-validation-rollup.md) - ADR 0027 expected-vs-observed validation analysis across phases 0-6
 - [`docs/reports/adr-0024-scope-hardcut-validation-report.md`](reports/adr-0024-scope-hardcut-validation-report.md) - validation report for scope-first role-profile hard cut and required calculator/assistant traces
 - [`docs/runtime-configuration.md`](runtime-configuration.md) - runtime configuration reference for dependency policy, lifecycle toggles, toolstore roots, and authority settings
 - [`docs/roadmap.md`](roadmap.md) - near/mid/long-term roadmap
@@ -109,5 +114,12 @@ This index is organized for fast retrieval:
 - [`specs/contract/v1/scenarios.yaml`](../specs/contract/v1/scenarios.yaml) - shared conformance scenarios
 - [`specs/contract/v1/recurgent-log-entry.schema.json`](../specs/contract/v1/recurgent-log-entry.schema.json) - machine-readable schema for one observability log entry
 - [`specs/contract/v1/recurgent-log-stream.schema.json`](../specs/contract/v1/recurgent-log-stream.schema.json) - schema for JSON-array form of `recurgent.jsonl`
+- [`specs/contract/v1/simulation-preparedness.contract.yaml`](../specs/contract/v1/simulation-preparedness.contract.yaml) - readiness-gate contract and activation policy for simulation
+- [`specs/contract/v1/simulation-run-ledger.schema.json`](../specs/contract/v1/simulation-run-ledger.schema.json) - machine-readable schema for simulation gate-evidence run records
+- [`specs/contract/v1/simulation-scenario-pack.schema.json`](../specs/contract/v1/simulation-scenario-pack.schema.json) - machine-readable schema for scenario-pack contracts and scoring/replay fields
+- [`specs/contract/v1/simulation/scenario-packs/calculator-core-v1.yaml`](../specs/contract/v1/simulation/scenario-packs/calculator-core-v1.yaml) - class-1 deterministic calculator core scenario pack
+- [`specs/contract/v1/simulation/scenario-packs/calculator-edge-v1.yaml`](../specs/contract/v1/simulation/scenario-packs/calculator-edge-v1.yaml) - class-1 deterministic calculator edge/error scenario pack
+- [`.github/workflows/simulation-readiness-ci.yml`](../.github/workflows/simulation-readiness-ci.yml) - CI readiness gate workflow for class-1 packs (`G0`-`G5`)
+- [`.github/workflows/simulation-readiness-nightly.yml`](../.github/workflows/simulation-readiness-nightly.yml) - nightly expanded-seed readiness workflow with trend artifacts
 - [`runtimes/ruby/README.md`](../runtimes/ruby/README.md) - Ruby runtime quick reference
 - [`runtimes/lua/README.md`](../runtimes/lua/README.md) - Lua runtime placeholder

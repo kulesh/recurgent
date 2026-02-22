@@ -1,0 +1,112 @@
+name: Simulation Readiness Nightly
+
+on:
+  schedule:
+    - cron: "25 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  class-1-nightly:
+    name: Class-1 Nightly Trends
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: runtimes/ruby
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: bundle install
+
+      - name: Run expanded-seed readiness simulation
+        run: |
+          set -euo pipefail
+
+          SEEDS="11,19,23,31,43,59,71,97,101,131,149,173"
+          NIGHTLY_ROOT="../../tmp/simulation/nightly"
+          LEDGER_PATH="${NIGHTLY_ROOT}/run-ledger.jsonl"
+          TREND_REPORT="${NIGHTLY_ROOT}/nightly-trend-report.json"
+          TRACE_LOG="${NIGHTLY_ROOT}/trace.jsonl"
+
+          mkdir -p "${NIGHTLY_ROOT}"
+
+          cat > "${TRACE_LOG}" <<'JSONL'
+          {"timestamp":"2026-02-22T00:00:00.000Z","role":"simulation_runner","model":"deterministic","method":"nightly","args":[],"kwargs":{},"code":"result = 1","duration_ms":1.0,"generation_attempt":1}
+          JSONL
+
+          run_pack() {
+            local pack_id="$1"
+            local pack_path="$2"
+            local pack_out="${NIGHTLY_ROOT}/${pack_id}"
+            local fixture_root="${NIGHTLY_ROOT}/fixtures/${pack_id}"
+
+            mkdir -p "${pack_out}" "${fixture_root}"
+
+            bundle exec ruby bin/recurgent-sim \
+              --pack "${pack_path}" \
+              --mode fixture \
+              --seeds "${SEEDS}" \
+              --operational-mode nightly \
+              --nightly-trend-report "${TREND_REPORT}" \
+              --fixture-root "${fixture_root}" \
+              --ledger-path "${LEDGER_PATH}" > "${pack_out}/fixture.json"
+
+            bundle exec ruby bin/recurgent-sim \
+              --pack "${pack_path}" \
+              --mode replay \
+              --seeds "${SEEDS}" \
+              --operational-mode nightly \
+              --nightly-trend-report "${TREND_REPORT}" \
+              --fixture-root "${fixture_root}" \
+              --ledger-path "${LEDGER_PATH}" > "${pack_out}/replay-1.json"
+
+            bundle exec ruby bin/recurgent-sim \
+              --pack "${pack_path}" \
+              --mode replay \
+              --seeds "${SEEDS}" \
+              --trace-log "${TRACE_LOG}" \
+              --operational-mode nightly \
+              --nightly-trend-report "${TREND_REPORT}" \
+              --fixture-root "${fixture_root}" \
+              --ledger-path "${LEDGER_PATH}" > "${pack_out}/replay-2.json"
+
+            jq -e '.gates | to_entries | all(.value.status == "pass")' "${pack_out}/replay-2.json" > /dev/null
+          }
+
+          run_pack "calculator-core-v1" "../../specs/contract/v1/simulation/scenario-packs/calculator-core-v1.yaml"
+          run_pack "calculator-edge-v1" "../../specs/contract/v1/simulation/scenario-packs/calculator-edge-v1.yaml"
+
+          jq -s '
+            {
+              generated_at: (now | todate),
+              seed_matrix: "'"${SEEDS}"'" | split(",") | map(tonumber),
+              runs: map({
+                run_id,
+                scenario_pack_id,
+                mode,
+                overall_score: .score_vector.overall,
+                gates: (.gates | with_entries(.value = .value.status)),
+                baseline_diff_classification: .metrics.baseline_diff_report.classification
+              })
+            }
+          ' "${LEDGER_PATH}" > "${TREND_REPORT}"
+
+          {
+            echo "### Nightly Simulation Readiness"
+            echo ""
+            echo "- Seed matrix: \`${SEEDS}\`"
+            echo "- Trend report: \`${TREND_REPORT}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload nightly readiness artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-readiness-nightly
+          path: tmp/simulation/nightly

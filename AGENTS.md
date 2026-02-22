@@ -206,7 +206,7 @@ runtimes/
 
 ## Retrieval Index
 
-Last Updated (UTC): 2026-02-21T22:05:00Z
+Last Updated (UTC): 2026-02-22T02:05:00Z
 
 - `README.md` - project introduction, quickstart, architecture snapshot, FAQ
 - `LICENSE` - MIT open source license
@@ -222,6 +222,7 @@ Last Updated (UTC): 2026-02-21T22:05:00Z
 - `docs/runtime-configuration.md` - runtime configuration reference for dependency policy, persistence roots, lifecycle toggles, and authority controls
 - `docs/product-specs/idea-brief.md` - concept vision, rationale, demos, future direction
 - `docs/product-specs/recursim-product-spec.md` - product specification for Recursim simulator focused on robustness and reliable emergence in self-contained systems
+- `docs/simulation-readiness.md` - operational commands and diagnostics for simulation readiness gates (`G0`-`G5`) including CI/nightly modes
 - `docs/observability.md` - mechanistic interpretability model, shared log schema, and live watcher usage
 - `docs/ubiquitous-language.md` - canonical Tool Builder/Tool vocabulary and naming rules
 - `docs/tolerant-delegation-interfaces.md` - canonical tolerant delegation interface guidance and examples
@@ -259,8 +260,16 @@ Last Updated (UTC): 2026-02-21T22:05:00Z
 - `docs/baselines/2026-02-20/adr-0024/phase-6-validation.md` - ADR 0024 phase 6 validation results for suite, calculator, assistant, and trace diagnosis
 - `docs/baselines/2026-02-20/adr-0024/phase-rollup.json` - machine-readable rollup of phase-by-phase validation outcomes for ADR 0024
 - `docs/baselines/2026-02-20/adr-0024/logs/` - copied per-phase raw logs and outputs (rspec, calculator, assistant, jsonl traces)
+- `docs/baselines/2026-02-22/adr-0027/phase-0-validation.md` - ADR 0027 phase 0 validation report with suite/example runs and trace diagnosis
+- `docs/baselines/2026-02-22/adr-0027/phase-1-validation.md` - ADR 0027 phase 1 validation report for scenario-pack contracts and phase trace results
+- `docs/baselines/2026-02-22/adr-0027/phase-2-validation.md` - ADR 0027 phase 2 validation report for fixture/replay pipeline and phase trace results
+- `docs/baselines/2026-02-22/adr-0027/phase-3-validation.md` - ADR 0027 phase 3 validation report for deterministic scoring and phase trace results
+- `docs/baselines/2026-02-22/adr-0027/phase-4-validation.md` - ADR 0027 phase 4 validation report for trace-schema gate and phase trace results
+- `docs/baselines/2026-02-22/adr-0027/phase-5-validation.md` - ADR 0027 phase 5 validation report for baseline diff engine and phase trace results
+- `docs/baselines/2026-02-22/adr-0027/phase-6-validation.md` - ADR 0027 phase 6 validation report for CI/nightly operationalization and phase trace results
 - `docs/reports/adr-0023-phase-validation-report.md` - per-phase validation transcript for tests, examples, logs, and diagnostics during ADR 0023 implementation
 - `docs/reports/adr-0024-phase-validation-rollup.md` - ADR 0024 implementation rollup comparing expected improvements vs observed phase outcomes
+- `docs/reports/adr-0027-phase-validation-rollup.md` - ADR 0027 implementation rollup comparing expected readiness-gate improvements vs observed outcomes
 - `docs/reports/adr-0024-scope-hardcut-validation-report.md` - validation report for scope-first role-profile hard cut, with full-suite + calculator + assistant trace diagnosis
 - `docs/open-source-release-checklist.md` - OSS launch checklist with completed and manual items
 - `docs/release-process.md` - SemVer and release checklist process
@@ -305,6 +314,11 @@ Last Updated (UTC): 2026-02-21T22:05:00Z
 - `specs/contract/v1/conformance.md` - runtime harness conformance guidance
 - `specs/contract/v1/recurgent-log-entry.schema.json` - machine-readable schema for one JSONL observability log entry
 - `specs/contract/v1/recurgent-log-stream.schema.json` - schema for JSON-array form of the JSONL log stream
+- `specs/contract/v1/simulation-preparedness.contract.yaml` - simulation readiness-gate contract and activation policy surface
+- `specs/contract/v1/simulation-run-ledger.schema.json` - machine-readable schema for simulation run gate-evidence ledger entries
+- `specs/contract/v1/simulation-scenario-pack.schema.json` - machine-readable schema for scenario-pack contracts including oracle/scoring/replay fields
+- `specs/contract/v1/simulation/scenario-packs/calculator-core-v1.yaml` - class-1 deterministic calculator core simulation pack
+- `specs/contract/v1/simulation/scenario-packs/calculator-edge-v1.yaml` - class-1 deterministic calculator edge/error simulation pack
 - `runtimes/ruby/lib/recurgent.rb` - core runtime dispatch, execution, retry, and outcome mapping
 - `runtimes/ruby/lib/recurgent/prompting.rb` - system/user prompt construction and tool schema
 - `runtimes/ruby/lib/recurgent/observability.rb` - JSONL log composition and debug capture
@@ -324,6 +338,8 @@ Last Updated (UTC): 2026-02-21T22:05:00Z
 - `runtimes/lua/README.md` - Lua runtime placeholder contract
 - `bin/recurgent-watch` - runtime-agnostic live JSONL log watcher for delegation trace analysis
 - `.github/workflows/ci.yml` - required CI checks for tests and lint
+- `.github/workflows/simulation-readiness-ci.yml` - class-1 readiness gate workflow evaluating `G0`-`G5` in CI with per-pack artifacts and summaries
+- `.github/workflows/simulation-readiness-nightly.yml` - nightly expanded-seed simulation readiness workflow publishing trend artifacts
 - `.github/workflows/security.yml` - dependency review, bundler-audit, and secret scanning checks
 - `.github/workflows/pr-compliance.yml` - issue-first and PR-template enforcement gate
 - `.github/workflows/stale.yml` - stale PR management policy automation

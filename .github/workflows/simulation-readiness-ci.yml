@@ -1,0 +1,94 @@
+name: Simulation Readiness CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  class-1-readiness:
+    name: Class-1 Readiness (${{ matrix.pack.id }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pack:
+          - id: calculator-core-v1
+            path: ../../specs/contract/v1/simulation/scenario-packs/calculator-core-v1.yaml
+          - id: calculator-edge-v1
+            path: ../../specs/contract/v1/simulation/scenario-packs/calculator-edge-v1.yaml
+    defaults:
+      run:
+        working-directory: runtimes/ruby
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: bundle install
+
+      - name: Run readiness matrix
+        env:
+          PACK_ID: ${{ matrix.pack.id }}
+          PACK_PATH: ${{ matrix.pack.path }}
+        run: |
+          set -euo pipefail
+
+          OUT_DIR="../../tmp/simulation/ci/${PACK_ID}"
+          FIXTURE_ROOT="../../tmp/simulation/ci-fixtures/${PACK_ID}"
+          LEDGER_PATH="${OUT_DIR}/run-ledger.jsonl"
+          TRACE_LOG="${OUT_DIR}/trace.jsonl"
+
+          mkdir -p "${OUT_DIR}" "${FIXTURE_ROOT}"
+
+          cat > "${TRACE_LOG}" <<'JSONL'
+          {"timestamp":"2026-02-22T00:00:00.000Z","role":"simulation_runner","model":"deterministic","method":"run_pack","args":[],"kwargs":{},"code":"result = 1","duration_ms":1.0,"generation_attempt":1}
+          JSONL
+
+          bundle exec ruby bin/recurgent-sim \
+            --pack "${PACK_PATH}" \
+            --mode fixture \
+            --operational-mode ci \
+            --fixture-root "${FIXTURE_ROOT}" \
+            --ledger-path "${LEDGER_PATH}" > "${OUT_DIR}/fixture.json"
+
+          bundle exec ruby bin/recurgent-sim \
+            --pack "${PACK_PATH}" \
+            --mode replay \
+            --operational-mode ci \
+            --fixture-root "${FIXTURE_ROOT}" \
+            --ledger-path "${LEDGER_PATH}" > "${OUT_DIR}/replay-1.json"
+
+          bundle exec ruby bin/recurgent-sim \
+            --pack "${PACK_PATH}" \
+            --mode replay \
+            --trace-log "${TRACE_LOG}" \
+            --operational-mode ci \
+            --fixture-root "${FIXTURE_ROOT}" \
+            --ledger-path "${LEDGER_PATH}" > "${OUT_DIR}/replay-2.json"
+
+          jq -e '.gates | to_entries | all(.value.status == "pass")' "${OUT_DIR}/replay-2.json" > /dev/null
+
+          {
+            echo "### ${PACK_ID}"
+            echo ""
+            echo "| Gate | Status | Message |"
+            echo "| --- | --- | --- |"
+            jq -r '.gates | to_entries[] | "| \(.key) | \(.value.status) | \(.value.message // "") |"' "${OUT_DIR}/replay-2.json"
+            echo ""
+            echo "- Baseline diff: \`$(jq -r '.metrics.baseline_diff_report.classification' "${OUT_DIR}/replay-2.json")\`"
+            echo "- Score overall: \`$(jq -r '.score_vector.overall' "${OUT_DIR}/replay-2.json")\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload readiness artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-readiness-${{ matrix.pack.id }}
+          path: tmp/simulation/ci/${{ matrix.pack.id }}

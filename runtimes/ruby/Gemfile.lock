@@ -8,7 +8,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    anthropic (1.21.0)
+    anthropic (1.23.0)
       cgi
       connection_pool
     ast (2.4.3)
@@ -71,7 +71,7 @@ DEPENDENCIES
   rubocop (~> 1.0)
 
 CHECKSUMS
-  anthropic (1.21.0)
+  anthropic (1.23.0)
   ast (2.4.3)
   base64 (0.3.0)
   cgi (0.5.1)

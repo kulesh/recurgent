@@ -1,0 +1,43 @@
+version: 1
+id: calculator-core-v1
+class: class_1
+description: Deterministic core arithmetic/composition pack for calculator readiness gating.
+scoring_profile:
+  id: calculator_core_v1
+  weights:
+    correctness: 0.7
+    contract_adherence: 0.15
+    repair_efficiency: 0.1
+    reuse: 0.05
+replay:
+  mode: fixture
+  seeds: [11, 19, 23, 31, 43, 59, 71, 97]
+oracles:
+  - id: add_chain_correct
+    kind: calculator_expression
+    input:
+      expression: 5 + 3 + 4
+    expect:
+      result: 12.0
+      tolerance: 0.0
+  - id: multiply_chain_correct
+    kind: calculator_expression
+    input:
+      expression: 2 * 3 * 4
+    expect:
+      result: 24.0
+      tolerance: 0.0
+  - id: sqrt_expected_precision
+    kind: calculator_expression
+    input:
+      expression: sqrt(144)
+    expect:
+      result: 12.0
+      tolerance: 0.000001
+  - id: composed_expression_correct
+    kind: calculator_expression
+    input:
+      expression: (2 + 3) * 4
+    expect:
+      result: 20.0
+      tolerance: 0.0

@@ -21,6 +21,13 @@ specs/contract/
     tolerant-delegation-scenarios.yaml  # tolerant profile scenarios
     recurgent-log-entry.schema.json    # machine-readable schema for one JSONL log entry
     recurgent-log-stream.schema.json   # schema for jq-slurped JSONL stream arrays
+    simulation-preparedness.contract.yaml   # readiness gate contract for simulation activation
+    simulation-run-ledger.schema.json       # schema for simulation run evidence records
+    simulation-scenario-pack.schema.json    # schema for scenario-pack contract surface
+    simulation/
+      scenario-packs/
+        calculator-core-v1.yaml             # class-1 deterministic calculator core pack
+        calculator-edge-v1.yaml             # class-1 deterministic calculator edge/error pack
     conformance.md       # harness guidance for runtime implementations
 ```
 
