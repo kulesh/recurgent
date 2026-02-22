@@ -1,6 +1,6 @@
 # Simulation Readiness Decision (Phase 7a)
 
-- Generated at (UTC): 2026-02-22T03:18:09Z
+- Generated at (UTC): 2026-02-22T03:35:32Z
 - Ledger: `../../docs/baselines/2026-02-22/adr-0027/phase-7/run-ledger.jsonl`
 
 ## Window Summary
@@ -9,16 +9,16 @@
 - Required distinct seeds: 5
 - Required qualifying sessions: 2
 - Required distinct UTC days: 3
-- Observed consecutive qualifying runs: 8
+- Observed consecutive qualifying runs: 20
 - Observed distinct seeds: 5
-- Observed qualifying sessions: 8
+- Observed qualifying sessions: 20
 - Observed distinct UTC days: 1
 
 ## Gate Status Summary
 
 - This decision is computed from replay entries requiring `G0, G1, G2, G3, G4, G5` to be `pass` for each required pack.
 - Required packs: `calculator-core-v1, calculator-edge-v1`
-- Qualifying session records analyzed: 8
+- Qualifying session records analyzed: 20
 - Reset events observed: 0
 
 ## Evidence Index
@@ -38,9 +38,9 @@
 - `class_1_stable: false`
 - Rationale:
   - window_met=false
-  - trailing_consecutive_qualifying=8
+  - trailing_consecutive_qualifying=20
   - distinct_seed_count=5
-  - qualifying_session_count=8
+  - qualifying_session_count=20
   - distinct_day_count=1
 
 ## Next Scope Recommendation

@@ -1,0 +1,430 @@
+{
+  "schema_version": 1,
+  "run_id": "8571999b556459d2c12ac35e",
+  "recorded_at": "2026-02-22T03:35:32Z",
+  "commit_sha": "184ab69",
+  "scenario_pack_id": "calculator-edge-v1",
+  "scenario_class": "class_1",
+  "seed": 11,
+  "session_id": "phase7a-r18",
+  "mode": "fixture",
+  "score_vector": {
+    "correctness": 0.7,
+    "contract_adherence": 0.15,
+    "repair_efficiency": 0.1,
+    "reuse": 0.05,
+    "overall": 1.0
+  },
+  "scorer_version": "simulation_scorer_v1",
+  "artifacts": {
+    "scenario_pack_checksum_sha256": "642d42e7c9a128b19c249171af38b16d7f2d05c7027711ee73231bd92368ca91",
+    "baseline_diff_report_path": "/Users/kulesh/dev/actuator/tmp/simulation/diffs/8571999b556459d2c12ac35e.json"
+  },
+  "metrics": {
+    "seeds": [
+      11,
+      19,
+      23,
+      31,
+      43
+    ],
+    "replay_stability": 1.0,
+    "per_seed_results": [
+      {
+        "seed": 11,
+        "pack_id": "calculator-edge-v1",
+        "pack_checksum_sha256": "642d42e7c9a128b19c249171af38b16d7f2d05c7027711ee73231bd92368ca91",
+        "oracle_results": [
+          {
+            "id": "malformed_expression_reports_parse_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "parse_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "parse_error",
+                "message": "expression contains unsupported characters"
+              }
+            }
+          },
+          {
+            "id": "sqrt_negative_reports_domain_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "domain_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "domain_error",
+                "message": "Numerical argument is out of domain - sqrt"
+              }
+            }
+          },
+          {
+            "id": "divide_by_zero_reports_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "zero_division",
+              "passed": true,
+              "details": {
+                "expected_error_type": "zero_division",
+                "message": "divided by 0"
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 19,
+        "pack_id": "calculator-edge-v1",
+        "pack_checksum_sha256": "642d42e7c9a128b19c249171af38b16d7f2d05c7027711ee73231bd92368ca91",
+        "oracle_results": [
+          {
+            "id": "divide_by_zero_reports_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "zero_division",
+              "passed": true,
+              "details": {
+                "expected_error_type": "zero_division",
+                "message": "divided by 0"
+              }
+            }
+          },
+          {
+            "id": "sqrt_negative_reports_domain_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "domain_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "domain_error",
+                "message": "Numerical argument is out of domain - sqrt"
+              }
+            }
+          },
+          {
+            "id": "malformed_expression_reports_parse_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "parse_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "parse_error",
+                "message": "expression contains unsupported characters"
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 23,
+        "pack_id": "calculator-edge-v1",
+        "pack_checksum_sha256": "642d42e7c9a128b19c249171af38b16d7f2d05c7027711ee73231bd92368ca91",
+        "oracle_results": [
+          {
+            "id": "divide_by_zero_reports_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "zero_division",
+              "passed": true,
+              "details": {
+                "expected_error_type": "zero_division",
+                "message": "divided by 0"
+              }
+            }
+          },
+          {
+            "id": "malformed_expression_reports_parse_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "parse_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "parse_error",
+                "message": "expression contains unsupported characters"
+              }
+            }
+          },
+          {
+            "id": "sqrt_negative_reports_domain_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "domain_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "domain_error",
+                "message": "Numerical argument is out of domain - sqrt"
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 31,
+        "pack_id": "calculator-edge-v1",
+        "pack_checksum_sha256": "642d42e7c9a128b19c249171af38b16d7f2d05c7027711ee73231bd92368ca91",
+        "oracle_results": [
+          {
+            "id": "divide_by_zero_reports_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "zero_division",
+              "passed": true,
+              "details": {
+                "expected_error_type": "zero_division",
+                "message": "divided by 0"
+              }
+            }
+          },
+          {
+            "id": "sqrt_negative_reports_domain_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "domain_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "domain_error",
+                "message": "Numerical argument is out of domain - sqrt"
+              }
+            }
+          },
+          {
+            "id": "malformed_expression_reports_parse_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "parse_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "parse_error",
+                "message": "expression contains unsupported characters"
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      },
+      {
+        "seed": 43,
+        "pack_id": "calculator-edge-v1",
+        "pack_checksum_sha256": "642d42e7c9a128b19c249171af38b16d7f2d05c7027711ee73231bd92368ca91",
+        "oracle_results": [
+          {
+            "id": "divide_by_zero_reports_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "zero_division",
+              "passed": true,
+              "details": {
+                "expected_error_type": "zero_division",
+                "message": "divided by 0"
+              }
+            }
+          },
+          {
+            "id": "sqrt_negative_reports_domain_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "domain_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "domain_error",
+                "message": "Numerical argument is out of domain - sqrt"
+              }
+            }
+          },
+          {
+            "id": "malformed_expression_reports_parse_error",
+            "kind": "calculator_error_case",
+            "passed": true,
+            "observation": {
+              "status": "error",
+              "error_type": "parse_error",
+              "passed": true,
+              "details": {
+                "expected_error_type": "parse_error",
+                "message": "expression contains unsupported characters"
+              }
+            }
+          }
+        ],
+        "pass_count": 3,
+        "total_count": 3,
+        "replay_match": true,
+        "fixture_present": true
+      }
+    ],
+    "score_components": {
+      "correctness": 1.0,
+      "contract_adherence": 1.0,
+      "repair_efficiency": 1.0,
+      "reuse": 1.0
+    },
+    "score_weights": {
+      "correctness": 0.7,
+      "contract_adherence": 0.15,
+      "repair_efficiency": 0.1,
+      "reuse": 0.05
+    },
+    "trace_validation": {
+      "valid": null,
+      "entry_count": 0,
+      "skipped_reason": "trace_log_missing"
+    },
+    "baseline_diff_report": {
+      "classification": "unchanged",
+      "baseline_run_id": "5a0bdfe5fef43baa44d1a7a7",
+      "current_run_id": "8571999b556459d2c12ac35e",
+      "score_delta": 0.0,
+      "gate_deltas": [
+        {
+          "gate": "G0",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G1",
+          "from": "advisory",
+          "to": "advisory",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G2",
+          "from": "advisory",
+          "to": "advisory",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G3",
+          "from": "advisory",
+          "to": "advisory",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G4",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        },
+        {
+          "gate": "G5",
+          "from": "pass",
+          "to": "pass",
+          "rank_delta": 0
+        }
+      ],
+      "non_actionable_noise": true,
+      "suspected_causes": [
+        "no_material_change"
+      ]
+    }
+  },
+  "gates": {
+    "G0": {
+      "status": "pass",
+      "evaluator_owner": "scenario_contract_validator",
+      "required_artifacts": [
+        "scenario_pack_contract",
+        "oracle_contract",
+        "scoring_profile"
+      ],
+      "message": "scenario pack contract validated",
+      "measured_at": "2026-02-22T03:35:32Z"
+    },
+    "G1": {
+      "status": "advisory",
+      "evaluator_owner": "replay_runner",
+      "required_artifacts": [
+        "replay_manifest",
+        "replay_result_vector",
+        "replay_stability_metrics"
+      ],
+      "message": "replayability measured in replay mode",
+      "measured_at": "2026-02-22T03:35:32Z"
+    },
+    "G2": {
+      "status": "advisory",
+      "evaluator_owner": "deterministic_scorer",
+      "required_artifacts": [
+        "score_vector",
+        "score_components",
+        "scorer_version"
+      ],
+      "message": "score consistency measured in replay mode",
+      "measured_at": "2026-02-22T03:35:32Z"
+    },
+    "G3": {
+      "status": "advisory",
+      "evaluator_owner": "schema_validator",
+      "required_artifacts": [
+        "trace_log",
+        "trace_schema_report"
+      ],
+      "message": "trace validation skipped: no trace log provided",
+      "measured_at": "2026-02-22T03:35:32Z"
+    },
+    "G4": {
+      "status": "pass",
+      "evaluator_owner": "baseline_diff_engine",
+      "required_artifacts": [
+        "baseline_snapshot",
+        "baseline_diff_report"
+      ],
+      "message": "baseline diff classification=unchanged",
+      "measured_at": "2026-02-22T03:35:32Z"
+    },
+    "G5": {
+      "status": "pass",
+      "evaluator_owner": "ci_gate_runner",
+      "required_artifacts": [
+        "ci_gate_result",
+        "nightly_trend_report"
+      ],
+      "message": "ci readiness gate executed",
+      "measured_at": "2026-02-22T03:35:32Z"
+    }
+  }
+}
