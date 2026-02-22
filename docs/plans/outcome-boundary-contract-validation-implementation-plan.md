@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement ADR 0014 so delegated Tool boundaries are validated by runtime, interfaces remain tolerant and idiomatic in Ruby, and interface drift is reduced through canonical method visibility.
+Implement [ADR 0014](../adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md) so delegated Tool boundaries are validated by runtime, interfaces remain tolerant and idiomatic in Ruby, and interface drift is reduced through canonical method visibility.
 
 This plan preserves:
 
@@ -338,4 +338,4 @@ Add fields to call logs:
 5. [ ] Alias overlap observation signal implemented (Agent-driven consolidation only).
 6. [ ] Contracted parser/tool precondition failures return typed errors.
 7. [ ] Google/Yahoo/NYT acceptance trace passes and is documented.
-8. [ ] ADR 0014 status reviewed for `accepted` transition after stable rollout.
+8. [ ] [ADR 0014](../adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md) status reviewed for `accepted` transition after stable rollout.

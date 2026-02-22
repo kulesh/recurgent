@@ -9,20 +9,20 @@ Phase 7b objective: add class-2+ advisory simulation packs (assistant + debate),
 ## What Was Implemented
 
 1. Added class-2+ scenario packs:
-   - `specs/contract/v1/simulation/scenario-packs/assistant-continuity-v1.yaml`
-   - `specs/contract/v1/simulation/scenario-packs/debate-orchestration-v1.yaml`
+   - [`specs/contract/v1/simulation/scenario-packs/assistant-continuity-v1.yaml`](../../../../specs/contract/v1/simulation/scenario-packs/assistant-continuity-v1.yaml)
+   - [`specs/contract/v1/simulation/scenario-packs/debate-orchestration-v1.yaml`](../../../../specs/contract/v1/simulation/scenario-packs/debate-orchestration-v1.yaml)
 2. Extended oracle evaluator with advisory kinds:
    - `assistant_followup_case`
    - `provenance_envelope_case`
    - `typed_error_boundary_case`
    - `debate_orchestration_case`
 3. Added advisory aggregation/reporting:
-   - `runtimes/ruby/lib/recurgent/simulation_advisory_status.rb`
-   - `runtimes/ruby/bin/recurgent-sim-advisory-report`
+   - [`runtimes/ruby/lib/recurgent/simulation_advisory_status.rb`](../../../../runtimes/ruby/lib/recurgent/simulation_advisory_status.rb)
+   - [`runtimes/ruby/bin/recurgent-sim-advisory-report`](../../../../runtimes/ruby/bin/recurgent-sim-advisory-report)
    - nightly workflow now runs advisory packs and writes advisory JSON + markdown artifact.
 4. Added tests for new surfaces:
-   - `runtimes/ruby/spec/simulation_calculator_oracle_spec.rb`
-   - `runtimes/ruby/spec/simulation_advisory_status_spec.rb`
+   - [`runtimes/ruby/spec/simulation_calculator_oracle_spec.rb`](../../../../runtimes/ruby/spec/simulation_calculator_oracle_spec.rb)
+   - [`runtimes/ruby/spec/simulation_advisory_status_spec.rb`](../../../../runtimes/ruby/spec/simulation_advisory_status_spec.rb)
    - updated contract pack spec for class-1 + class-2+ packs.
 
 ## Required Validation Runs
@@ -33,8 +33,8 @@ Phase 7b objective: add class-2+ advisory simulation packs (assistant + debate),
 - RSpec: pass (`298 examples, 0 failures`).
 
 Artifacts:
-- `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-rubocop.txt`
-- `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-rspec.txt`
+- [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-rubocop.txt`](logs/phase-7b-rubocop.txt)
+- [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-rspec.txt`](logs/phase-7b-rspec.txt)
 
 ### 2) Calculator example
 
@@ -53,8 +53,8 @@ Trace diagnosis:
 - `history` failed with `role_profile_continuity_violation` (`shared_state_slot_drift`).
 
 Artifacts:
-- `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-calculator.txt`
-- `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-calculator.jsonl`
+- [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-calculator.txt`](logs/phase-7b-calculator.txt)
+- [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-calculator.jsonl`](logs/phase-7b-calculator.jsonl)
 
 ### 3) Personal assistant (3 required prompts)
 
@@ -75,18 +75,18 @@ Trace diagnosis for prompt 1 failure:
   - `rss_parser.parse` -> `invalid_input` (empty XML)
 
 Artifacts:
-- `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-assistant.txt`
-- `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-assistant.jsonl`
+- [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-assistant.txt`](logs/phase-7b-assistant.txt)
+- [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-assistant.jsonl`](logs/phase-7b-assistant.jsonl)
 
 ## 7b-Specific Advisory Pack Validation
 
 Local nightly-equivalent advisory pack run succeeded and generated report artifacts:
-- Advisory markdown: `docs/reports/simulation-advisory-status-2026-02-22.md`
-- Advisory analysis JSON: `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-advisory-analysis.json`
-- Advisory status JSON: `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-advisory-status.json`
+- Advisory markdown: [`docs/reports/simulation-advisory-status-2026-02-22.md`](../../../reports/simulation-advisory-status-2026-02-22.md)
+- Advisory analysis JSON: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-advisory-analysis.json`](logs/phase-7b-advisory-analysis.json)
+- Advisory status JSON: [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-advisory-status.json`](logs/phase-7b-advisory-status.json)
 - Replay evidence:
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-assistant-pack-replay-2.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-7b-debate-pack-replay-2.json`
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-assistant-pack-replay-2.json`](logs/phase-7b-assistant-pack-replay-2.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-7b-debate-pack-replay-2.json`](logs/phase-7b-debate-pack-replay-2.json)
 
 Observed advisory result snapshot:
 - Pack count: 2 (`assistant-continuity-v1`, `debate-orchestration-v1`)

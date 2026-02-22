@@ -30,7 +30,7 @@ Use the PR template and complete all required sections:
 3. Implementation summary.
 4. Verification evidence (tests/lint/manual checks).
 5. Scope/intent declaration (no speculative unrelated edits).
-6. Acknowledgement of this policy and `CODE_OF_CONDUCT.md`.
+6. Acknowledgement of this policy and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 PRs missing required fields may fail automated checks.
 
@@ -55,4 +55,4 @@ Maintainers may close PRs without review when:
 
 ## Conduct
 
-All contributors must follow `CODE_OF_CONDUCT.md`.
+All contributors must follow [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).

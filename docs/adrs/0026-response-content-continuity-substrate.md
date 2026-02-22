@@ -13,7 +13,7 @@ Recurgent currently provides three continuity layers:
 
 This leaves a known gap: continuity of response substance. A follow-up like "format that algorithm in markdown" often needs the prior response payload (text/code/object), not only call metadata.
 
-Today, `conversation_history` is intentionally compact (ADR 0019 + ADR 0021): method, args, outcome summary, minimal provenance references. Full response payloads are not persisted there by default. This keeps context slim but prevents reliable content-level follow-up across turns.
+Today, `conversation_history` is intentionally compact ([ADR 0019](0019-structured-conversation-history-first-and-recursion-deferral.md) + [ADR 0021](0021-external-data-provenance-invariant.md)): method, args, outcome summary, minimal provenance references. Full response payloads are not persisted there by default. This keeps context slim but prevents reliable content-level follow-up across turns.
 
 This gap is not unique to assistant flows:
 
@@ -125,7 +125,7 @@ Prompt guidance should:
 Retention policy governance:
 
 1. runtime defaults are code-owned,
-2. policy mutations (limits, TTL, eviction strategy) should flow through explicit proposal/authority lanes consistent with ADR 0025,
+2. policy mutations (limits, TTL, eviction strategy) should flow through explicit proposal/authority lanes consistent with [ADR 0025](0025-awareness-substrate-and-authority-boundary.md),
 3. strict governance enforcement can be phased in during hardening (not required for initial substrate MVP).
 
 ## Status Quo Baseline
@@ -144,8 +144,8 @@ Retention policy governance:
 ## Non-Improvement Expectations
 
 1. Existing state continuity semantics (`context[:value]`/role profile continuity) remain unchanged.
-2. Artifact promotion/lifecycle policy (ADR 0023) remains unchanged.
-3. Conversation-history record compactness goals from ADR 0019/0021 remain intact.
+2. Artifact promotion/lifecycle policy ([ADR 0023](0023-solver-shape-and-reliability-gated-tool-evolution.md)) remains unchanged.
+3. Conversation-history record compactness goals from [ADR 0019](0019-structured-conversation-history-first-and-recursion-deferral.md)/0021 remain intact.
 4. This ADR does not auto-promote content retention policy mutations without explicit governance.
 
 ## Validation Signals

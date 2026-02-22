@@ -2,11 +2,11 @@
 
 - Status: draft
 - Date: 2026-02-21
-- Scope: ADR 0027 simulation readiness gates and activation policy
+- Scope: [ADR 0027](../adrs/0027-simulation-preparedness-and-readiness-gates.md) simulation readiness gates and activation policy
 
 ## Objective
 
-Operationalize ADR 0027 so automated simulation can be used as a trustworthy evolution/release signal.
+Operationalize [ADR 0027](../adrs/0027-simulation-preparedness-and-readiness-gates.md) so automated simulation can be used as a trustworthy evolution/release signal.
 
 Primary outcomes:
 
@@ -17,8 +17,8 @@ Primary outcomes:
 ## Status Quo Baseline
 
 1. Runtime infrastructure is strong, but scenario semantics remain inconsistent in phase reports (for example calculator regressions despite passing suites).
-2. Recursim scope and metrics are documented (`docs/product-specs/recursim-product-spec.md`), but readiness gates are not yet implemented as enforcement.
-3. Observability schema/docs now exist (`specs/contract/v1/recurgent-log-*.schema.json`, `docs/observability.md`) but are not integrated into a simulation-gating flow.
+2. Recursim scope and metrics are documented ([`docs/product-specs/recursim-product-spec.md`](../product-specs/recursim-product-spec.md)), but readiness gates are not yet implemented as enforcement.
+3. Observability schema/docs now exist (`specs/contract/v1/recurgent-log-*.schema.json`, [`docs/observability.md`](../observability.md)) but are not integrated into a simulation-gating flow.
 
 ## Expected Improvements
 
@@ -30,7 +30,7 @@ Primary outcomes:
 ## Non-Improvement Expectations
 
 1. This plan does not directly fix runtime semantics (calculator/news correctness is measured, not auto-repaired).
-2. This plan does not relax ADR 0025 authority boundaries (observe/propose/enact separation remains).
+2. This plan does not relax [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) authority boundaries (observe/propose/enact separation remains).
 3. This plan does not promote class-2+ simulation to gating before class-1 stability window is satisfied.
 
 ## Validation Signals and Thresholds
@@ -40,7 +40,7 @@ Primary outcomes:
    - simulation harness tests for scenario loading, scoring, replay controls, and diff generation.
 2. Traces/logs:
    - logs include `trace_id`, `call_id`, `parent_call_id`, `depth`, `outcome_status`,
-   - logs validate against `specs/contract/v1/recurgent-log-stream.schema.json`.
+   - logs validate against [`specs/contract/v1/recurgent-log-stream.schema.json`](../../specs/contract/v1/recurgent-log-stream.schema.json).
 3. Thresholds:
    - `G1` replay stability `>= 99%`,
    - `G2` score reproducibility `100%` (same seed/config),
@@ -84,7 +84,7 @@ Goals:
 
 Implementation:
 
-1. Define `simulation_preparedness` contract file under `specs/contract/v1`.
+1. Define `simulation_preparedness` contract file under [`specs/contract/v1`](../../specs/contract/v1).
 2. Define run ledger record schema:
    - run id, commit sha, scenario pack id, seed, mode (`fixture|replay|live`), gate results.
 3. Define canonical gate result statuses:
@@ -418,14 +418,14 @@ Entry criteria:
 
 Implementation:
 
-1. Add advisory scenario packs under `specs/contract/v1/simulation/scenario-packs/` for:
+1. Add advisory scenario packs under [`specs/contract/v1/simulation/scenario-packs/`](../../specs/contract/v1/simulation/scenario-packs) for:
    - `assistant-continuity-v1` (continuity/source-follow-up + boundary/provenance checks),
    - `debate-orchestration-v1` (orchestration coherence + boundary/provenance checks).
 2. Run advisory packs in nightly workflow only.
 3. Preserve non-gating behavior:
    - advisory failures must not fail PR merge gates.
 4. Generate advisory report with:
-   - `runtimes/ruby/bin/recurgent-sim-advisory-report`,
+   - [`runtimes/ruby/bin/recurgent-sim-advisory-report`](../../runtimes/ruby/bin/recurgent-sim-advisory-report),
    - output markdown path under nightly artifacts (for example `simulation-advisory-status-<YYYY-MM-DD>.md`).
 
 Advisory reporting format:
@@ -484,7 +484,7 @@ Advisory reporting format:
 
 ## Completion Criteria
 
-1. ADR 0027 gates `G0-G5` are implemented for class-1 packs.
+1. [ADR 0027](../adrs/0027-simulation-preparedness-and-readiness-gates.md) gates `G0-G5` are implemented for class-1 packs.
 2. Class-1 readiness gate is enforced in CI and tracked nightly.
 3. Observation window criteria are met with documented readiness decision.
 4. Documentation and operator workflows are published and indexed.

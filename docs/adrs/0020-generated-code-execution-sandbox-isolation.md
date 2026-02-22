@@ -66,7 +66,7 @@ Method definitions become sandbox-local for that attempt and do not mutate Agent
 
 Pre-execution guardrails continue rejecting direct class/module mutation patterns against runtime host objects (for example `class Agent`, `class << Agent`, `Module#class_eval` against Agent).
 
-Such violations stay in recoverable validation lanes (ADR 0016), with bounded retry feedback.
+Such violations stay in recoverable validation lanes ([ADR 0016](0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md)), with bounded retry feedback.
 
 ### 5. Observability and lifecycle integrity
 
@@ -151,10 +151,10 @@ Out of scope:
 
 ## Relationship to Existing ADRs
 
-1. ADR 0016 governs validation-first retries and transactional guardrail recovery; this ADR fixes execution receiver integrity inside that lifecycle.
-2. ADR 0014 contract validation remains the outcome boundary invariant.
-3. ADR 0012 persistence/repair remains unchanged; persisted artifacts now execute in an isolated receiver.
-4. ADR 0019 structured conversation-history access remains unchanged; `context[:conversation_history]` stays available through sandbox `context`.
+1. [ADR 0016](0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) governs validation-first retries and transactional guardrail recovery; this ADR fixes execution receiver integrity inside that lifecycle.
+2. [ADR 0014](0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md) contract validation remains the outcome boundary invariant.
+3. [ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) persistence/repair remains unchanged; persisted artifacts now execute in an isolated receiver.
+4. [ADR 0019](0019-structured-conversation-history-first-and-recursion-deferral.md) structured conversation-history access remains unchanged; `context[:conversation_history]` stays available through sandbox `context`.
 
 ## Open Questions
 

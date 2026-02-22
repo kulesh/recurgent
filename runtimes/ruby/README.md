@@ -81,5 +81,5 @@ result = ticket.await(timeout: 30)
 
 Shared cross-runtime contract artifacts live at:
 
-- `../../specs/contract/v1/agent-contract.md`
-- `../../specs/contract/v1/scenarios.yaml`
+- [`../../specs/contract/v1/agent-contract.md`](../../specs/contract/v1/agent-contract.md)
+- [`../../specs/contract/v1/scenarios.yaml`](../../specs/contract/v1/scenarios.yaml)

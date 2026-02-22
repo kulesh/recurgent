@@ -2,24 +2,24 @@
 
 - Status: draft
 - Date: 2026-02-19
-- Scope: ADR 0025 rollout (`awareness substrate` + `authority boundary`)
+- Scope: [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) rollout (`awareness substrate` + `authority boundary`)
 
 ## Objective
 
-Implement ADR 0025 so Agent self-awareness is explicit, inspectable, and useful for evolution while mutation authority remains explicitly governed.
+Implement [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) so Agent self-awareness is explicit, inspectable, and useful for evolution while mutation authority remains explicitly governed.
 
 Primary outcomes:
 
 1. Awareness is modeled as first-class runtime data (`L1`, `L2`, `L3`).
 2. Authority is explicit and bounded (`observe`, `propose`, `enact`), with `enact` denied by default.
 3. Proposal artifacts become the canonical path for agent-suggested evolution.
-4. Role continuity work from ADR 0024 remains independent and is not diluted by governance/control-plane concerns.
+4. Role continuity work from [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) remains independent and is not diluted by governance/control-plane concerns.
 
 ## Non-Goals
 
 1. Do not enable L4 autonomous policy mutation.
 2. Do not implement full context storage migration in this plan.
-3. Do not merge ADR 0024 continuity mechanics and ADR 0025 governance mechanics into one code path.
+3. Do not merge [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) continuity mechanics and [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) governance mechanics into one code path.
 4. Do not introduce hidden auto-approval or silent enactment flows.
 
 ## Design Constraints
@@ -34,13 +34,13 @@ Primary outcomes:
 
 Prerequisite alignment:
 
-1. ADR 0024 establishes role/profile continuity semantics and active profile version concepts.
-2. ADR 0025 consumes those concepts for awareness visibility and proposal governance.
+1. [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) establishes role/profile continuity semantics and active profile version concepts.
+2. [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) consumes those concepts for awareness visibility and proposal governance.
 
 Execution rule:
 
-1. Land ADR 0024 role-coordination substrate first (or in parallel where non-conflicting).
-2. Land ADR 0025 authority enforcement after observational self-model and proposal artifacts are stable.
+1. Land [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) role-coordination substrate first (or in parallel where non-conflicting).
+2. Land [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) authority enforcement after observational self-model and proposal artifacts are stable.
 
 ## Delivery Strategy
 
@@ -69,7 +69,7 @@ Implementation:
 3. Capture baseline traces from:
    - `examples/calculator.rb`
    - `examples/assistant.rb`
-   - one role-profile-enabled flow (ADR 0024 shadow if available)
+   - one role-profile-enabled flow ([ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) shadow if available)
 
 Suggested files:
 
@@ -253,7 +253,7 @@ Required artifacts:
 
 ## Risks and Mitigations
 
-1. Risk: accidental coupling of ADR 0024 and ADR 0025 implementations.
+1. Risk: accidental coupling of [ADR 0024](../adrs/0024-contract-first-role-profiles-and-state-continuity-guard.md) and [ADR 0025](../adrs/0025-awareness-substrate-and-authority-boundary.md) implementations.
    Mitigation: keep separate modules and separate acceptance tests.
 2. Risk: proposal spam/noise from low-signal L3 suggestions.
    Mitigation: minimum evidence thresholds before proposal creation.

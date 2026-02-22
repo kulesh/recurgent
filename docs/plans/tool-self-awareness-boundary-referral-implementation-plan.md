@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement ADR 0015 so Tools can emit referral-grade signals (`wrong_tool_boundary`, `low_utility`), while the runtime separates fast inline correction from slower out-of-band evolution.
+Implement [ADR 0015](../adrs/0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md) so Tools can emit referral-grade signals (`wrong_tool_boundary`, `low_utility`), while the runtime separates fast inline correction from slower out-of-band evolution.
 
 This plan keeps architecture aligned with project tenets:
 
@@ -34,7 +34,7 @@ Out of scope:
 Already implemented:
 
 1. Delegation contracts (`purpose`, `deliverable`, `acceptance`, `failure_policy`) flow through prompt and runtime.
-2. Delegated outcome boundary shape validation (ADR 0014) with tolerant symbol/string key equivalence.
+2. Delegated outcome boundary shape validation ([ADR 0014](../adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md)) with tolerant symbol/string key equivalence.
 3. Tool persistence, artifact selection, and repair pipelines.
 4. Method metadata in registry and prompt rendering support.
 

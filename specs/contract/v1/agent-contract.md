@@ -92,4 +92,4 @@ For cross-runtime delegation observability, runtimes SHOULD include:
 
 ## 9. Conformance
 
-Conformance is defined by passing all scenarios in `scenarios.yaml` using the abstract programs in `programs.yaml`.
+Conformance is defined by passing all scenarios in [`scenarios.yaml`](scenarios.yaml) using the abstract programs in [`programs.yaml`](programs.yaml).

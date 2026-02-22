@@ -6,7 +6,7 @@ This guide defines how a runtime validates against `Agent Contract v1`.
 
 Each runtime harness SHOULD:
 
-1. Load `programs.yaml`, `scenarios.yaml`, and `tolerant-delegation-scenarios.yaml`.
+1. Load [`programs.yaml`](programs.yaml), [`scenarios.yaml`](scenarios.yaml), and [`tolerant-delegation-scenarios.yaml`](tolerant-delegation-scenarios.yaml).
 2. Provide a deterministic provider stub that can:
    - return program implementations by `program_id`
    - return invalid payload fixtures (`invalid_nil`, `invalid_blank`)
@@ -16,7 +16,7 @@ Each runtime harness SHOULD:
 
 Harness SHOULD also load:
 
-- `tolerant-delegation-profile.md`
+- [`tolerant-delegation-profile.md`](tolerant-delegation-profile.md)
 
 ## Runtime Mapping Responsibility
 
@@ -30,7 +30,7 @@ The observable result MUST match scenario expectations.
 
 ## Minimum Pass Condition
 
-A runtime is v1-conformant when all scenario ids in `scenarios.yaml` and `tolerant-delegation-scenarios.yaml` pass.
+A runtime is v1-conformant when all scenario ids in [`scenarios.yaml`](scenarios.yaml) and [`tolerant-delegation-scenarios.yaml`](tolerant-delegation-scenarios.yaml) pass.
 
 ## Reporting Format (Recommended)
 

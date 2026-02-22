@@ -15,7 +15,7 @@
 
 ### Changes
 
-- Baseline capture only for ADR 0026 (no runtime behavior change yet).
+- Baseline capture only for [ADR 0026](../adrs/0026-response-content-continuity-substrate.md) (no runtime behavior change yet).
 - Validation artifacts captured under [`tmp/phase-validation-0026/phase-0/`](../../tmp/phase-validation-0026/phase-0).
 
 ### Validation
@@ -64,7 +64,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0026/phase-0/xdg/recurgent/recurgent.jsonl` (`15` entries)
+- Log file: [`tmp/phase-validation-0026/phase-0/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation-0026/phase-0/xdg/recurgent/recurgent.jsonl) (`15` entries)
 - Trace summary:
   - Roles:
     - `calculator`: `8`
@@ -157,7 +157,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0026/phase-1/xdg/recurgent/recurgent.jsonl` (`21` entries)
+- Log file: [`tmp/phase-validation-0026/phase-1/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation-0026/phase-1/xdg/recurgent/recurgent.jsonl) (`21` entries)
 - Trace summary:
   - Roles:
     - `calculator`: `8`
@@ -242,7 +242,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0026/phase-2/xdg/recurgent/recurgent.jsonl` (`19` entries)
+- Log file: [`tmp/phase-validation-0026/phase-2/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation-0026/phase-2/xdg/recurgent/recurgent.jsonl) (`19` entries)
 - Trace summary:
   - Roles:
     - `calculator`: `8`
@@ -326,7 +326,7 @@
 
 #### Log inspection and diagnosis
 
-- Log file: `tmp/phase-validation-0026/phase-3/xdg/recurgent/recurgent.jsonl` (`14` entries)
+- Log file: [`tmp/phase-validation-0026/phase-3/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation-0026/phase-3/xdg/recurgent/recurgent.jsonl) (`14` entries)
 - Trace summary:
   - Roles:
     - `calculator`: `8`
@@ -352,7 +352,7 @@
 - Command: `cd runtimes/ruby && mise exec -- env XDG_STATE_HOME=/Users/kulesh/dev/actuator/tmp/phase-validation-0026/content-followup-check/xdg ruby examples/assistant.rb < /Users/kulesh/dev/actuator/tmp/phase-validation-0026/content-followup-check/input.txt`
 - Evidence:
   - [`tmp/phase-validation-0026/content-followup-check/output.txt`](../../tmp/phase-validation-0026/content-followup-check/output.txt)
-  - `tmp/phase-validation-0026/content-followup-check/xdg/recurgent/recurgent.jsonl`
+  - [`tmp/phase-validation-0026/content-followup-check/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation-0026/content-followup-check/xdg/recurgent/recurgent.jsonl)
 - Result:
   - Second turn succeeded and produced markdown output.
   - Log evidence confirmed ref-resolution read path:
@@ -392,6 +392,6 @@
 
 ### Core Learning
 
-1. ADR 0026 substrate changes delivered continuity mechanics and observability.
+1. [ADR 0026](../adrs/0026-response-content-continuity-substrate.md) substrate changes delivered continuity mechanics and observability.
 2. Mechanical continuity does not by itself guarantee semantic robustness in generated tool logic.
 3. Next quality gains need targeted prompt/guardrail and tool-quality work on high-variance examples (calculator solve/history and live-source adapters), not additional continuity plumbing.

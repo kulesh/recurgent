@@ -7,12 +7,12 @@
   - `mise exec -- env XDG_STATE_HOME=... ruby examples/calculator.rb`
   - `mise exec -- env XDG_STATE_HOME=... ruby examples/assistant.rb` (scripted stdin with 3 required prompts)
 - Artifacts:
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-0-rubocop.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-0-rspec.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-0-calculator.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-0-calculator.jsonl`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-0-assistant.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-0-assistant.jsonl`
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-0-rubocop.txt`](logs/phase-0-rubocop.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-0-rspec.txt`](logs/phase-0-rspec.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-0-calculator.txt`](logs/phase-0-calculator.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-0-calculator.jsonl`](logs/phase-0-calculator.jsonl)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-0-assistant.txt`](logs/phase-0-assistant.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-0-assistant.jsonl`](logs/phase-0-assistant.jsonl)
 
 ## Lint and Test Suite
 
@@ -143,8 +143,8 @@ Expected (Phase 0): introduce machine-checkable simulation gate contract and run
 
 Observed:
 
-- Added `specs/contract/v1/simulation-preparedness.contract.yaml`.
-- Added `specs/contract/v1/simulation-run-ledger.schema.json`.
-- Added integrity spec: `runtimes/ruby/spec/contract/simulation_preparedness_contract_spec.rb`.
+- Added [`specs/contract/v1/simulation-preparedness.contract.yaml`](../../../../specs/contract/v1/simulation-preparedness.contract.yaml).
+- Added [`specs/contract/v1/simulation-run-ledger.schema.json`](../../../../specs/contract/v1/simulation-run-ledger.schema.json).
+- Added integrity spec: [`runtimes/ruby/spec/contract/simulation_preparedness_contract_spec.rb`](../../../../runtimes/ruby/spec/contract/simulation_preparedness_contract_spec.rb).
 - Contract/lint/test checks pass.
 - Example behavior remains mixed, which is expected at this phase.

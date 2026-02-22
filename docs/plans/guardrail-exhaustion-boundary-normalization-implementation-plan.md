@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement ADR 0022 with a generic lifecycle policy:
+Implement [ADR 0022](../adrs/0022-guardrail-exhaustion-boundary-normalization.md) with a generic lifecycle policy:
 
 1. Exhausted guardrail retries never leak raw internal diagnostics to end users.
 2. Internal diagnostics remain fully preserved for repair, observability, and evolution.
@@ -12,8 +12,8 @@ Implement ADR 0022 with a generic lifecycle policy:
 
 1. Subtype-agnostic user-facing messaging in v1.
 2. Normalization scope is top-level boundary only (`depth == 0`) in v1.
-3. No change to retry semantics from ADR 0016.
-4. No semantic coercion of successful outcomes (ADR 0017).
+3. No change to retry semantics from [ADR 0016](../adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md).
+4. No semantic coercion of successful outcomes ([ADR 0017](../adrs/0017-contract-driven-utility-failures-and-observational-runtime.md)).
 5. Preserve tolerant interfaces and existing typed outcome vocabulary where possible.
 
 ## Scope
@@ -187,7 +187,7 @@ Exit criteria:
 
 ## Completion Checklist
 
-1. ADR 0022 remains `proposed` or is moved to `accepted` after implementation review.
+1. [ADR 0022](../adrs/0022-guardrail-exhaustion-boundary-normalization.md) remains `proposed` or is moved to `accepted` after implementation review.
 2. Runtime emits guardrail subtype metadata consistently.
 3. Top-level boundary normalization is active with v1 generic message.
 4. Depth-1+ paths preserve raw typed errors.

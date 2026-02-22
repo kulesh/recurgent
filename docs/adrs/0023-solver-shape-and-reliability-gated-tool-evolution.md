@@ -72,11 +72,11 @@ Shadow decisions are always logged when shadow mode is enabled. Enforcement cont
 
 Operator tooling and docs support scorecard inspection, decision inspection, and audited manual lifecycle overrides.
 
-### 7. Composition with ADR 0024 and ADR 0025
+### 7. Composition with [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md) and [ADR 0025](0025-awareness-substrate-and-authority-boundary.md)
 
 1. ADR 0023 measures reliability and lifecycle fitness.
-2. ADR 0024 adds semantic continuity/correctness pressure for role-style interfaces.
-3. ADR 0025 governs awareness and authority boundaries for evolution actions.
+2. [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md) adds semantic continuity/correctness pressure for role-style interfaces.
+3. [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) governs awareness and authority boundaries for evolution actions.
 
 ## MVP Delivered (Implemented)
 
@@ -123,9 +123,9 @@ Baseline (pre-implementation phase 0, see report):
 
 ## Non-Improvement Expectations
 
-1. Runtime does not reinterpret domain `Outcome.ok` into semantic error by heuristic judgment (ADR 0017 remains intact).
+1. Runtime does not reinterpret domain `Outcome.ok` into semantic error by heuristic judgment ([ADR 0017](0017-contract-driven-utility-failures-and-observational-runtime.md) remains intact).
 2. This ADR does not introduce domain-specific quality heuristics (news/movies/recipes correctness stays outside policy contract).
-3. This ADR does not grant autonomous policy mutation authority (ADR 0025 authority boundaries remain in force).
+3. This ADR does not grant autonomous policy mutation authority ([ADR 0025](0025-awareness-substrate-and-authority-boundary.md) authority boundaries remain in force).
 
 ## Validation Signals
 
@@ -191,8 +191,8 @@ Rollout phases from this ADR are complete as MVP in Ruby runtime:
 
 Follow-up work continues under separate plans/ADRs for:
 
-1. semantic continuity contracts (ADR 0024)
-2. awareness/authority substrate evolution (ADR 0025)
+1. semantic continuity contracts ([ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md))
+2. awareness/authority substrate evolution ([ADR 0025](0025-awareness-substrate-and-authority-boundary.md))
 3. quality hardening of specific capability flows
 
 ## Guardrails
@@ -200,7 +200,7 @@ Follow-up work continues under separate plans/ADRs for:
 1. Promotion gates must not rewrite domain outcomes.
 2. Policy versions and lifecycle decisions must be logged and inspectable.
 3. Lifecycle transitions must be reversible via selector policy and operator controls.
-4. Reliability policy measures stability; semantic correctness requires complementary contracts (ADR 0024 when applicable).
+4. Reliability policy measures stability; semantic correctness requires complementary contracts ([ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md) when applicable).
 
 ## Ubiquitous Language Additions
 

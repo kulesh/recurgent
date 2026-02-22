@@ -116,9 +116,9 @@ This ADR governs runtime API and lifecycle behavior for recursive context explor
 
 It does not change:
 
-1. artifact selection policy from ADR 0012,
-2. validation-first guardrail recovery from ADR 0016,
-3. contract-driven utility semantics from ADR 0017.
+1. artifact selection policy from [ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md),
+2. validation-first guardrail recovery from [ADR 0016](0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md),
+3. contract-driven utility semantics from [ADR 0017](0017-contract-driven-utility-failures-and-observational-runtime.md).
 
 ## Consequences
 

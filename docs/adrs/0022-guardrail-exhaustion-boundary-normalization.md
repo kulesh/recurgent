@@ -7,7 +7,7 @@
 
 Recent traces exposed a lifecycle gap at the user boundary:
 
-1. Guardrail retries are correctly executed (ADR 0016).
+1. Guardrail retries are correctly executed ([ADR 0016](0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md)).
 2. When retries exhaust, raw internal guardrail diagnostics can leak to user-facing responses.
 3. Internal messages are implementation details (policy strings, schema fragments, correction hints), not stable user-facing semantics.
 
@@ -28,9 +28,9 @@ This conflicts with project tenets:
 
 Related decisions:
 
-1. ADR 0016 defines validation-first retries and recoverable guardrail recovery.
-2. ADR 0017 preserves observational runtime semantics (no hidden semantic coercion).
-3. ADR 0021 defines provenance-required success for external-data behavior as one specific guardrail.
+1. [ADR 0016](0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) defines validation-first retries and recoverable guardrail recovery.
+2. [ADR 0017](0017-contract-driven-utility-failures-and-observational-runtime.md) preserves observational runtime semantics (no hidden semantic coercion).
+3. [ADR 0021](0021-external-data-provenance-invariant.md) defines provenance-required success for external-data behavior as one specific guardrail.
 
 ## Decision
 
@@ -83,7 +83,7 @@ Depth scope for v1:
 
 ### 4. No Category-Specific Lifecycle Lanes
 
-Runtime MUST NOT introduce category-specific normalization lanes (for example external-data-only lifecycle treatment). Category-specific invariants (such as ADR 0021 provenance) remain as individual guardrails with subtype metadata.
+Runtime MUST NOT introduce category-specific normalization lanes (for example external-data-only lifecycle treatment). Category-specific invariants (such as [ADR 0021](0021-external-data-provenance-invariant.md) provenance) remain as individual guardrails with subtype metadata.
 
 ### 5. Capability-Oriented Typed Outcomes
 
@@ -99,7 +99,7 @@ In scope:
 
 Out of scope:
 
-1. changing individual guardrail invariants (for example ADR 0021 provenance requirements),
+1. changing individual guardrail invariants (for example [ADR 0021](0021-external-data-provenance-invariant.md) provenance requirements),
 2. domain-specific parser behavior or quality heuristics,
 3. special-case runtime handlers by category/domain.
 
@@ -151,9 +151,9 @@ Out of scope:
 
 ## Guardrails
 
-1. Boundary normalization is a presentation concern, not semantic success coercion (ADR 0017).
-2. Retry lifecycle semantics remain unchanged (ADR 0016).
-3. Individual invariants (for example ADR 0021 provenance) remain enforced as their own guardrails.
+1. Boundary normalization is a presentation concern, not semantic success coercion ([ADR 0017](0017-contract-driven-utility-failures-and-observational-runtime.md)).
+2. Retry lifecycle semantics remain unchanged ([ADR 0016](0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md)).
+3. Individual invariants (for example [ADR 0021](0021-external-data-provenance-invariant.md) provenance) remain enforced as their own guardrails.
 
 ## Open Questions
 

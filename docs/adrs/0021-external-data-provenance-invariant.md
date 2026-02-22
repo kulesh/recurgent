@@ -21,11 +21,11 @@ This conflicts with project tenets:
 
 Related decisions:
 
-1. ADR 0012 introduces persisted artifacts and health metrics.
-2. ADR 0014 enforces outcome-boundary deliverable validation.
-3. ADR 0017 keeps runtime observational for utility semantics (no hidden success->error coercion).
-4. ADR 0016 defines validation-first retries for recoverable guardrails.
-5. ADR 0019 makes conversation history structured and queryable.
+1. [ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) introduces persisted artifacts and health metrics.
+2. [ADR 0014](0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md) enforces outcome-boundary deliverable validation.
+3. [ADR 0017](0017-contract-driven-utility-failures-and-observational-runtime.md) keeps runtime observational for utility semantics (no hidden success->error coercion).
+4. [ADR 0016](0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) defines validation-first retries for recoverable guardrails.
+5. [ADR 0019](0019-structured-conversation-history-first-and-recursion-deferral.md) makes conversation history structured and queryable.
 
 ## Decision
 
@@ -35,7 +35,7 @@ Adopt a global invariant: any successful outcome derived from external data MUST
 
 When code performs external retrieval/extraction behavior (HTTP fetch, remote feed parsing, file/network import), `Outcome.ok` must include provenance metadata.
 
-If provenance is missing, generated code is invalid and must regenerate through the recoverable guardrail lane (ADR 0016), not silently pass.
+If provenance is missing, generated code is invalid and must regenerate through the recoverable guardrail lane ([ADR 0016](0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md)), not silently pass.
 
 ### 2. Canonical Provenance Envelope
 
@@ -71,7 +71,7 @@ Expected retrieval mode should be expressed in the existing contract surface, us
 
 ### 4. Guardrail, Not Runtime Semantic Coercion
 
-Runtime does not rewrite domain semantics after execution (ADR 0017 remains intact).
+Runtime does not rewrite domain semantics after execution ([ADR 0017](0017-contract-driven-utility-failures-and-observational-runtime.md) remains intact).
 
 Instead, runtime enforces provenance as a validation/guardrail invariant:
 
@@ -142,7 +142,7 @@ Out of scope:
 1. Keep provenance optional and rely on prompt nudges.
    - Rejected: weak enforcement; repeated trust failures remain likely.
 2. Coerce missing-provenance success to runtime error after execution.
-   - Rejected: violates ADR 0017 observational semantics.
+   - Rejected: violates [ADR 0017](0017-contract-driven-utility-failures-and-observational-runtime.md) observational semantics.
 3. Domain-specific rules (for example only movies/news).
    - Rejected: does not generalize; fragments ubiquitous language.
 

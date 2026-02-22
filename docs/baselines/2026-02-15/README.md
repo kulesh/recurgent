@@ -1,6 +1,6 @@
 # Baseline Traces (2026-02-15)
 
-Captured before cross-session artifact persistence implementation (ADR 0012) to establish pre-persistence behavior baselines.
+Captured before cross-session artifact persistence implementation ([ADR 0012](../../adrs/0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md)) to establish pre-persistence behavior baselines.
 
 ## Environment
 

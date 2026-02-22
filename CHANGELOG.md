@@ -13,7 +13,7 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Tolerant dynamic-call contract using `Agent::Outcome`.
 - Provider abstraction for Anthropic/OpenAI routing.
 - Retry and logging telemetry for generated code execution.
-- Contract specification package under `specs/contract/v1`.
+- Contract specification package under [`specs/contract/v1`](specs/contract/v1).
 - Documentation set: onboarding, ADRs, ubiquitous language, tolerant delegation guidance.
 
 ### Changed

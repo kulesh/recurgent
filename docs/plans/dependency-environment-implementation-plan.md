@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement ADR 0010 with a phased, low-regret rollout:
+Implement [ADR 0010](../adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md) with a phased, low-regret rollout:
 
 1. Tools can declare dependencies in `GeneratedProgram`.
 2. Runtime can validate, normalize, and log dependency manifests.
@@ -239,7 +239,7 @@ Out of scope:
 
 1. Update [`specs/contract/v1/agent-contract.md`](../../specs/contract/v1/agent-contract.md) after Phase 1 completion.
 2. Add contract scenarios for dependency errors and environment-preparing flow.
-3. Keep ADR 0010 as `proposed` until Phase 1 lands; promote status to `accepted` after Phase 2 stability.
+3. Keep [ADR 0010](../adrs/0010-dependency-aware-generated-programs-and-environment-contract-v1.md) as `proposed` until Phase 1 lands; promote status to `accepted` after Phase 2 stability.
 
 ### Operational Defaults
 

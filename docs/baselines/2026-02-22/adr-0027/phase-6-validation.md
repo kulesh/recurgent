@@ -10,23 +10,23 @@
   - `mise exec -- ruby bin/recurgent-sim --operational-mode ci` (fixture + replay x2)
   - `mise exec -- ruby bin/recurgent-sim --operational-mode nightly --seeds ...`
 - Artifacts:
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-rubocop.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-rspec.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-calculator.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-calculator.jsonl`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-assistant.txt`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-assistant.jsonl`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-core-fixture.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-core-replay-1.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-core-replay-2.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-edge-fixture.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-edge-replay-1.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-edge-replay-2.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-nightly-fixture.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-nightly-replay-1.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-nightly-replay-2.json`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-run-ledger.jsonl`
-  - `docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-nightly-trend-report.json`
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-rubocop.txt`](logs/phase-6-rubocop.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-rspec.txt`](logs/phase-6-rspec.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-calculator.txt`](logs/phase-6-calculator.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-calculator.jsonl`](logs/phase-6-calculator.jsonl)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-assistant.txt`](logs/phase-6-assistant.txt)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-assistant.jsonl`](logs/phase-6-assistant.jsonl)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-core-fixture.json`](logs/phase-6-sim-ci-core-fixture.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-core-replay-1.json`](logs/phase-6-sim-ci-core-replay-1.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-core-replay-2.json`](logs/phase-6-sim-ci-core-replay-2.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-edge-fixture.json`](logs/phase-6-sim-ci-edge-fixture.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-edge-replay-1.json`](logs/phase-6-sim-ci-edge-replay-1.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-ci-edge-replay-2.json`](logs/phase-6-sim-ci-edge-replay-2.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-nightly-fixture.json`](logs/phase-6-sim-nightly-fixture.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-nightly-replay-1.json`](logs/phase-6-sim-nightly-replay-1.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-nightly-replay-2.json`](logs/phase-6-sim-nightly-replay-2.json)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-run-ledger.jsonl`](logs/phase-6-sim-run-ledger.jsonl)
+  - [`docs/baselines/2026-02-22/adr-0027/logs/phase-6-sim-nightly-trend-report.json`](logs/phase-6-sim-nightly-trend-report.json)
 
 ## Lint and Test Suite
 
@@ -124,8 +124,8 @@ Expected:
 
 Observed:
 
-1. Added CI workflow: `.github/workflows/simulation-readiness-ci.yml` with per-pack gate evaluation and summary/artifact publishing.
-2. Added nightly workflow: `.github/workflows/simulation-readiness-nightly.yml` with expanded-seed runs and trend report generation.
+1. Added CI workflow: [`.github/workflows/simulation-readiness-ci.yml`](../../../../.github/workflows/simulation-readiness-ci.yml) with per-pack gate evaluation and summary/artifact publishing.
+2. Added nightly workflow: [`.github/workflows/simulation-readiness-nightly.yml`](../../../../.github/workflows/simulation-readiness-nightly.yml) with expanded-seed runs and trend report generation.
 3. Runner/CLI now support `operational_mode` and nightly report path; `G5` is no longer always `not_applicable`.
 4. Release/checklist/docs updated to include simulation readiness operational requirements.
 

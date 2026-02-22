@@ -5,7 +5,7 @@
 
 ## Context
 
-The dependency environment contract from ADR 0010 requires deterministic and policy-safe environment reuse. Two implementation gaps emerged:
+The dependency environment contract from [ADR 0010](0010-dependency-aware-generated-programs-and-environment-contract-v1.md) requires deterministic and policy-safe environment reuse. Two implementation gaps emerged:
 
 1. Environment identity and cache-hit checks did not include source policy (`source_mode`, `gem_sources`), allowing cache reuse across different policy configurations.
 2. Execution routing used per-call dependency declarations instead of the tool's resolved effective manifest, so a call could run inline even after the tool had already adopted a non-empty environment manifest.

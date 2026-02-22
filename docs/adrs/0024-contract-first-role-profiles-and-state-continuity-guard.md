@@ -5,13 +5,13 @@
 
 ## Context
 
-ADR 0023 introduced solver-shape observability and reliability-gated lifecycle promotion. That infrastructure answers "how reliably did this artifact execute?" It does not answer "is this role semantically coherent across methods?"
+[ADR 0023](0023-solver-shape-and-reliability-gated-tool-evolution.md) introduced solver-shape observability and reliability-gated lifecycle promotion. That infrastructure answers "how reliably did this artifact execute?" It does not answer "is this role semantically coherent across methods?"
 
-ADR 0025 is now implemented and adds the control-plane substrate for awareness, proposal artifacts, and authority gating. ADR 0024 must run on top of that substrate:
+[ADR 0025](0025-awareness-substrate-and-authority-boundary.md) is now implemented and adds the control-plane substrate for awareness, proposal artifacts, and authority gating. ADR 0024 must run on top of that substrate:
 
 1. role-profile mutations are proposal artifacts (`role_profile_update`),
 2. enactment is maintainer-approved (`approve`/`apply`) and authority-gated,
-3. observability fields from ADR 0025 are available for continuity rollout evidence.
+3. observability fields from [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) are available for continuity rollout evidence.
 
 That distinction is now explicit:
 
@@ -46,7 +46,7 @@ context[:value] = current + args[0].to_f
 result = context[:value]
 ```
 
-Both methods may produce `ok` outcomes. ADR 0023 scorecards can still show strong reliability, but the role has continuity drift (`:memory` vs `:value`).
+Both methods may produce `ok` outcomes. [ADR 0023](0023-solver-shape-and-reliability-gated-tool-evolution.md) scorecards can still show strong reliability, but the role has continuity drift (`:memory` vs `:value`).
 
 ### Over-Prescriptive Failure Mode
 
@@ -99,7 +99,7 @@ strict_profile = calculator_profile.with_constraints(
 
 Introduce an explicit, opt-in role contract layer (`RoleProfile`) and a `State Continuity Guard` that validates role coherence using existing retry/repair infrastructure.
 
-This ADR remains the semantic-coherence layer. ADR 0025 remains the awareness/authority layer.
+This ADR remains the semantic-coherence layer. [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) remains the awareness/authority layer.
 
 ### 1. Role Profiles Are Explicit and Opt-In
 
@@ -160,7 +160,7 @@ state.role_profile_version = active_profile.version
 
 ### 4. Add State Continuity Guard to Existing Contract Lanes
 
-The continuity guard runs as part of existing validation/repair flow (ADR 0014, ADR 0016), not a new enforcement subsystem.
+The continuity guard runs as part of existing validation/repair flow ([ADR 0014](0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md), [ADR 0016](0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md)), not a new enforcement subsystem.
 
 Guard checks:
 
@@ -233,9 +233,9 @@ Continuity guard starts in observational shadow mode for profile-enabled roles:
 2. calibrate false holds/false violations,
 3. enable recoverable enforcement only after shadow evidence is clean.
 
-### 7. Profile Lifecycle Uses ADR 0025 Control Plane
+### 7. Profile Lifecycle Uses [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) Control Plane
 
-Role-profile lifecycle operations must use ADR 0025 proposal and authority primitives:
+Role-profile lifecycle operations must use [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) proposal and authority primitives:
 
 1. profile creation/version bump/constraint mode change is represented as `role_profile_update` proposal artifact,
 2. profile enactment requires explicit maintainer approval and apply action,
@@ -278,14 +278,14 @@ In scope:
 1. explicit `RoleProfile` contract model,
 2. continuity guard integrated into existing validation/retry lanes,
 3. observability fields for profile compliance and violations.
-4. integration with ADR 0025 proposal/authority workflow for profile lifecycle changes.
+4. integration with [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) proposal/authority workflow for profile lifecycle changes.
 
 Out of scope:
 
 1. auto-inference of role profiles by runtime,
 2. domain-specific semantic grading beyond authored profile contract,
-3. replacing reliability promotion policy from ADR 0023.
-4. bypassing ADR 0025 governance controls for profile updates.
+3. replacing reliability promotion policy from [ADR 0023](0023-solver-shape-and-reliability-gated-tool-evolution.md).
+4. bypassing [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) governance controls for profile updates.
 
 ## Consequences
 
@@ -325,7 +325,7 @@ Out of scope:
 
 1. run continuity checks in shadow mode using role-wide default scope,
 2. record violations and correction hints without blocking execution.
-3. include ADR 0025 observability evidence in rollout review:
+3. include [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) observability evidence in rollout review:
    - `active_role_profile_version`
    - `self_model.awareness_level`
    - namespace-pressure signals (`namespace_key_collision_count`, `namespace_multi_lifetime_key_count`, `namespace_continuity_violation_count`).
@@ -349,9 +349,9 @@ Out of scope:
 2. keep non-profile tools on reliability-only lifecycle policy.
 3. treat profile-compliance evidence as semantic-correctness signal, not authority signal.
 
-## Evidence from ADR 0025 Rollout
+## Evidence from [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) Rollout
 
-Phase validation traces showed why ADR 0024 is still required after ADR 0025:
+Phase validation traces showed why ADR 0024 is still required after [ADR 0025](0025-awareness-substrate-and-authority-boundary.md):
 
 1. calls can show `awareness_level: "l3"` with `active_role_profile_version: nil`,
 2. reliability outcomes can remain `ok` while deterministic semantics drift (calculator `solve` returned `8.5` for `2x + 5 = 17` in one rerun),
@@ -365,7 +365,7 @@ Phase validation traces showed why ADR 0024 is still required after ADR 0025:
 4. non-profile tools retain current tolerant behavior and promotion semantics.
 5. coordination-mode constraints must not force specific key names or shapes.
 6. prescriptive constraints must be explicit and reviewable.
-7. profile enactment and mode/version mutations must be proposal- and authority-gated via ADR 0025 lanes.
+7. profile enactment and mode/version mutations must be proposal- and authority-gated via [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) lanes.
 8. default scope is role-wide (`all_methods`); explicit method lists are narrowing exceptions only.
 9. no compatibility layer for methods-first schema in runtime hot paths.
 

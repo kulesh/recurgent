@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement ADR 0020 by isolating generated-code execution to a per-attempt sandbox receiver so generated method definitions cannot leak into Agent method space.
+Implement [ADR 0020](../adrs/0020-generated-code-execution-sandbox-isolation.md) by isolating generated-code execution to a per-attempt sandbox receiver so generated method definitions cannot leak into Agent method space.
 
 Target outcomes:
 
@@ -56,8 +56,8 @@ Observed impact:
 
 1. Keep `def` allowed in generated code.
 2. No silent broad `self` exposure to full Agent internals.
-3. Maintain compatibility with ADR 0016 retry/rollback lifecycle.
-4. Maintain `context[:conversation_history]` behavior from ADR 0019.
+3. Maintain compatibility with [ADR 0016](../adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) retry/rollback lifecycle.
+4. Maintain `context[:conversation_history]` behavior from [ADR 0019](../adrs/0019-structured-conversation-history-first-and-recursion-deferral.md).
 5. Preserve worker execution path for dependency-backed programs.
 
 ## Target Runtime Design
@@ -192,7 +192,7 @@ Tasks:
 
 1. Add regression test: generated `def fetch_headlines` in one call does not alter next call dispatch behavior.
 2. Add test: repeated assistant-style calls preserve delegated depth-1 traces when tools are reused.
-3. Add test: ADR 0016 retry lanes still function under sandbox (`guardrail`, `execution`, `outcome` repair).
+3. Add test: [ADR 0016](../adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) retry lanes still function under sandbox (`guardrail`, `execution`, `outcome` repair).
 4. Add test: conversation history append still occurs once per logical call (no duplication under retries).
 
 Primary files:
@@ -269,7 +269,7 @@ Recommended analysis checks:
 2. Risk: refactor accidentally changes `result` semantics.
    - Mitigation: direct unit tests for result channel and control-flow semantics.
 3. Risk: lifecycle drift in retries/history append.
-   - Mitigation: explicit regression tests for ADR 0016 and ADR 0019 invariants.
+   - Mitigation: explicit regression tests for [ADR 0016](../adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) and [ADR 0019](../adrs/0019-structured-conversation-history-first-and-recursion-deferral.md) invariants.
 
 ## Completion Checklist
 

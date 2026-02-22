@@ -7,7 +7,7 @@
 
 Recurgent needs better long-context handling, but the project is still in a nascent phase.
 
-A broad recursion surface (`ContextView`, `recurse(...)`) was captured in ADR 0018 as a forward-looking direction. However, introducing new coordination primitives now creates risk:
+A broad recursion surface (`ContextView`, `recurse(...)`) was captured in [ADR 0018](0018-contextview-and-recursive-context-exploration-v1.md) as a forward-looking direction. However, introducing new coordination primitives now creates risk:
 
 1. additional policy surface before we have trace evidence,
 2. more decision volatility (`do` vs `delegate` vs `recurse`) without empirical grounding,
@@ -90,7 +90,7 @@ Out of scope:
 
 ## Alternatives Considered
 
-1. Implement ADR 0018 immediately.
+1. Implement [ADR 0018](0018-contextview-and-recursive-context-exploration-v1.md) immediately.
    - rejected for now: broad primitive set before evidence from real traces.
 2. Keep history unstructured and rely on model memory.
    - rejected: weak for deterministic introspection and code-level manipulation.
@@ -118,9 +118,9 @@ Out of scope:
 2. History records should avoid storing non-serializable payloads.
 3. Additive schema changes must remain backward-tolerant.
 
-## Relationship to ADR 0018
+## Relationship to [ADR 0018](0018-contextview-and-recursive-context-exploration-v1.md)
 
-ADR 0018 remains a forward-looking proposal.
+[ADR 0018](0018-contextview-and-recursive-context-exploration-v1.md) remains a forward-looking proposal.
 
 This ADR sequences the work: first observe behavior with structured history access, then decide whether recursive primitives are justified.
 
@@ -128,4 +128,4 @@ This ADR sequences the work: first observe behavior with structured history acce
 
 1. Which history fields are mandatory in v1 versus optional diagnostic enrichments?
 2. Should history retention be bounded by count, time window, or token-estimated footprint?
-3. What objective threshold (pattern frequency) should trigger revisiting ADR 0018 for implementation?
+3. What objective threshold (pattern frequency) should trigger revisiting [ADR 0018](0018-contextview-and-recursive-context-exploration-v1.md) for implementation?

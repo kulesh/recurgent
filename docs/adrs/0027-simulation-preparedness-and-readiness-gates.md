@@ -9,7 +9,7 @@ Recurgent has enough runtime infrastructure to begin automated simulation, but c
 
 Current state:
 
-1. Reliability and lifecycle infrastructure exists (ADR 0023), role/profile continuity exists (ADR 0024), authority boundaries exist (ADR 0025), and response-content continuity exists (ADR 0026).
+1. Reliability and lifecycle infrastructure exists ([ADR 0023](0023-solver-shape-and-reliability-gated-tool-evolution.md)), role/profile continuity exists ([ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md)), authority boundaries exist ([ADR 0025](0025-awareness-substrate-and-authority-boundary.md)), and response-content continuity exists ([ADR 0026](0026-response-content-continuity-substrate.md)).
 2. Phase validation reports show tests are consistently green while example semantics still fluctuate by phase and run conditions.
 3. External-data scenarios (news/movies/recipe) are noisy due to upstream variability, while closed-world scenarios (calculator) expose deterministic correctness gaps.
 
@@ -89,11 +89,11 @@ Scoring profile rule:
 ## Status Quo Baseline
 
 1. Tests are stable, but examples are not uniformly stable:
-   - ADR-0024 rollup reports full suite pass across phases with calculator regressions in multiple phases (`docs/reports/adr-0024-phase-validation-rollup.md`).
+   - [ADR-0024](0024-contract-first-role-profiles-and-state-continuity-guard.md) rollup reports full suite pass across phases with calculator regressions in multiple phases ([`docs/reports/adr-0024-phase-validation-rollup.md`](../reports/adr-0024-phase-validation-rollup.md)).
 2. External-data scenarios remain variable:
-   - news/movies/recipe flows show capability and source variability across phases/runs (`docs/reports/adr-0023-phase-validation-report.md`, `docs/reports/adr-0024-phase-validation-rollup.md`).
+   - news/movies/recipe flows show capability and source variability across phases/runs ([`docs/reports/adr-0023-phase-validation-report.md`](../reports/adr-0023-phase-validation-report.md), [`docs/reports/adr-0024-phase-validation-rollup.md`](../reports/adr-0024-phase-validation-rollup.md)).
 3. Observability is strong but not yet used as a strict simulation gate:
-   - trace docs exist (`docs/observability.md`) and log schemas now exist (`specs/contract/v1/recurgent-log-entry.schema.json`, `specs/contract/v1/recurgent-log-stream.schema.json`), but simulator-run gating is not enforced.
+   - trace docs exist ([`docs/observability.md`](../observability.md)) and log schemas now exist (`specs/contract/v1/recurgent-log-entry.schema.json`, `specs/contract/v1/recurgent-log-stream.schema.json`), but simulator-run gating is not enforced.
 
 ## Expected Improvements
 
@@ -112,7 +112,7 @@ Scoring profile rule:
 ## Non-Improvement Expectations
 
 1. This ADR does not change runtime semantics by itself (no automatic fixes to calculator/news behavior).
-2. This ADR does not authorize autonomous policy mutation (ADR 0025 authority boundary remains intact).
+2. This ADR does not authorize autonomous policy mutation ([ADR 0025](0025-awareness-substrate-and-authority-boundary.md) authority boundary remains intact).
 3. This ADR does not replace acceptance tests or runtime contract suites; it adds simulation governance on top.
 
 ## Validation Signals
@@ -122,7 +122,7 @@ Scoring profile rule:
    - simulation harness tests validate scenario loading, scoring determinism, replay controls.
 2. Traces/logs:
    - each simulation run emits JSONL logs with `trace_id`, `call_id`, `parent_call_id`, `depth`, `outcome_status`.
-   - logs validate against `specs/contract/v1/recurgent-log-stream.schema.json`.
+   - logs validate against [`specs/contract/v1/recurgent-log-stream.schema.json`](../../specs/contract/v1/recurgent-log-stream.schema.json).
 3. Thresholds:
    - `G1`: replay stability `>= 99%`.
    - `G2`: score diff reproducibility `100%` for same seed/config.

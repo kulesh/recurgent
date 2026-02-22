@@ -10,7 +10,7 @@ Evidence root:
 - [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/rspec.txt`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/rspec.txt)
 - [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/calculator.txt`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/calculator.txt)
 - [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/assistant.txt`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/assistant.txt)
-- `tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/xdg/recurgent/recurgent.jsonl`
+- [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/xdg/recurgent/recurgent.jsonl`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/xdg/recurgent/recurgent.jsonl)
 - [`tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/log_summary.txt`](../../tmp/phase-validation-0024-scope-hardcut/phase-1-rerun/log_summary.txt)
 
 ## 1) Full Test Suite

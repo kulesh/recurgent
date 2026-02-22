@@ -28,4 +28,4 @@ Applies to dynamic delegation/runtime calls (API shape runtime-specific).
 
 ## 4. Conformance
 
-Conformance is defined by passing scenarios in `tolerant-delegation-scenarios.yaml`.
+Conformance is defined by passing scenarios in [`tolerant-delegation-scenarios.yaml`](tolerant-delegation-scenarios.yaml).

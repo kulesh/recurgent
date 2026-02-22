@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement ADR 0017 so utility quality pressure is agent-visible and contract-driven, while runtime remains observational for semantics.
+Implement [ADR 0017](../adrs/0017-contract-driven-utility-failures-and-observational-runtime.md) so utility quality pressure is agent-visible and contract-driven, while runtime remains observational for semantics.
 
 Target outcome:
 
@@ -49,9 +49,9 @@ Out of scope:
 
 Implemented already:
 
-1. ADR 0014 delegated outcome boundary validation (shape/required keys + tolerant key semantics).
-2. ADR 0015 typed outcomes (`low_utility`, `wrong_tool_boundary`) as vocabulary.
-3. ADR 0016 validation-first fresh-call lifecycle and retry mechanisms.
+1. [ADR 0014](../adrs/0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md) delegated outcome boundary validation (shape/required keys + tolerant key semantics).
+2. [ADR 0015](../adrs/0015-tool-self-awareness-and-boundary-referral-for-emergent-tool-evolution.md) typed outcomes (`low_utility`, `wrong_tool_boundary`) as vocabulary.
+3. [ADR 0016](../adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) validation-first fresh-call lifecycle and retry mechanisms.
 4. Prompt nudges for Tool self-evaluation and Outcome API usage.
 
 Gap to close:
@@ -75,7 +75,7 @@ Implementation:
    - movie scenario (weak success/no parse),
    - Google/Yahoo/NYT sequence,
    - one deterministic non-open-world scenario (control).
-2. Add feature marker in code comments for ADR 0017 path boundaries.
+2. Add feature marker in code comments for [ADR 0017](../adrs/0017-contract-driven-utility-failures-and-observational-runtime.md) path boundaries.
 3. Ensure debug logs expose enough fields to compare pre/post behavior.
 
 Exit criteria:

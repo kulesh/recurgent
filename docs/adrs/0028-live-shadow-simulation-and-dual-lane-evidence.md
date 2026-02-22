@@ -5,7 +5,7 @@
 
 ## Context
 
-ADR 0027 established simulation preparedness gates (`G0`-`G5`) and a deterministic replay harness. That harness is now useful for measuring pipeline reliability, but it does not execute live runtime behavior.
+[ADR 0027](0027-simulation-preparedness-and-readiness-gates.md) established simulation preparedness gates (`G0`-`G5`) and a deterministic replay harness. That harness is now useful for measuring pipeline reliability, but it does not execute live runtime behavior.
 
 Current mismatch:
 
@@ -15,10 +15,10 @@ Current mismatch:
 
 Recent evidence:
 
-1. `docs/baselines/2026-02-22/adr-0027/phase-7b-validation-report.md` shows deterministic advisory infrastructure is complete.
+1. [`docs/baselines/2026-02-22/adr-0027/phase-7b-validation-report.md`](../baselines/2026-02-22/adr-0027/phase-7b-validation-report.md) shows deterministic advisory infrastructure is complete.
 2. The same report shows live example instability (`solve/history` continuity failures, assistant top-news failure) despite green deterministic infrastructure checks.
 
-The project now needs a second simulation lane: one that runs live runtime behavior in shadow mode without weakening ADR 0027 discipline.
+The project now needs a second simulation lane: one that runs live runtime behavior in shadow mode without weakening [ADR 0027](0027-simulation-preparedness-and-readiness-gates.md) discipline.
 
 ## Decision
 
@@ -92,7 +92,7 @@ Isolation default:
 
 ### Gate Policy
 
-Keep ADR 0027 gate model unchanged; apply status interpretation by lane:
+Keep [ADR 0027](0027-simulation-preparedness-and-readiness-gates.md) gate model unchanged; apply status interpretation by lane:
 
 1. Deterministic class-1 packs remain primary gating evidence.
 2. Live-shadow packs are advisory until deterministic class-1 window is stable.
@@ -118,9 +118,9 @@ scenario pack YAML
 
 ## Status Quo Baseline
 
-1. Deterministic simulation readiness infrastructure is implemented and CI-capable (`docs/simulation-readiness.md`, `.github/workflows/simulation-readiness-ci.yml`).
-2. Class-1 stabilization evidence can be computed, but day-window criterion still governs readiness (`docs/reports/simulation-readiness-decision-2026-02-22.md`).
-3. Live runtime semantic failures still appear in manual validation traces (`docs/baselines/2026-02-22/adr-0027/phase-7b-validation-report.md`).
+1. Deterministic simulation readiness infrastructure is implemented and CI-capable ([`docs/simulation-readiness.md`](../simulation-readiness.md), `.github/workflows/simulation-readiness-ci.yml`).
+2. Class-1 stabilization evidence can be computed, but day-window criterion still governs readiness ([`docs/reports/simulation-readiness-decision-2026-02-22.md`](../reports/simulation-readiness-decision-2026-02-22.md)).
+3. Live runtime semantic failures still appear in manual validation traces ([`docs/baselines/2026-02-22/adr-0027/phase-7b-validation-report.md`](../baselines/2026-02-22/adr-0027/phase-7b-validation-report.md)).
 
 ## Expected Improvements
 
@@ -136,7 +136,7 @@ scenario pack YAML
 ## Non-Improvement Expectations
 
 1. This ADR does not auto-repair runtime semantics.
-2. This ADR does not relax ADR 0025 authority boundaries.
+2. This ADR does not relax [ADR 0025](0025-awareness-substrate-and-authority-boundary.md) authority boundaries.
 3. This ADR does not make networked/open-world scenarios deterministic.
 
 ## Validation Signals
@@ -191,7 +191,7 @@ Out of scope:
 
 1. Separates measurement reliability from runtime semantic correctness while preserving one evidence model.
 2. Reduces dependence on manual calculator/assistant trace sweeps for regression detection.
-3. Keeps ADR 0027 governance discipline intact during expansion.
+3. Keeps [ADR 0027](0027-simulation-preparedness-and-readiness-gates.md) governance discipline intact during expansion.
 
 ### Tradeoffs
 

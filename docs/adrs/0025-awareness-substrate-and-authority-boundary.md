@@ -5,7 +5,7 @@
 
 ## Context
 
-ADR 0023 establishes reliability evidence and lifecycle policy. ADR 0024 establishes role coordination and continuity constraints. The remaining foundational question is how much self-awareness an Agent should have, and what authority that awareness grants.
+[ADR 0023](0023-solver-shape-and-reliability-gated-tool-evolution.md) establishes reliability evidence and lifecycle policy. [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md) establishes role coordination and continuity constraints. The remaining foundational question is how much self-awareness an Agent should have, and what authority that awareness grants.
 
 Current runtime behavior is strong but implicit:
 
@@ -30,7 +30,7 @@ Design rule:
 1. Agents may observe runtime state and propose changes.
 2. Agents must not mutate policy, profile, or governance rules without explicit maintainer approval.
 
-This ADR defines the awareness substrate and authority boundary only. It does not redefine role continuity contracts from ADR 0024.
+This ADR defines the awareness substrate and authority boundary only. It does not redefine role continuity contracts from [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md).
 
 ## Awareness Levels
 
@@ -60,10 +60,10 @@ Decision:
 Define five explicit substrates and classify current status:
 
 1. Context Substrate: call/session memory surfaces and state access conventions. Mostly present today; scope boundaries are not yet explicit.
-2. Execution Substrate: guardrails, retries, rollback, and attempt lifecycle. Present today (ADR 0014/0016/0022).
-3. Evolution Substrate: scorecards, lifecycle states, and reliability evidence. Present today (ADR 0023).
-4. Role Coordination Substrate: sibling-method coherence contracts. Introduced by ADR 0024.
-5. Contract Substrate: explicit active profile/contract versioning. Introduced by ADR 0024 and strengthened here as part of awareness semantics.
+2. Execution Substrate: guardrails, retries, rollback, and attempt lifecycle. Present today ([ADR 0014](0014-outcome-boundary-contract-validation-and-tolerant-interface-canonicalization.md)/0016/0022).
+3. Evolution Substrate: scorecards, lifecycle states, and reliability evidence. Present today ([ADR 0023](0023-solver-shape-and-reliability-gated-tool-evolution.md)).
+4. Role Coordination Substrate: sibling-method coherence contracts. Introduced by [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md).
+5. Contract Substrate: explicit active profile/contract versioning. Introduced by [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md) and strengthened here as part of awareness semantics.
 
 This organizes existing mechanics into first-class architecture vocabulary rather than introducing a new runtime tower.
 
@@ -170,7 +170,7 @@ Out of scope:
 
 1. immediate full context-scope storage migration,
 2. auto-approval workflows for proposal enactment,
-3. replacing ADR 0024 role continuity semantics.
+3. replacing [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md) role continuity semantics.
 
 ## Consequences
 
@@ -192,7 +192,7 @@ Out of scope:
    - Rejected: not auditable, authority leakage risk.
 2. permit autonomous policy/profile mutation (L4).
    - Rejected: conflicts with governance tenets and control-plane safety.
-3. merge this decision into ADR 0024.
+3. merge this decision into [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md).
    - Rejected: mixes role continuity mechanics with cross-cutting governance substrate; higher review and rollout risk.
 
 ## Rollout Plan
@@ -214,7 +214,7 @@ Out of scope:
 
 ### Phase 4: Context Scope Follow-Up
 
-1. evaluate trace evidence from ADR 0024 rollout and calculator flows,
+1. evaluate trace evidence from [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md) rollout and calculator flows,
 2. if key-collision pressure persists, publish follow-up ADR for concrete context-scope storage migration.
 
 ## Guardrails
@@ -222,7 +222,7 @@ Out of scope:
 1. awareness fields are descriptive and read-only in hot path.
 2. proposal generation must not auto-enact.
 3. L4 autonomous mutation remains prohibited unless superseding ADR explicitly changes this.
-4. role continuity enforcement remains governed by ADR 0024, not redefined here.
+4. role continuity enforcement remains governed by [ADR 0024](0024-contract-first-role-profiles-and-state-continuity-guard.md), not redefined here.
 
 ## Ubiquitous Language Additions
 

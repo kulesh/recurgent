@@ -5,7 +5,7 @@
 
 ## Context
 
-ADR 0012 introduced cross-session artifact persistence keyed by:
+[ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) introduced cross-session artifact persistence keyed by:
 
 - `role + method_name`
 
@@ -62,7 +62,7 @@ Persisted artifact execution requires:
 
 1. `cacheable == true` (or legacy-compatible fallback for stable methods),
 2. existing runtime/contract/checksum compatibility checks,
-3. health checks from ADR 0012.
+3. health checks from [ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md).
 
 Non-cacheable artifacts are persisted but never selected for direct execution.
 
@@ -115,7 +115,7 @@ Trust policy is asymmetric:
 ### Positive
 
 1. Prevents semantic cache poisoning for dynamic methods.
-2. Preserves ADR 0012 identity model and storage layout.
+2. Preserves [ADR 0012](0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) identity model and storage layout.
 3. Keeps full observability history for non-cacheable methods.
 4. Improves chance of emergent promotion by exposing repetition signal.
 5. Keeps promotion authority with the agent, not hardcoded runtime automation.

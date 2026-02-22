@@ -2,7 +2,7 @@
 
 ## Objective
 
-Implement ADR 0016 so fresh-generated calls can recover from guardrail violations safely and deterministically instead of failing immediately.
+Implement [ADR 0016](../adrs/0016-validation-first-fresh-generation-and-transactional-guardrail-recovery.md) so fresh-generated calls can recover from guardrail violations safely and deterministically instead of failing immediately.
 
 The plan enforces:
 
@@ -40,7 +40,7 @@ In scope:
 
 Out of scope:
 
-1. Persisted artifact repair flow redesign (ADR 0012 remains source of truth).
+1. Persisted artifact repair flow redesign ([ADR 0012](../adrs/0012-cross-session-tool-persistence-and-evolutionary-artifact-selection.md) remains source of truth).
 2. Runtime-autonomous tool decomposition.
 3. Lua parity.
 4. Performance optimization beyond correctness-first snapshot/restore in v1.
