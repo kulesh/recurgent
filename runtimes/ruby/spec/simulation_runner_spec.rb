@@ -4,6 +4,7 @@ require "pathname"
 require "tmpdir"
 require "fileutils"
 require "json"
+require "yaml"
 
 RSpec.describe Agent::SimulationRunner do
   let(:repo_root) { Pathname(__dir__).join("../../..").expand_path }
@@ -14,6 +15,7 @@ RSpec.describe Agent::SimulationRunner do
   let(:fixture_root) { File.join(tmpdir, "fixtures") }
   let(:ledger_path) { File.join(tmpdir, "run-ledger.jsonl") }
   let(:trace_log_path) { File.join(tmpdir, "recurgent.jsonl") }
+  let(:live_shadow_root) { File.join(tmpdir, "live-shadow") }
   let(:valid_trace_entry) do
     {
       "timestamp" => "2026-02-22T00:00:00.000Z",
@@ -32,6 +34,7 @@ RSpec.describe Agent::SimulationRunner do
       readiness_contract_path: readiness_contract_path,
       fixture_root: fixture_root,
       ledger_path: ledger_path,
+      live_shadow_root: live_shadow_root,
       operational_mode: "local",
       now: -> { Time.utc(2026, 2, 22, 1, 0, 0) },
       commit_sha: "deadbeef"
@@ -46,6 +49,19 @@ RSpec.describe Agent::SimulationRunner do
     result = runner.run_pack(pack_path: pack_path, mode: "fixture", session_id: "session-a", seeds: [19, 11])
 
     expect(result.fetch("mode")).to eq("fixture")
+    expect(result.fetch("execution_lane")).to eq("deterministic")
+    expect(result.fetch("run_scope_id")).to be_nil
+    expect(result.fetch("usage_telemetry")).to eq(
+      {
+        "provider" => nil,
+        "model" => nil,
+        "input_tokens" => nil,
+        "output_tokens" => nil,
+        "total_tokens" => nil,
+        "estimated_cost_usd" => nil,
+        "availability" => "unknown"
+      }
+    )
     expect(result.fetch("seed")).to eq(11)
     expect(result.dig("metrics", "seeds")).to eq([11, 19])
     expect(result.dig("gates", "G0", "status")).to eq("pass")
@@ -139,5 +155,141 @@ RSpec.describe Agent::SimulationRunner do
     result = nightly_runner.run_pack(pack_path: pack_path, mode: "fixture")
     expect(result.dig("gates", "G5", "status")).to eq("fail")
     expect(result.dig("gates", "G5", "message")).to include("nightly trend report path missing")
+  end
+
+  it "executes live-shadow scripts and emits step/trace payloads" do
+    mock_provider = instance_double(Agent::Providers::Anthropic)
+    allow(Agent::Providers::Anthropic).to receive(:new).and_return(mock_provider)
+    allow(mock_provider).to receive(:generate_program).and_return(
+      { code: "context[:value] = (context[:value] || 0) + args[0].to_f; result = context[:value]" },
+      { code: "context[:value] = (context[:value] || 0) * args[0].to_f; result = context[:value]" }
+    )
+
+    live_pack_path = File.join(tmpdir, "calculator-live-shadow.yaml")
+    File.write(
+      live_pack_path,
+      YAML.dump(
+        {
+          "version" => 1,
+          "id" => "calculator-live-shadow-v1",
+          "class" => "class_1",
+          "execution" => {
+            "lane" => "live_shadow",
+            "isolation" => "run_scoped"
+          },
+          "scenario" => {
+            "role" => "calculator",
+            "model" => Agent::DEFAULT_MODEL,
+            "script" => [
+              { "step_id" => "add", "call" => "add", "args" => [3] },
+              { "step_id" => "multiply", "call" => "multiply", "args" => [4] }
+            ]
+          },
+          "scoring_profile" => {
+            "id" => "calculator_live_shadow_v1",
+            "weights" => {
+              "correctness" => 0.7,
+              "contract_adherence" => 0.15,
+              "repair_efficiency" => 0.1,
+              "reuse" => 0.05
+            }
+          },
+          "replay" => {
+            "mode" => "fixture",
+            "seeds" => [11]
+          },
+          "oracles" => [
+            {
+              "id" => "value-add",
+              "kind" => "live_outcome_value",
+              "input" => { "step" => "add", "value_path" => "" },
+              "expect" => { "value" => 3.0, "tolerance" => 0.0 }
+            },
+            {
+              "id" => "value-multiply",
+              "kind" => "live_outcome_value",
+              "input" => { "step" => "multiply", "value_path" => "" },
+              "expect" => { "value" => 12.0, "tolerance" => 0.0 }
+            }
+          ]
+        }
+      )
+    )
+
+    result = runner.run_pack(pack_path: live_pack_path, mode: "fixture", session_id: "live-session-a")
+
+    expect(result.fetch("execution_lane")).to eq("live_shadow")
+    expect(result.fetch("run_scope_id")).to include("live-shadow:live-session-a:")
+    expect(result.dig("usage_telemetry", "availability")).to eq("partial")
+    expect(result.dig("usage_telemetry", "provider")).to eq("anthropic")
+    expect(result.dig("metrics", "per_seed_results", 0, "step_results").length).to eq(2)
+    expect(result.dig("metrics", "per_seed_results", 0, "oracle_results")).to all(include("passed" => true))
+  end
+
+  it "compares live-shadow replay using oracle verdicts rather than payload identity" do
+    mock_provider = instance_double(Agent::Providers::Anthropic)
+    allow(Agent::Providers::Anthropic).to receive(:new).and_return(mock_provider)
+
+    live_pack_path = File.join(tmpdir, "calculator-live-shadow-replay.yaml")
+    File.write(
+      live_pack_path,
+      YAML.dump(
+        {
+          "version" => 1,
+          "id" => "calculator-live-shadow-replay-v1",
+          "class" => "class_1",
+          "execution" => {
+            "lane" => "live_shadow",
+            "isolation" => "run_scoped"
+          },
+          "scenario" => {
+            "role" => "calculator",
+            "model" => Agent::DEFAULT_MODEL,
+            "script" => [
+              { "step_id" => "add", "call" => "add", "args" => [3] }
+            ]
+          },
+          "scoring_profile" => {
+            "id" => "calculator_live_shadow_replay_v1",
+            "weights" => {
+              "correctness" => 0.7,
+              "contract_adherence" => 0.15,
+              "repair_efficiency" => 0.1,
+              "reuse" => 0.05
+            }
+          },
+          "replay" => {
+            "mode" => "fixture",
+            "seeds" => [11]
+          },
+          "oracles" => [
+            {
+              "id" => "value-add",
+              "kind" => "live_outcome_value",
+              "input" => { "step" => "add", "value_path" => "" },
+              "expect" => { "value" => 3.0, "tolerance" => 1.0 }
+            }
+          ]
+        }
+      )
+    )
+
+    allow(mock_provider).to receive(:generate_program).and_return(
+      { code: "result = args[0].to_f" },
+      { code: "result = args[0].to_f + 0.5" }
+    )
+
+    runner.run_pack(pack_path: live_pack_path, mode: "fixture", session_id: "live-session-b")
+    replay = runner.run_pack(pack_path: live_pack_path, mode: "replay", session_id: "live-session-b")
+
+    fixture_payload = Agent::SimulationFixtureStore.new(root: fixture_root).read(
+      pack_id: "calculator-live-shadow-replay-v1",
+      checksum: Agent::SimulationScenarioPack.load(live_pack_path).fetch("checksum_sha256"),
+      seed: 11
+    )
+    replay_payload = replay.dig("metrics", "per_seed_results", 0)
+
+    expect(fixture_payload["step_results"]).not_to eq(replay_payload["step_results"])
+    expect(replay_payload["replay_match"]).to eq(true)
   end
 end

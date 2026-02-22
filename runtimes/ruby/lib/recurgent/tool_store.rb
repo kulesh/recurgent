@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "ripper"
+
 class Agent
   # Agent::ToolStore — JSON-backed persistence for delegated tool registry metadata.
   module ToolStore
@@ -197,7 +199,7 @@ class Agent
     def _toolstore_update_method_state_keys!(metadata, method_name:, state:)
       return unless state
 
-      keys = _toolstore_state_keys_from_code(state.code.to_s)
+      keys = _toolstore_state_write_keys_from_code(state.code.to_s)
       return if keys.empty?
 
       method_profiles = _toolstore_method_state_key_profiles(metadata)
@@ -274,7 +276,7 @@ class Agent
     end
 
     def _toolstore_state_key_lifetimes_from_code(code)
-      _toolstore_state_keys_from_code(code).each_with_object({}) do |key, profiles|
+      _toolstore_state_write_keys_from_code(code).each_with_object({}) do |key, profiles|
         key_pattern = Regexp.escape(key)
         lifetimes = []
         lifetimes << "durable" if %w[tools patterns role_profile proposals].include?(key)
@@ -429,15 +431,40 @@ class Agent
     end
 
     def _toolstore_state_keys_from_code(code)
-      code.scan(/context\[(?::|["'])([a-zA-Z0-9_]+)["']?\]/).flatten.uniq
+      normalized = _toolstore_code_without_comments(code.to_s)
+      normalized.scan(/context\[(?::|["'])([a-zA-Z0-9_]+)["']?\]/).flatten.uniq
+    end
+
+    def _toolstore_state_write_keys_from_code(code)
+      normalized = _toolstore_code_without_comments(code.to_s)
+      assignment_keys = normalized.scan(
+        %r{context\[(?::|["'])([a-zA-Z0-9_]+)["']?\]\s*(?:=|\+=|-=|\*=|/=|%=|\|\|=|&&=|<<)}m
+      ).flatten
+      mutator_keys = normalized.scan(
+        /context\[(?::|["'])([a-zA-Z0-9_]+)["']?\]\s*\.(?:push|append)\(/m
+      ).flatten
+      (assignment_keys + mutator_keys).map(&:to_s).reject(&:empty?).uniq
     end
 
     def _toolstore_signature_from_code(code)
-      arg_indexes = code.scan(/args\[(\d+)\]/).flatten.map(&:to_i).uniq.sort
-      kw_keys = code.scan(/kwargs\[(?::|["'])([a-zA-Z0-9_]+)["']?\]/).flatten.map(&:to_s).uniq.sort
+      normalized = _toolstore_code_without_comments(code.to_s)
+      arg_indexes = normalized.scan(/args\[(\d+)\]/).flatten.map(&:to_i).uniq.sort
+      kw_keys = normalized.scan(/kwargs\[(?::|["'])([a-zA-Z0-9_]+)["']?\]/).flatten.map(&:to_s).uniq.sort
       args_part = arg_indexes.empty? ? "none" : arg_indexes.join(",")
       kwargs_part = kw_keys.empty? ? "none" : kw_keys.join(",")
       "args:#{args_part}|kwargs:#{kwargs_part}"
+    end
+
+    def _toolstore_code_without_comments(code)
+      return "" if code.empty?
+
+      Ripper.lex(code).each_with_object(+"") do |(_pos, token, lexeme, _state), stripped|
+        next if %i[on_comment on_embdoc on_embdoc_beg on_embdoc_end].include?(token)
+
+        stripped << lexeme
+      end
+    rescue StandardError
+      code
     end
 
     def _toolstore_schema_supported?(schema_version)

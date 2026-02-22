@@ -1,0 +1,36 @@
+version: 1
+id: assistant-live-shadow-v1
+class: class_2_plus
+description: Live-shadow assistant continuity follow-up scenario using content-ref resolution checks.
+execution:
+  lane: live_shadow
+  isolation: run_scoped
+scenario:
+  role: personal assistant that remembers conversation history
+  script:
+    - step_id: initial_answer
+      call: ask
+      args:
+        - "Write a quick sort algorithm in SmallTalk"
+    - step_id: format_followup
+      call: ask
+      args:
+        - "Format the algorithm in markdown"
+scoring_profile:
+  id: assistant_live_shadow_v1
+  weights:
+    correctness: 0.5
+    contract_adherence: 0.2
+    repair_efficiency: 0.15
+    reuse: 0.15
+replay:
+  mode: fixture
+  seeds: [11, 19, 23, 31, 43]
+oracles:
+  - id: continuity_ref_resolved
+    kind: live_continuity_ref_resolution
+    input:
+      source_step: initial_answer
+      follow_up_step: format_followup
+    expect:
+      requires_content_ref: true

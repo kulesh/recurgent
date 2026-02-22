@@ -11,9 +11,11 @@
     "commit_sha",
     "scenario_pack_id",
     "scenario_class",
+    "execution_lane",
     "seed",
     "session_id",
     "mode",
+    "usage_telemetry",
     "gates"
   ],
   "properties": {
@@ -42,6 +44,19 @@
       "enum": [
         "class_1",
         "class_2_plus"
+      ]
+    },
+    "execution_lane": {
+      "type": "string",
+      "enum": [
+        "deterministic",
+        "live_shadow"
+      ]
+    },
+    "run_scope_id": {
+      "type": [
+        "string",
+        "null"
       ]
     },
     "seed": {
@@ -80,6 +95,66 @@
         "type": "string",
         "minLength": 1
       }
+    },
+    "usage_telemetry": {
+      "type": "object",
+      "required": [
+        "provider",
+        "model",
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "estimated_cost_usd",
+        "availability"
+      ],
+      "properties": {
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "input_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "output_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "total_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "estimated_cost_usd": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "availability": {
+          "type": "string",
+          "enum": [
+            "available",
+            "partial",
+            "unavailable",
+            "unknown"
+          ]
+        }
+      },
+      "additionalProperties": true
     },
     "gates": {
       "type": "object",

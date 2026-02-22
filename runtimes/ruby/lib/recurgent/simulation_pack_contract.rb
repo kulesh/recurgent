@@ -6,13 +6,17 @@ class Agent
   class SimulationPackContract
     SCHEMA_VERSION = 1
     SCENARIO_CLASSES = %w[class_1 class_2_plus].freeze
+    EXECUTION_LANES = %w[deterministic live_shadow].freeze
+    EXECUTION_ISOLATION_MODES = %w[run_scoped].freeze
     REQUIRED_WEIGHT_KEYS = %w[correctness contract_adherence repair_efficiency reuse].freeze
 
     def self.validate!(raw_pack, source_path: nil)
       pack = _normalize_pack(raw_pack)
       _validate_core_fields!(pack, source_path: source_path)
+      execution = _validate_execution!(pack.fetch("execution"), source_path: source_path)
       _validate_replay!(pack.fetch("replay"), source_path: source_path)
       _validate_scoring_profile!(pack.fetch("scoring_profile"), source_path: source_path)
+      _validate_live_shadow_scenario!(pack, execution: execution, source_path: source_path)
       _validate_oracles!(pack.fetch("oracles"), source_path: source_path)
       pack
     end
@@ -27,11 +31,33 @@ class Agent
       end
 
       def _validate_core_fields!(pack, source_path:)
-        _assert_required_fields!(pack, %w[version id class scoring_profile replay oracles], source_path: source_path)
+        _assert_required_fields!(pack, %w[version id class execution scoring_profile replay oracles], source_path: source_path)
         _assert(pack["version"].to_i == SCHEMA_VERSION, "version must equal #{SCHEMA_VERSION}", source_path: source_path)
         _fetch_non_empty_string!(pack, "id", source_path: source_path)
         _assert(SCENARIO_CLASSES.include?(pack["class"].to_s), "class must be one of: #{SCENARIO_CLASSES.join(", ")}",
                 source_path: source_path)
+      end
+
+      def _validate_execution!(execution, source_path:)
+        execution_hash = _fetch_hash!(execution, "execution", source_path: source_path)
+        lane = _fetch_non_empty_string!(execution_hash, "lane", source_path: source_path)
+        isolation = _fetch_non_empty_string!(execution_hash, "isolation", source_path: source_path)
+
+        _assert(
+          EXECUTION_LANES.include?(lane),
+          "execution.lane must be one of: #{EXECUTION_LANES.join(", ")}",
+          source_path: source_path
+        )
+        _assert(
+          EXECUTION_ISOLATION_MODES.include?(isolation),
+          "execution.isolation must be one of: #{EXECUTION_ISOLATION_MODES.join(", ")}",
+          source_path: source_path
+        )
+
+        {
+          "lane" => lane,
+          "isolation" => isolation
+        }
       end
 
       def _validate_replay!(replay, source_path:)
@@ -60,6 +86,43 @@ class Agent
         _assert(oracles.is_a?(Array) && !oracles.empty?, "oracles must be a non-empty Array", source_path: source_path)
         ids = oracles.map { |oracle| _validate_oracle!(oracle, source_path: source_path) }
         _assert(ids.uniq.length == ids.length, "oracle ids must be unique", source_path: source_path)
+      end
+
+      def _validate_live_shadow_scenario!(pack, execution:, source_path:)
+        return unless execution["lane"] == "live_shadow"
+
+        scenario = _fetch_hash!(pack["scenario"] || pack[:scenario], "scenario", source_path: source_path)
+        _fetch_non_empty_string!(scenario, "role", source_path: source_path)
+        script = scenario["script"] || scenario[:script]
+        _assert(script.is_a?(Array) && !script.empty?, "scenario.script must be a non-empty Array", source_path: source_path)
+        _validate_live_shadow_script!(script, source_path: source_path)
+      end
+
+      def _validate_live_shadow_script!(script, source_path:)
+        script.each_with_index do |step, index|
+          _validate_live_shadow_script_step!(step: step, index: index, source_path: source_path)
+        end
+      end
+
+      def _validate_live_shadow_script_step!(step:, index:, source_path:)
+        step_hash = _fetch_hash!(step, "scenario.script[#{index}]", source_path: source_path)
+        _fetch_non_empty_string!(step_hash, "call", source_path: source_path)
+        _validate_live_shadow_script_step_kwargs!(step_hash, index: index, source_path: source_path)
+        _validate_live_shadow_script_step_args!(step_hash, index: index, source_path: source_path)
+      end
+
+      def _validate_live_shadow_script_step_kwargs!(step_hash, index:, source_path:)
+        kwargs = step_hash["kwargs"] || step_hash[:kwargs]
+        return if kwargs.nil?
+
+        _assert(kwargs.is_a?(Hash), "scenario.script[#{index}].kwargs must be a Hash", source_path: source_path)
+      end
+
+      def _validate_live_shadow_script_step_args!(step_hash, index:, source_path:)
+        args = step_hash["args"] || step_hash[:args]
+        return if args.nil?
+
+        _assert(args.is_a?(Array), "scenario.script[#{index}].args must be an Array", source_path: source_path)
       end
 
       def _error_message(message, source_path:)

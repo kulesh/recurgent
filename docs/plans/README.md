@@ -46,4 +46,5 @@ Use [`docs/plans/TEMPLATE.md`](TEMPLATE.md) for new implementation plans.
 - [`awareness-substrate-authority-boundary-implementation-plan.md`](awareness-substrate-authority-boundary-implementation-plan.md) - bounded awareness rollout with explicit observe/propose/enact authority gates
 - [`response-content-continuity-implementation-plan.md`](response-content-continuity-implementation-plan.md) - bounded response-content store, history content references, and follow-up retrieval reliability
 - [`simulation-preparedness-implementation-plan.md`](simulation-preparedness-implementation-plan.md) - readiness-gated simulation rollout (`G0`-`G5`) with replay, schema, baseline-diff, and CI enforcement
+- [`live-shadow-simulation-dual-lane-implementation-plan.md`](live-shadow-simulation-dual-lane-implementation-plan.md) - ADR 0028 dual-lane rollout adding run-scoped live-shadow simulation, lane-aware evidence, and advisory promotion criteria
 - [`TEMPLATE.md`](TEMPLATE.md) - canonical implementation-plan structure with measurable outcome contracts

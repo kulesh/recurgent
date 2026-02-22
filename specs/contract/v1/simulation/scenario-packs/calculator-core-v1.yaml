@@ -2,6 +2,9 @@ version: 1
 id: calculator-core-v1
 class: class_1
 description: Deterministic core arithmetic/composition pack for calculator readiness gating.
+execution:
+  lane: deterministic
+  isolation: run_scoped
 scoring_profile:
   id: calculator_core_v1
   weights:

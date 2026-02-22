@@ -164,7 +164,7 @@ class Agent
         Array(keys).map(&:to_s).reject(&:empty?).min
       end
       method_profiles.merge!(_role_profile_cached_observations(kind: :shared_state_slot))
-      current_keys = _toolstore_state_keys_from_code(code.to_s).map(&:to_s).reject(&:empty?).uniq
+      current_keys = _toolstore_state_write_keys_from_code(code.to_s).map(&:to_s).reject(&:empty?).uniq
       current_primary = current_keys.min
       if current_primary
         method_profiles[method_name.to_s] = current_primary

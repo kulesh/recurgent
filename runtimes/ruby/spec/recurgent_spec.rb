@@ -282,6 +282,77 @@ RSpec.describe Agent do
       end
     end
 
+    it "ignores commented context assignments when enforcing shared-state continuity" do
+      Dir.mktmpdir("recurgent-role-profile-comments-") do |tmpdir|
+        Agent.configure_runtime(
+          toolstore_root: tmpdir,
+          role_profile_shadow_mode_enabled: true,
+          role_profile_enforcement_enabled: true
+        )
+        profile = {
+          role: "calculator",
+          version: 1,
+          constraints: {
+            accumulator_slot: {
+              kind: :shared_state_slot,
+              scope: :all_methods,
+              mode: :coordination
+            }
+          }
+        }
+        g = described_class.new(
+          "calculator",
+          role_profile: profile,
+          guardrail_recovery_budget: 1
+        )
+        g.memory = 1
+
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(
+            code: <<~RUBY
+              # Carry forward setter continuity (comment only):
+              # context[:memory] = context.fetch(:memory, 0) + args[0]
+              context[:value] = context.fetch(:value, 0) + args[0]
+              result = context[:value]
+            RUBY
+          ),
+          program_payload(code: "context[:memory] = context.fetch(:memory, 0) + args[0]; result = context[:memory]")
+        )
+
+        expect_ok_outcome(g.add(2), value: 3)
+        expect(mock_provider).to have_received(:generate_program).twice
+      end
+    end
+
+    it "does not fail shared-state continuity for all-methods members that only read context" do
+      Agent.configure_runtime(
+        toolstore_root: runtime_toolstore_root,
+        role_profile_shadow_mode_enabled: true,
+        role_profile_enforcement_enabled: true
+      )
+      profile = {
+        role: "calculator",
+        version: 1,
+        constraints: {
+          accumulator_slot: {
+            kind: :shared_state_slot,
+            mode: :coordination
+          }
+        }
+      }
+      g = described_class.new("calculator", role_profile: profile, guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: "context[:memory] = (context[:memory] || 0) + args[0].to_f; result = context[:memory]"),
+        program_payload(code: "result = { calls: (context[:conversation_history] || []).length, current: context[:memory] }")
+      )
+
+      expect_ok_outcome(g.add(2), value: 2.0)
+      history = g.history
+      expect(history).to be_ok
+      expect(history.value).to include(calls: be >= 1, current: 2.0)
+      expect(mock_provider).to have_received(:generate_program).twice
+    end
+
     it "persists proposal artifacts without applying runtime mutations" do
       g = described_class.new("planner")
       proposal = g.propose(
@@ -1253,6 +1324,28 @@ RSpec.describe Agent do
       end
     end
 
+    it "repairs over-specialized persisted artifacts that ignore invocation inputs" do
+      Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        seeder = described_class.new("calculator")
+        allow(mock_provider).to receive(:generate_program).and_return(
+          program_payload(code: "input_value = 32.0; result = Math.sqrt(input_value)"),
+          program_payload(code: "input_value = args.first.to_f; result = Math.sqrt(input_value)")
+        )
+
+        expect_ok_outcome(seeder.sqrt(32), value: Math.sqrt(32))
+
+        Agent.configure_runtime(toolstore_root: tmpdir)
+        warm = described_class.new("calculator")
+        expect_ok_outcome(warm.sqrt(144), value: Math.sqrt(144))
+        expect(mock_provider).to have_received(:generate_program).twice
+
+        artifact_path = warm.send(:_toolstore_artifact_path, role_name: "calculator", method_name: "sqrt")
+        artifact = JSON.parse(File.read(artifact_path))
+        expect(artifact["code"]).to include("args.first")
+      end
+    end
+
     it "enforces durable-over-probation artifact selection when promotion enforcement is enabled" do
       Dir.mktmpdir("recurgent-artifacts-") do |tmpdir|
         Agent.configure_runtime(toolstore_root: tmpdir, promotion_enforcement_enabled: false)
@@ -1886,6 +1979,18 @@ RSpec.describe Agent do
       expect(worker_supervisor).not_to have_received(:execute)
     end
 
+    it "supports rss parsing requires in sandbox without explicit dependency manifests" do
+      g = described_class.new("assistant")
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(code: 'require "rss"; result = RSS::VERSION')
+      )
+
+      outcome = g.ask("parse rss")
+      expect(outcome).to be_ok
+      expect(outcome.value).to be_a(String)
+      expect(outcome.value).not_to be_empty
+    end
+
     it "returns timeout outcome when worker times out" do
       g = described_class.new("calculator")
       allow(g).to receive(:_environment_manager).and_return(env_manager)
@@ -1978,6 +2083,48 @@ RSpec.describe Agent do
                      .and(including("unsupported_capability"))
       )
       g.discuss
+    end
+  end
+
+  describe "conversational refusal repair" do
+    it "repairs unnecessary capability refusals for non-fresh knowledge prompts" do
+      g = described_class.new("assistant", guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            result = Agent::Outcome.error(
+              error_type: "capability_unavailable",
+              error_message: "no web search available",
+              retriable: false
+            )
+          RUBY
+        ),
+        program_payload(code: 'result = Agent::Outcome.ok("Use fish stock, crab, cuttlefish, and tamarind.")')
+      )
+
+      outcome = g.ask("What's a good recipe for Jaffna Kool")
+      expect(outcome).to be_ok
+      expect(outcome.value).to include("fish stock")
+      expect(mock_provider).to have_received(:generate_program).twice
+    end
+
+    it "allows capability refusal for freshness-bounded prompts" do
+      g = described_class.new("assistant", guardrail_recovery_budget: 1)
+      allow(mock_provider).to receive(:generate_program).and_return(
+        program_payload(
+          code: <<~RUBY
+            result = Agent::Outcome.error(
+              error_type: "capability_unavailable",
+              error_message: "live theater API unavailable",
+              retriable: false
+            )
+          RUBY
+        )
+      )
+
+      outcome = g.ask("What action adventure movies are playing in theaters today?")
+      expect_error_outcome(outcome, type: "capability_unavailable", retriable: false)
+      expect(mock_provider).to have_received(:generate_program).once
     end
   end
 

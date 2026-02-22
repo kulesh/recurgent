@@ -91,7 +91,7 @@ class Agent
       retry_counters:
     )
       attempts = _fresh_attempt_counters(retry_counters)
-      _validate_generated_code_policy!(method_name, state.code)
+      _validate_generated_code_policy!(method_name, state.code, args: args, kwargs: kwargs, program_source: state.program_source)
       state.attempt_stage = "validated"
       outcome = _execute_generated_program(
         method_name,

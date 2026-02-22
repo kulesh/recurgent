@@ -108,4 +108,80 @@ RSpec.describe Agent::SimulationCalculatorOracle do
     expect(observation.fetch("passed")).to eq(true)
     expect(observation.fetch("status")).to eq("ok")
   end
+
+  it "evaluates live outcome value oracle against scripted step payloads" do
+    observation = oracle.evaluate(
+      {
+        "id" => "live-value",
+        "kind" => "live_outcome_value",
+        "input" => {
+          "step" => "multiply",
+          "value_path" => ""
+        },
+        "expect" => {
+          "value" => 12.0,
+          "tolerance" => 0.0
+        }
+      },
+      context: {
+        "step_results" => [
+          {
+            "step_id" => "multiply",
+            "step_index" => 1,
+            "call" => "multiply",
+            "outcome" => {
+              "status" => "ok",
+              "value" => 12.0
+            }
+          }
+        ]
+      }
+    )
+
+    expect(observation.fetch("passed")).to eq(true)
+    expect(observation.fetch("status")).to eq("ok")
+  end
+
+  it "evaluates live continuity content-ref resolution using step trace metadata" do
+    observation = oracle.evaluate(
+      {
+        "id" => "live-continuity",
+        "kind" => "live_continuity_ref_resolution",
+        "input" => {
+          "source_step" => "initial_answer",
+          "follow_up_step" => "format_followup"
+        },
+        "expect" => {
+          "requires_content_ref" => true
+        }
+      },
+      context: {
+        "step_results" => [
+          {
+            "step_id" => "initial_answer",
+            "trace_entry" => {
+              "content_store_write_ref" => "content:abc"
+            },
+            "outcome" => {
+              "status" => "ok",
+              "value" => { "answer" => "..." }
+            }
+          },
+          {
+            "step_id" => "format_followup",
+            "trace_entry" => {
+              "content_store_read_refs" => ["content:abc"]
+            },
+            "outcome" => {
+              "status" => "ok",
+              "value" => "# formatted"
+            }
+          }
+        ]
+      }
+    )
+
+    expect(observation.fetch("passed")).to eq(true)
+    expect(observation.fetch("status")).to eq("ok")
+  end
 end

@@ -217,7 +217,7 @@ class Agent
     end
 
     def _artifact_state_keys_from_code(code)
-      code.scan(/context\[(?::|["'])([a-zA-Z0-9_]+)["']?\]/).flatten.uniq
+      _toolstore_state_write_keys_from_code(code.to_s)
     end
 
     def _artifact_provenance_violation?(error_type:, error_message:)

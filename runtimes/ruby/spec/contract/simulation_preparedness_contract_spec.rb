@@ -48,7 +48,7 @@ RSpec.describe "simulation preparedness contract package" do
 
     expect(schema.fetch("required")).to include(
       "schema_version", "run_id", "recorded_at", "commit_sha", "scenario_pack_id", "scenario_class", "seed", "session_id",
-      "mode", "gates"
+      "execution_lane", "mode", "usage_telemetry", "gates"
     )
 
     gate_props = schema.dig("properties", "gates", "properties")
@@ -61,5 +61,13 @@ RSpec.describe "simulation preparedness contract package" do
 
     mode_enum = schema.dig("properties", "mode", "enum")
     expect(mode_enum).to eq(%w[fixture replay live])
+
+    lane_enum = schema.dig("properties", "execution_lane", "enum")
+    expect(lane_enum).to eq(%w[deterministic live_shadow])
+
+    telemetry_required = schema.dig("properties", "usage_telemetry", "required")
+    expect(telemetry_required).to eq(
+      %w[provider model input_tokens output_tokens total_tokens estimated_cost_usd availability]
+    )
   end
 end

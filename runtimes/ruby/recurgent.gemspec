@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "anthropic", "~> 1.0"
   spec.add_dependency "base64" # required by anthropic on Ruby >= 3.4
+  spec.add_dependency "rss" # stdlib gem; required for generated RSS parsing code on Ruby >= 3.4
 
   # Optional: gem "openai" for OpenAI model support (gpt-*, o1-*, o3-*, o4-*, chatgpt-*)
   # Install with: gem install openai

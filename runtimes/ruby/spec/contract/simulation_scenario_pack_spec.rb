@@ -15,17 +15,28 @@ RSpec.describe Agent::SimulationScenarioPack do
     class_1_ids = payloads.select { |payload| payload.fetch("class") == "class_1" }.map { |payload| payload.fetch("id") }
     class_2_ids = payloads.select { |payload| payload.fetch("class") == "class_2_plus" }.map { |payload| payload.fetch("id") }
 
-    expect(class_1_ids).to include("calculator-core-v1", "calculator-edge-v1")
-    expect(class_2_ids).to include("assistant-continuity-v1", "debate-orchestration-v1")
-    expect(ids).to include("calculator-core-v1", "calculator-edge-v1", "assistant-continuity-v1", "debate-orchestration-v1")
+    expect(class_1_ids).to include("calculator-core-v1", "calculator-edge-v1", "calculator-live-shadow-v1")
+    expect(class_2_ids).to include("assistant-continuity-v1", "debate-orchestration-v1", "assistant-live-shadow-v1")
+    expect(ids).to include(
+      "calculator-core-v1",
+      "calculator-edge-v1",
+      "calculator-live-shadow-v1",
+      "assistant-continuity-v1",
+      "assistant-live-shadow-v1",
+      "debate-orchestration-v1"
+    )
   end
 
   it "validates scoring profile and replay contract for each pack" do
     pack_paths.each do |path|
       payload = Agent::SimulationScenarioPack.load(path)
+      execution = payload.fetch("execution")
       replay = payload.fetch("replay")
       scoring = payload.fetch("scoring_profile")
 
+      expect(%w[deterministic live_shadow]).to include(execution.fetch("lane"))
+      expect(execution.fetch("isolation")).to eq("run_scoped")
+      expect(payload.fetch("scenario")).to be_a(Hash) if execution.fetch("lane") == "live_shadow"
       expect(%w[fixture replay live]).to include(replay.fetch("mode"))
       expect(replay.fetch("seeds")).to all(be_a(Integer))
       expect(replay.fetch("seeds").uniq).to eq(replay.fetch("seeds"))
