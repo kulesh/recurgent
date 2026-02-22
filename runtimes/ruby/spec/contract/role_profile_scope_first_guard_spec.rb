@@ -25,24 +25,24 @@ RSpec.describe "ADR 0024 scope-first role profile guard" do
          .select { |path| File.file?(path) }
   end
 
-  def methods_first_pattern?(line)
-    # A methods-first profile declares constraints keyed by method name or uses
-    # a top-level `methods:` list as the primary constraint organizer (the old shape).
-    # Scope-first uses `scope: all_methods` / `scope: explicit_methods` with an
-    # optional narrowing `methods:` list only inside `explicit_methods` scope.
+  def methods_first_terminology?(line)
+    # Terminology guard: catches the literal term "methods-first" or "methods_first"
+    # appearing in code, docs, or examples. This prevents reintroduction of the old
+    # schema *concept* in prose and naming (variable names, comments describing the
+    # old approach as current, doc examples teaching the old pattern).
     #
-    # Detect patterns that indicate methods-first schema usage:
-    #   1. A constraint hash with no `scope` key but a `methods` key at constraint level
-    #   2. A profile example where constraints are keyed by method name (e.g., `add:`, `multiply:`)
-    #      with `kind:` inside — the scope-first schema keys constraints by family name
-    #   3. Explicit string "methods-first" or "methods_first" used as a schema name/mode
-    return true if line.match?(/\bmethods[_-]first\b/i)
-
-    false
+    # Structural enforcement of the scope-first contract is handled separately by
+    # RoleProfile.normalize, which rejects invalid scope/methods combinations at
+    # the API level. See the "RoleProfile.normalize scope-first enforcement" group.
+    line.match?(/\bmethods[_-]first\b/i)
   end
 
-  describe "runtime code (lib/)" do
-    it "contains no methods-first role profile schema references" do
+  # Layer 1: Terminology guard.
+  # Prevents the "methods-first" term from reappearing in active code, tests,
+  # examples, contracts, or documentation (plan/ADR/report prose is allowlisted
+  # since it describes the removal decision itself).
+  describe "terminology guard: no methods-first references outside historical prose" do
+    it "runtime code (lib/) does not reference the methods-first term" do
       files = scan_files(ruby_lib, ["**/*.rb"])
       violations = []
 
@@ -50,17 +50,15 @@ RSpec.describe "ADR 0024 scope-first role profile guard" do
         File.readlines(path, chomp: true).each_with_index do |line, idx|
           next if line.match?(/^\s*#/) # skip comments
 
-          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_pattern?(line)
+          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_terminology?(line)
         end
       end
 
       expect(violations).to be_empty,
                             "Found methods-first role profile references in runtime code:\n#{violations.join("\n")}"
     end
-  end
 
-  describe "test code (spec/)" do
-    it "contains no methods-first role profile schema references" do
+    it "test code (spec/) does not reference the methods-first term" do
       files = scan_files(ruby_spec, ["**/*.rb"])
       violations = []
 
@@ -70,17 +68,15 @@ RSpec.describe "ADR 0024 scope-first role profile guard" do
           # Allow this guard spec itself to reference the term for detection purposes.
           next if Pathname(path).basename.to_s == "role_profile_scope_first_guard_spec.rb"
 
-          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_pattern?(line)
+          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_terminology?(line)
         end
       end
 
       expect(violations).to be_empty,
                             "Found methods-first role profile references in test code:\n#{violations.join("\n")}"
     end
-  end
 
-  describe "examples" do
-    it "contains no methods-first role profile schema references" do
+    it "examples do not reference the methods-first term" do
       files = scan_files(ruby_examples, ["**/*.rb"])
       violations = []
 
@@ -88,33 +84,29 @@ RSpec.describe "ADR 0024 scope-first role profile guard" do
         File.readlines(path, chomp: true).each_with_index do |line, idx|
           next if line.match?(/^\s*#/) # skip comments
 
-          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_pattern?(line)
+          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_terminology?(line)
         end
       end
 
       expect(violations).to be_empty,
                             "Found methods-first role profile references in examples:\n#{violations.join("\n")}"
     end
-  end
 
-  describe "contract specifications" do
-    it "contains no methods-first role profile schema references" do
+    it "contract specifications do not reference the methods-first term" do
       files = scan_files(specs_dir, ["**/*.yaml", "**/*.yml", "**/*.json", "**/*.md"])
       violations = []
 
       files.each do |path|
         File.readlines(path, chomp: true).each_with_index do |line, idx|
-          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_pattern?(line)
+          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_terminology?(line)
         end
       end
 
       expect(violations).to be_empty,
                             "Found methods-first role profile references in contract specs:\n#{violations.join("\n")}"
     end
-  end
 
-  describe "documentation (non-plan/ADR prose)" do
-    it "contains no methods-first role profile schema examples" do
+    it "documentation (excluding plan/ADR/report prose) does not reference the methods-first term" do
       files = scan_files(docs_dir, ["**/*.md", "**/*.yaml", "**/*.yml"])
 
       # Exclude plan/ADR/report prose that describes the removal decision itself.
@@ -126,7 +118,7 @@ RSpec.describe "ADR 0024 scope-first role profile guard" do
 
       files.each do |path|
         File.readlines(path, chomp: true).each_with_index do |line, idx|
-          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_pattern?(line)
+          violations << "#{Pathname(path).relative_path_from(repo_root)}:#{idx + 1}: #{line.strip}" if methods_first_terminology?(line)
         end
       end
 
@@ -135,6 +127,10 @@ RSpec.describe "ADR 0024 scope-first role profile guard" do
     end
   end
 
+  # Layer 2: Structural enforcement.
+  # RoleProfile.normalize is the runtime gate that rejects methods-first shapes.
+  # These tests verify the API contract: scope defaults to all_methods, methods
+  # lists are forbidden under all_methods scope, and required under explicit_methods.
   describe "RoleProfile.normalize scope-first enforcement" do
     it "rejects constraints with methods list under all_methods scope" do
       input = {
