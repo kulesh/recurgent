@@ -1,0 +1,76 @@
+version: 1
+simulation_preparedness:
+  gate_statuses:
+    - pass
+    - fail
+    - advisory
+    - not_applicable
+  gates:
+    G0:
+      name: contracted_scenarios
+      evaluator_owner: scenario_contract_validator
+      required_artifacts:
+        - scenario_pack_contract
+        - oracle_contract
+        - scoring_profile
+    G1:
+      name: replayability
+      evaluator_owner: replay_runner
+      required_artifacts:
+        - replay_manifest
+        - replay_result_vector
+        - replay_stability_metrics
+    G2:
+      name: score_consistency
+      evaluator_owner: deterministic_scorer
+      required_artifacts:
+        - score_vector
+        - score_components
+        - scorer_version
+    G3:
+      name: trace_integrity
+      evaluator_owner: schema_validator
+      required_artifacts:
+        - trace_log
+        - trace_schema_report
+    G4:
+      name: baseline_diffs
+      evaluator_owner: baseline_diff_engine
+      required_artifacts:
+        - baseline_snapshot
+        - baseline_diff_report
+    G5:
+      name: ci_operationalization
+      evaluator_owner: ci_gate_runner
+      required_artifacts:
+        - ci_gate_result
+        - nightly_trend_report
+  dependencies:
+    - prerequisite: G0
+      enables: G2
+      rationale: score consistency is meaningful only when scenario contracts/oracles are explicit
+    - prerequisite: G1
+      enables: G4
+      rationale: baseline diffs are actionable only when replay determinism is established
+  activation_policy:
+    class_1:
+      required_gates:
+        - G0
+        - G1
+        - G2
+        - G3
+        - G4
+        - G5
+      observation_window:
+        minimum_runs: 20
+        minimum_seeds: 5
+        minimum_sessions: 2
+        minimum_calendar_days: 3
+    class_2_plus:
+      policy: advisory_until_class_1_stable
+  run_ledger:
+    schema_ref: simulation-run-ledger.schema.json
+    required_gate_fields:
+      - status
+      - evaluator_owner
+      - required_artifacts

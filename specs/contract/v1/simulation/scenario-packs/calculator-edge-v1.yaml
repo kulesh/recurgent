@@ -1,0 +1,33 @@
+version: 1
+id: calculator-edge-v1
+class: class_1
+description: Deterministic edge/error pack for calculator readiness gating.
+scoring_profile:
+  id: calculator_edge_v1
+  weights:
+    correctness: 0.7
+    contract_adherence: 0.15
+    repair_efficiency: 0.1
+    reuse: 0.05
+replay:
+  mode: fixture
+  seeds: [11, 19, 23, 31, 43, 59, 71, 97]
+oracles:
+  - id: sqrt_negative_reports_domain_error
+    kind: calculator_error_case
+    input:
+      expression: sqrt(-9)
+    expect:
+      error_type: domain_error
+  - id: divide_by_zero_reports_error
+    kind: calculator_error_case
+    input:
+      expression: 10 / 0
+    expect:
+      error_type: zero_division
+  - id: malformed_expression_reports_parse_error
+    kind: calculator_error_case
+    input:
+      expression: 2x + = 4
+    expect:
+      error_type: parse_error

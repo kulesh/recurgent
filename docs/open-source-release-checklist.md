@@ -59,6 +59,7 @@ Scope: repository-level launch readiness for Recurgent (Ruby runtime first, Lua 
 
 - [x] `mise exec -- bundle exec rspec` passes in [`runtimes/ruby`](../runtimes/ruby).
 - [x] `mise exec -- bundle exec rubocop` passes in [`runtimes/ruby`](../runtimes/ruby).
+- [ ] Class-1 simulation readiness CI (`G0`-`G5`) passes for current release commit ([`.github/workflows/simulation-readiness-ci.yml`](../.github/workflows/simulation-readiness-ci.yml)).
 - [x] Deterministic examples run successfully (especially `observability_demo.rb`).
 - [x] At least one manual smoke run validates tolerant failure handling for provider-invalid payload.
 - [x] Regression coverage exists for:

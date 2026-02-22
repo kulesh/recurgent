@@ -1,0 +1,11 @@
+=== Personal Assistant ===
+Model: claude-sonnet-4-5-20250929
+Type 'quit' or 'exit' to stop.
+
+> [non_serializable_result] context contains non-JSON-compatible values
+
+> [non_serializable_result] context contains non-JSON-compatible values
+
+> [non_serializable_result] context contains non-JSON-compatible values
+
+> 

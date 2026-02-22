@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "simulation-run-ledger.schema.json",
+  "title": "Simulation Run Ledger Entry (v1)",
+  "description": "Machine-readable evidence record for simulation readiness gate evaluation.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "recorded_at",
+    "commit_sha",
+    "scenario_pack_id",
+    "scenario_class",
+    "seed",
+    "session_id",
+    "mode",
+    "gates"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recorded_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "scenario_pack_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_class": {
+      "type": "string",
+      "enum": [
+        "class_1",
+        "class_2_plus"
+      ]
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "fixture",
+        "replay",
+        "live"
+      ]
+    },
+    "scorer_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "score_vector": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "gates": {
+      "type": "object",
+      "required": [
+        "G0",
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5"
+      ],
+      "properties": {
+        "G0": { "$ref": "#/$defs/gateResult" },
+        "G1": { "$ref": "#/$defs/gateResult" },
+        "G2": { "$ref": "#/$defs/gateResult" },
+        "G3": { "$ref": "#/$defs/gateResult" },
+        "G4": { "$ref": "#/$defs/gateResult" },
+        "G5": { "$ref": "#/$defs/gateResult" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "gateResult": {
+      "type": "object",
+      "required": [
+        "status",
+        "evaluator_owner",
+        "required_artifacts"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "advisory",
+            "not_applicable"
+          ]
+        },
+        "evaluator_owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_artifacts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "message": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "measured_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

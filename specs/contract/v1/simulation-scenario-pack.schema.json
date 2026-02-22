@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "simulation-scenario-pack.schema.json",
+  "title": "Simulation Scenario Pack (v1)",
+  "type": "object",
+  "required": [
+    "version",
+    "id",
+    "class",
+    "scoring_profile",
+    "replay",
+    "oracles"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "class": {
+      "type": "string",
+      "enum": [
+        "class_1",
+        "class_2_plus"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "scoring_profile": {
+      "type": "object",
+      "required": [
+        "id",
+        "weights"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weights": {
+          "type": "object",
+          "required": [
+            "correctness",
+            "contract_adherence",
+            "repair_efficiency",
+            "reuse"
+          ],
+          "properties": {
+            "correctness": { "type": "number", "minimum": 0 },
+            "contract_adherence": { "type": "number", "minimum": 0 },
+            "repair_efficiency": { "type": "number", "minimum": 0 },
+            "reuse": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "replay": {
+      "type": "object",
+      "required": [
+        "mode",
+        "seeds"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "fixture",
+            "replay",
+            "live"
+          ]
+        },
+        "seeds": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "oracles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "input",
+          "expect"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input": {
+            "type": "object"
+          },
+          "expect": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

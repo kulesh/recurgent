@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+require_relative "../lib/recurgent"
+
+options = {
+  mode: nil,
+  session_id: nil,
+  ledger_path: nil,
+  fixture_root: nil,
+  operational_mode: nil,
+  nightly_trend_report: nil,
+  seeds: nil
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bin/recurgent-sim --pack PATH [options]"
+  opts.on("--pack PATH", "Path to scenario-pack YAML") { |value| options[:pack] = value }
+  opts.on("--mode MODE", "fixture|replay|live") { |value| options[:mode] = value }
+  opts.on("--session-id ID", "Optional session identifier") { |value| options[:session_id] = value }
+  opts.on("--ledger-path PATH", "Override run-ledger output path") { |value| options[:ledger_path] = value }
+  opts.on("--fixture-root PATH", "Override fixture root path") { |value| options[:fixture_root] = value }
+  opts.on("--trace-log PATH", "Optional JSONL trace file for G3 schema validation") { |value| options[:trace_log] = value }
+  opts.on("--operational-mode MODE", "local|ci|nightly (drives G5 status)") { |value| options[:operational_mode] = value }
+  opts.on("--nightly-trend-report PATH", "Trend report path for nightly G5 evidence") do |value|
+    options[:nightly_trend_report] = value
+  end
+  opts.on("--seeds CSV", "Override seed list, e.g. 11,19,23") { |value| options[:seeds] = value }
+  opts.on("--help", "Show this help") do
+    puts opts
+    exit 0
+  end
+end
+
+parser.parse!(ARGV)
+if options[:pack].to_s.strip.empty?
+  warn "missing required --pack"
+  warn parser
+  exit 1
+end
+
+runner = Agent::SimulationRunner.new(
+  fixture_root: options[:fixture_root] || File.expand_path("../tmp/simulation/fixtures", __dir__),
+  ledger_path: options[:ledger_path] || File.expand_path("../tmp/simulation/run-ledger.jsonl", __dir__),
+  operational_mode: options[:operational_mode] || ENV.fetch("RECURGENT_SIM_OPERATIONAL_MODE", "local"),
+  nightly_trend_report_path: options[:nightly_trend_report] || ENV.fetch("RECURGENT_SIM_NIGHTLY_TREND_REPORT", "")
+)
+parsed_seeds = options[:seeds].to_s.split(",").map(&:strip).reject(&:empty?).map(&:to_i)
+result = runner.run_pack(
+  pack_path: options[:pack],
+  mode: options[:mode],
+  session_id: options[:session_id],
+  trace_log_path: options[:trace_log],
+  seeds: parsed_seeds.empty? ? nil : parsed_seeds
+)
+puts JSON.pretty_generate(result)
