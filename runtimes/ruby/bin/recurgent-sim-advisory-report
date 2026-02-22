@@ -1,0 +1,91 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+require "fileutils"
+require "time"
+require_relative "../lib/recurgent"
+
+options = {
+  ledger_path: File.expand_path("../tmp/simulation/nightly/run-ledger.jsonl", __dir__),
+  pack_ids: nil
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bin/recurgent-sim-advisory-report [options]"
+  opts.on("--ledger-path PATH", "Simulation ledger JSONL path") { |value| options[:ledger_path] = value }
+  opts.on("--pack-ids CSV", "Optional advisory pack ids filter") { |value| options[:pack_ids] = value }
+  opts.on("--write-json PATH", "Write advisory analysis JSON to path") { |value| options[:write_json] = value }
+  opts.on("--write-markdown PATH", "Write advisory status markdown to path") { |value| options[:write_markdown] = value }
+  opts.on("--help", "Show this help") do
+    puts opts
+    exit 0
+  end
+end
+
+parser.parse!(ARGV)
+
+pack_ids = options[:pack_ids] ? options[:pack_ids].split(",").map(&:strip).reject(&:empty?) : nil
+analysis = Agent::SimulationAdvisoryStatus.new(
+  ledger_path: options.fetch(:ledger_path),
+  pack_ids: pack_ids
+).analyze
+
+puts JSON.pretty_generate(analysis)
+
+if options[:write_json]
+  json_path = File.expand_path(options[:write_json])
+  FileUtils.mkdir_p(File.dirname(json_path))
+  File.write(json_path, JSON.pretty_generate(analysis))
+end
+
+if options[:write_markdown]
+  markdown_path = File.expand_path(options[:write_markdown])
+  FileUtils.mkdir_p(File.dirname(markdown_path))
+
+  markdown = +""
+  markdown << "# Simulation Advisory Status\n\n"
+  markdown << "- Generated at (UTC): #{analysis.fetch("generated_at")}\n"
+  markdown << "- Total replay runs: #{analysis.fetch("total_replay_runs")}\n"
+  markdown << "- Advisory packs analyzed: #{analysis.fetch("pack_count")}\n\n"
+
+  Array(analysis.fetch("pack_summaries")).each do |pack|
+    markdown << "## #{pack.fetch("pack_id")}\n\n"
+    markdown << "- Scenario class: `#{pack.fetch("scenario_class")}`\n"
+    markdown << "- Run count: #{pack.fetch("run_count")}\n"
+    markdown << "- Seed set: `#{pack.fetch("seed_set").join(",")}`\n"
+    markdown << "- Latest recorded_at: #{pack.fetch("latest_recorded_at")}\n"
+
+    trend = pack.fetch("score_trend")
+    markdown << "- Score trend: first=#{trend.fetch("first")}, latest=#{trend.fetch("latest")}, " \
+                "min=#{trend.fetch("min")}, max=#{trend.fetch("max")}, delta=#{trend.fetch("delta")}\n"
+
+    markdown << "- Latest gate snapshot:\n"
+    pack.fetch("latest_gate_statuses").keys.sort.each do |gate|
+      markdown << "  - #{gate}: #{pack.fetch("latest_gate_statuses").fetch(gate)}\n"
+    end
+
+    markdown << "- Top failure signatures:\n"
+    if pack.fetch("failure_signatures").empty?
+      markdown << "  - none\n"
+    else
+      pack.fetch("failure_signatures").first(5).each do |item|
+        markdown << "  - #{item.fetch("signature")}: #{item.fetch("count")}\n"
+      end
+    end
+
+    markdown << "\n"
+  end
+
+  markdown << "## Global Failure Signatures\n\n"
+  if analysis.fetch("global_failure_signatures").empty?
+    markdown << "- none\n"
+  else
+    analysis.fetch("global_failure_signatures").first(10).each do |item|
+      markdown << "- #{item.fetch("signature")}: #{item.fetch("count")}\n"
+    end
+  end
+
+  File.write(markdown_path, markdown)
+end

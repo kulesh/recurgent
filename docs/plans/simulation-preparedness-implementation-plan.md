@@ -419,11 +419,14 @@ Entry criteria:
 Implementation:
 
 1. Add advisory scenario packs under `specs/contract/v1/simulation/scenario-packs/` for:
-   - assistant continuity/source-follow-up,
-   - debate orchestration coherence.
+   - `assistant-continuity-v1` (continuity/source-follow-up + boundary/provenance checks),
+   - `debate-orchestration-v1` (orchestration coherence + boundary/provenance checks).
 2. Run advisory packs in nightly workflow only.
 3. Preserve non-gating behavior:
    - advisory failures must not fail PR merge gates.
+4. Generate advisory report with:
+   - `runtimes/ruby/bin/recurgent-sim-advisory-report`,
+   - output markdown path under nightly artifacts (for example `simulation-advisory-status-<YYYY-MM-DD>.md`).
 
 Advisory reporting format:
 

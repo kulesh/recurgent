@@ -1,0 +1,51 @@
+version: 1
+id: assistant-continuity-v1
+class: class_2_plus
+description: Advisory pack for assistant continuity and boundary/provenance behavior.
+scoring_profile:
+  id: assistant_continuity_v1
+  weights:
+    correctness: 0.5
+    contract_adherence: 0.2
+    repair_efficiency: 0.15
+    reuse: 0.15
+replay:
+  mode: fixture
+  seeds: [11, 19, 23, 31, 43, 59, 71, 97]
+oracles:
+  - id: followup_content_ref_resolution
+    kind: assistant_followup_case
+    input:
+      conversation_history:
+        - outcome_summary:
+            content_ref: content:abc123
+            content_kind: object
+      follow_up:
+        query: format that in markdown
+        resolved_content_ref: content:abc123
+    expect:
+      requires_content_ref: true
+  - id: external_data_provenance_envelope
+    kind: provenance_envelope_case
+    input:
+      success_payload:
+        provenance:
+          sources:
+            - uri: https://news.google.com/rss
+              fetched_at: "2026-02-22T00:00:00Z"
+              retrieval_tool: rss_news_fetcher
+              retrieval_mode: live
+    expect:
+      min_sources: 1
+      required_source_keys: [uri, fetched_at, retrieval_tool, retrieval_mode]
+      allowed_retrieval_modes: [live, cached, fixture, knowledge_base]
+  - id: unavailable_capability_reports_typed_error
+    kind: typed_error_boundary_case
+    input:
+      outcome:
+        status: error
+        error_type: capability_unavailable
+        retriable: false
+    expect:
+      allowed_error_types: [capability_unavailable, unsupported_capability]
+      require_non_retriable: true

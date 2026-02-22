@@ -5,16 +5,21 @@ require "strscan"
 class Agent
   # Agent::SimulationCalculatorOracle evaluates deterministic calculator oracles.
   class SimulationCalculatorOracle
+    ORACLE_HANDLERS = {
+      "calculator_expression" => :_evaluate_expression_oracle,
+      "calculator_error_case" => :_evaluate_error_oracle,
+      "assistant_followup_case" => :_evaluate_assistant_followup_oracle,
+      "provenance_envelope_case" => :_evaluate_provenance_envelope_oracle,
+      "typed_error_boundary_case" => :_evaluate_typed_error_boundary_oracle,
+      "debate_orchestration_case" => :_evaluate_debate_orchestration_oracle
+    }.freeze
+
     def evaluate(oracle)
       oracle_hash = oracle.transform_keys(&:to_s)
-      case oracle_hash.fetch("kind")
-      when "calculator_expression"
-        _evaluate_expression_oracle(oracle_hash)
-      when "calculator_error_case"
-        _evaluate_error_oracle(oracle_hash)
-      else
-        _error_observation("unsupported_oracle_kind", "unsupported oracle kind: #{oracle_hash["kind"]}")
-      end
+      handler = ORACLE_HANDLERS[oracle_hash.fetch("kind")]
+      return _error_observation("unsupported_oracle_kind", "unsupported oracle kind: #{oracle_hash["kind"]}") unless handler
+
+      send(handler, oracle_hash)
     end
 
     private
@@ -54,6 +59,152 @@ class Agent
           "message" => e.message
         }
       }
+    end
+
+    def _evaluate_assistant_followup_oracle(oracle)
+      input = oracle.fetch("input")
+      expect = oracle.fetch("expect")
+      followup_query, resolved_content_ref, history_refs = _assistant_followup_fields(input)
+      requires_content_ref = expect.fetch("requires_content_ref", true)
+      query_requires_ref = _assistant_query_requires_ref?(followup_query)
+      must_resolve_ref = requires_content_ref && query_requires_ref
+      has_resolution = _assistant_resolved_from_history?(resolved_content_ref, history_refs)
+
+      {
+        "status" => must_resolve_ref && !has_resolution ? "error" : "ok",
+        "passed" => !must_resolve_ref || has_resolution,
+        "details" => {
+          "query_requires_content_ref" => query_requires_ref,
+          "history_ref_count" => history_refs.length,
+          "resolved_content_ref" => resolved_content_ref,
+          "resolved_from_history" => has_resolution
+        }
+      }
+    rescue StandardError => e
+      _error_observation("assistant_followup_oracle_error", e.message)
+    end
+
+    def _evaluate_provenance_envelope_oracle(oracle)
+      input = oracle.fetch("input")
+      expect = oracle.fetch("expect")
+      required_keys = Array(expect.fetch("required_source_keys", %w[uri fetched_at retrieval_tool retrieval_mode]))
+      allowed_modes = Array(expect.fetch("allowed_retrieval_modes", %w[live cached fixture knowledge_base]))
+      min_sources = expect.fetch("min_sources", 1).to_i
+
+      sources = Array(input.dig("success_payload", "provenance", "sources"))
+      missing_key_count, invalid_mode_count = _provenance_source_violations(
+        sources: sources,
+        required_keys: required_keys,
+        allowed_modes: allowed_modes
+      )
+
+      passed = sources.length >= min_sources && missing_key_count.zero? && invalid_mode_count.zero?
+      {
+        "status" => passed ? "ok" : "error",
+        "passed" => passed,
+        "details" => {
+          "source_count" => sources.length,
+          "min_sources" => min_sources,
+          "missing_key_count" => missing_key_count,
+          "invalid_mode_count" => invalid_mode_count
+        }
+      }
+    rescue StandardError => e
+      _error_observation("provenance_oracle_error", e.message)
+    end
+
+    def _evaluate_typed_error_boundary_oracle(oracle)
+      input = oracle.fetch("input")
+      expect = oracle.fetch("expect")
+
+      allowed_error_types = Array(expect.fetch("allowed_error_types", []))
+      require_non_retriable = expect.fetch("require_non_retriable", false)
+
+      outcome = input.fetch("outcome")
+      status = outcome.fetch("status", "").to_s
+      error_type = outcome.fetch("error_type", "").to_s
+      retriable = outcome.fetch("retriable", false) == true
+
+      passed = status == "error" &&
+               allowed_error_types.include?(error_type) &&
+               (!require_non_retriable || retriable == false)
+
+      {
+        "status" => passed ? "ok" : "error",
+        "passed" => passed,
+        "details" => {
+          "status" => status,
+          "error_type" => error_type,
+          "retriable" => retriable,
+          "allowed_error_types" => allowed_error_types
+        }
+      }
+    rescue StandardError => e
+      _error_observation("typed_error_boundary_oracle_error", e.message)
+    end
+
+    def _evaluate_debate_orchestration_oracle(oracle)
+      input = oracle.fetch("input")
+      expect = oracle.fetch("expect")
+
+      contributions = Array(input.fetch("contributions", []))
+      panelists, rounds = _debate_panelists_and_rounds(contributions)
+      min_panelists = expect.fetch("min_panelists", 3).to_i
+      min_rounds = expect.fetch("min_rounds", 2).to_i
+      require_final_synthesis = expect.fetch("require_final_synthesis", true)
+      final_synthesis_present = input.dig("moderation", "final_synthesis_present") == true
+
+      passed = panelists.length >= min_panelists &&
+               rounds.length >= min_rounds &&
+               (!require_final_synthesis || final_synthesis_present)
+
+      {
+        "status" => passed ? "ok" : "error",
+        "passed" => passed,
+        "details" => {
+          "panelist_count" => panelists.length,
+          "round_count" => rounds.length,
+          "final_synthesis_present" => final_synthesis_present
+        }
+      }
+    rescue StandardError => e
+      _error_observation("debate_orchestration_oracle_error", e.message)
+    end
+
+    def _assistant_followup_fields(input)
+      query = input.dig("follow_up", "query").to_s
+      resolved_content_ref = input.dig("follow_up", "resolved_content_ref").to_s
+      history_refs = Array(input.fetch("conversation_history", [])).map do |record|
+        record.dig("outcome_summary", "content_ref").to_s
+      end.reject(&:empty?)
+      [query, resolved_content_ref, history_refs]
+    end
+
+    def _assistant_query_requires_ref?(followup_query)
+      followup_query.match?(/\b(that|it|previous|format|summarize)\b/i)
+    end
+
+    def _assistant_resolved_from_history?(resolved_content_ref, history_refs)
+      !resolved_content_ref.empty? && history_refs.include?(resolved_content_ref)
+    end
+
+    def _provenance_source_violations(sources:, required_keys:, allowed_modes:)
+      missing_key_count = 0
+      invalid_mode_count = 0
+
+      sources.each do |source|
+        source_hash = source.transform_keys(&:to_s)
+        missing_key_count += required_keys.count { |key| source_hash.fetch(key.to_s, "").to_s.empty? }
+        invalid_mode_count += 1 unless allowed_modes.include?(source_hash.fetch("retrieval_mode", "").to_s)
+      end
+
+      [missing_key_count, invalid_mode_count]
+    end
+
+    def _debate_panelists_and_rounds(contributions)
+      panelists = contributions.map { |item| item.fetch("panelist", "").to_s }.reject(&:empty?).uniq
+      rounds = contributions.map { |item| item.fetch("round", 0).to_i }.uniq
+      [panelists, rounds]
     end
 
     def _evaluate_expression(expression)
