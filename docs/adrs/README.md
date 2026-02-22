@@ -43,6 +43,7 @@ Use [`docs/adrs/TEMPLATE.md`](TEMPLATE.md) for new ADRs.
 - [`0025-awareness-substrate-and-authority-boundary.md`](0025-awareness-substrate-and-authority-boundary.md)
 - [`0026-response-content-continuity-substrate.md`](0026-response-content-continuity-substrate.md)
 - [`0027-simulation-preparedness-and-readiness-gates.md`](0027-simulation-preparedness-and-readiness-gates.md)
+- [`0028-live-shadow-simulation-and-dual-lane-evidence.md`](0028-live-shadow-simulation-and-dual-lane-evidence.md)
 - [`TEMPLATE.md`](TEMPLATE.md)
 
 ## Status Values

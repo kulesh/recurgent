@@ -33,7 +33,7 @@ class Agent
       !_outcome_value_has_external_provenance?(outcome.value)
     end
 
-    def _validate_generated_code_policy!(_method_name, code)
+    def _validate_generated_code_policy!(_method_name, code, args: nil, kwargs: nil, program_source: nil)
       source = code.to_s
       if source.match?(/\.\s*define_singleton_method\s*\(/)
         raise ToolRegistryViolationError,
@@ -46,6 +46,12 @@ class Agent
               "(not |t| with t[:name])."
       end
 
+      if _persisted_artifact_literalized_inputs?(source, args: args, kwargs: kwargs, program_source: program_source)
+        raise ToolRegistryViolationError,
+              "Persisted artifact ignored invocation inputs (`args`/`kwargs`) and became over-specialized; " \
+              "parameterize trigger-specific values through inputs."
+      end
+
       return unless _hardcoded_external_fallback_success?(source)
 
       raise ToolRegistryViolationError,
@@ -53,8 +59,19 @@ class Agent
             "emit low_utility/unsupported_capability instead."
     end
 
-    def _validate_generated_outcome_policy!(_method_name, code, outcome)
+    def _validate_generated_outcome_policy!(method_name, code, outcome, args: nil, kwargs: nil)
       source = code.to_s
+      if _unnecessary_capability_refusal?(
+        method_name: method_name,
+        outcome: outcome,
+        args: args,
+        kwargs: kwargs
+      )
+        raise ToolRegistryViolationError,
+              "Capability-boundary refusal was unnecessary for a non-fresh knowledge query; " \
+              "provide best-effort answer instead of `capability_unavailable`."
+      end
+
       return unless _missing_external_provenance_success?(source, outcome)
 
       raise ToolRegistryViolationError,
@@ -115,6 +132,72 @@ class Agent
 
     def _source_without_ruby_comments(source)
       source.each_line.map { |line| line.sub(/#.*$/, "") }.join("\n")
+    end
+
+    def _persisted_artifact_literalized_inputs?(source, args:, kwargs:, program_source:)
+      return false unless program_source.to_s == "persisted"
+      return false if Array(args).empty? && (kwargs.nil? || kwargs.empty?)
+
+      normalized_source = _source_without_ruby_comments(source)
+      return false if normalized_source.match?(/\bargs\b|\bkwargs\b/)
+
+      _literalized_input_assignment?(normalized_source)
+    end
+
+    def _literalized_input_assignment?(normalized_source)
+      normalized_source.match?(
+        /
+          \b(?:input|arg|query|url|uri|value|number|amount|text|prompt|equation)[a-zA-Z0-9_]*\s*=\s*
+          (?:
+            ["'][^"']+["']|
+            -?\d+(?:\.\d+)?
+          )
+        /ix
+      )
+    end
+
+    def _unnecessary_capability_refusal?(method_name:, outcome:, args:, kwargs:)
+      return false unless _capability_refusal_outcome?(outcome)
+      return false unless DYNAMIC_DISPATCH_METHODS.include?(method_name.to_s)
+
+      query = _query_from_invocation(args: args, kwargs: kwargs)
+      return false if query.empty?
+      return false if _query_requires_capability_boundary_refusal?(query)
+
+      true
+    end
+
+    def _capability_refusal_outcome?(outcome)
+      return false unless outcome.is_a?(Outcome) && outcome.error?
+
+      %w[capability_unavailable unsupported_capability].include?(outcome.error_type.to_s)
+    end
+
+    def _query_from_invocation(args:, kwargs:)
+      direct = Array(args).first.to_s.strip
+      return direct unless direct.empty?
+
+      kw = kwargs || {}
+      (kw[:query] || kw["query"] || kw[:prompt] || kw["prompt"]).to_s.strip
+    end
+
+    def _query_requires_live_data?(query)
+      normalized = query.to_s.downcase
+      return true if normalized.match?(/\b(today|now|current|latest|breaking|live|real-time|realtime)\b/)
+      return true if normalized.match?(/\b(in theaters|showtimes?|stock|price|scores?|weather|traffic)\b/)
+      return true if normalized.match?(/\b(top news|google news|yahoo news|ny\s*times|nyt)\b/)
+
+      false
+    end
+
+    def _query_requires_external_action?(query)
+      query.to_s.downcase.match?(
+        /\b(send|email|text|sms|call|book|reserve|order|purchase|buy|pay|transfer|upload|delete|update account)\b/
+      )
+    end
+
+    def _query_requires_capability_boundary_refusal?(query)
+      _query_requires_live_data?(query) || _query_requires_external_action?(query)
     end
   end
 end

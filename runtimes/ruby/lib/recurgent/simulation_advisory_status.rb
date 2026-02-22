@@ -21,6 +21,7 @@ class Agent
         "generated_at" => Time.now.utc.iso8601,
         "pack_count" => summaries.length,
         "total_replay_runs" => replay_entries.length,
+        "lane_summaries" => _lane_summaries(replay_entries),
         "pack_summaries" => summaries,
         "global_failure_signatures" => _global_failure_signatures(summaries)
       }
@@ -36,12 +37,25 @@ class Agent
         "pack_id" => pack_id,
         "scenario_class" => latest.fetch("scenario_class", "class_2_plus"),
         "run_count" => ordered.length,
+        "execution_lanes" => ordered.map { |entry| entry.fetch("execution_lane", "deterministic") }.uniq.sort,
         "seed_set" => _seed_set(ordered),
         "latest_recorded_at" => latest["recorded_at"],
         "latest_gate_statuses" => _gate_statuses(latest),
         "score_trend" => _score_trend(ordered),
         "failure_signatures" => _failure_signatures(ordered)
       }
+    end
+
+    def _lane_summaries(entries)
+      grouped = entries.group_by { |entry| entry.fetch("execution_lane", "deterministic") }
+      grouped.keys.sort.map do |lane|
+        lane_entries = grouped.fetch(lane)
+        {
+          "execution_lane" => lane,
+          "run_count" => lane_entries.length,
+          "pack_count" => lane_entries.map { |entry| entry.fetch("scenario_pack_id") }.uniq.length
+        }
+      end
     end
 
     def _seed_set(entries)

@@ -29,6 +29,9 @@ RSpec.describe Agent::SimulationAdvisoryStatus do
     analysis = described_class.new(ledger_path: ledger_path).analyze
     expect(analysis.fetch("pack_count")).to eq(2)
     expect(analysis.fetch("total_replay_runs")).to eq(3)
+    expect(analysis.fetch("lane_summaries")).to include(
+      hash_including("execution_lane" => "deterministic", "run_count" => 3, "pack_count" => 2)
+    )
 
     assistant = analysis.fetch("pack_summaries").find { |item| item.fetch("pack_id") == "assistant-continuity-v1" }
     expect(assistant.fetch("run_count")).to eq(2)
@@ -45,6 +48,7 @@ RSpec.describe Agent::SimulationAdvisoryStatus do
       "recorded_at" => recorded_at,
       "scenario_pack_id" => pack_id,
       "scenario_class" => "class_2_plus",
+      "execution_lane" => "deterministic",
       "mode" => "replay",
       "score_vector" => { "overall" => score },
       "metrics" => {

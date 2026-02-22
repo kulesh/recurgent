@@ -99,7 +99,7 @@ class Agent
 
     def _execute_generated_program(name, code, args, kwargs, normalized_dependencies:, environment_info:, state:)
       _print_generated_code(name, code) if @verbose
-      _validate_generated_code_policy!(name, code)
+      _validate_generated_code_policy!(name, code, args: args, kwargs: kwargs, program_source: state.program_source)
 
       outcome =
         if _worker_execution_required?(normalized_dependencies)
@@ -123,7 +123,7 @@ class Agent
           Outcome.coerce(result, tool_role: @role, method_name: name)
         end
 
-      _validate_generated_outcome_policy!(name, code, outcome)
+      _validate_generated_outcome_policy!(name, code, outcome, args: args, kwargs: kwargs)
       validated = _validate_delegated_outcome_contract(
         outcome: outcome,
         method_name: name,

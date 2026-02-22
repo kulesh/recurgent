@@ -7,6 +7,7 @@
     "version",
     "id",
     "class",
+    "execution",
     "scoring_profile",
     "replay",
     "oracles"
@@ -29,6 +30,29 @@
     },
     "description": {
       "type": "string"
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "lane",
+        "isolation"
+      ],
+      "properties": {
+        "lane": {
+          "type": "string",
+          "enum": [
+            "deterministic",
+            "live_shadow"
+          ]
+        },
+        "isolation": {
+          "type": "string",
+          "enum": [
+            "run_scoped"
+          ]
+        }
+      },
+      "additionalProperties": true
     },
     "scoring_profile": {
       "type": "object",
@@ -84,6 +108,47 @@
       },
       "additionalProperties": true
     },
+    "scenario": {
+      "type": "object",
+      "required": [
+        "role",
+        "script"
+      ],
+      "properties": {
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "script": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "call"
+            ],
+            "properties": {
+              "step_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "call": {
+                "type": "string",
+                "minLength": 1
+              },
+              "args": {
+                "type": "array"
+              },
+              "kwargs": {
+                "type": "object"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
     "oracles": {
       "type": "array",
       "minItems": 1,
@@ -115,5 +180,22 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution": {
+            "properties": {
+              "lane": { "const": "live_shadow" }
+            },
+            "required": ["lane"]
+          }
+        }
+      },
+      "then": {
+        "required": ["scenario"]
+      }
+    }
+  ],
   "additionalProperties": true
 }

@@ -22,6 +22,7 @@ parser = OptionParser.new do |opts|
   opts.on("--session-id ID", "Optional session identifier") { |value| options[:session_id] = value }
   opts.on("--ledger-path PATH", "Override run-ledger output path") { |value| options[:ledger_path] = value }
   opts.on("--fixture-root PATH", "Override fixture root path") { |value| options[:fixture_root] = value }
+  opts.on("--live-shadow-root PATH", "Override live-shadow run-scope root path") { |value| options[:live_shadow_root] = value }
   opts.on("--trace-log PATH", "Optional JSONL trace file for G3 schema validation") { |value| options[:trace_log] = value }
   opts.on("--operational-mode MODE", "local|ci|nightly (drives G5 status)") { |value| options[:operational_mode] = value }
   opts.on("--nightly-trend-report PATH", "Trend report path for nightly G5 evidence") do |value|
@@ -44,6 +45,7 @@ end
 runner = Agent::SimulationRunner.new(
   fixture_root: options[:fixture_root] || File.expand_path("../tmp/simulation/fixtures", __dir__),
   ledger_path: options[:ledger_path] || File.expand_path("../tmp/simulation/run-ledger.jsonl", __dir__),
+  live_shadow_root: options[:live_shadow_root] || File.expand_path("../tmp/simulation/live-shadow", __dir__),
   operational_mode: options[:operational_mode] || ENV.fetch("RECURGENT_SIM_OPERATIONAL_MODE", "local"),
   nightly_trend_report_path: options[:nightly_trend_report] || ENV.fetch("RECURGENT_SIM_NIGHTLY_TREND_REPORT", "")
 )

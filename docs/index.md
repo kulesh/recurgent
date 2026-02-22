@@ -83,6 +83,7 @@ This index is organized for fast retrieval:
 - [`docs/plans/awareness-substrate-authority-boundary-implementation-plan.md`](plans/awareness-substrate-authority-boundary-implementation-plan.md)
 - [`docs/plans/response-content-continuity-implementation-plan.md`](plans/response-content-continuity-implementation-plan.md)
 - [`docs/plans/simulation-preparedness-implementation-plan.md`](plans/simulation-preparedness-implementation-plan.md)
+- [`docs/plans/live-shadow-simulation-dual-lane-implementation-plan.md`](plans/live-shadow-simulation-dual-lane-implementation-plan.md)
 
 ## Baselines and Operations
 

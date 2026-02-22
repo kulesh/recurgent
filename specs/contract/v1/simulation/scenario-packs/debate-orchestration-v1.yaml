@@ -2,6 +2,9 @@ version: 1
 id: debate-orchestration-v1
 class: class_2_plus
 description: Advisory pack for debate orchestration coherence and typed boundary handling.
+execution:
+  lane: deterministic
+  isolation: run_scoped
 scoring_profile:
   id: debate_orchestration_v1
   weights:

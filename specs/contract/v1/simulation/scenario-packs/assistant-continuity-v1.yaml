@@ -2,6 +2,9 @@ version: 1
 id: assistant-continuity-v1
 class: class_2_plus
 description: Advisory pack for assistant continuity and boundary/provenance behavior.
+execution:
+  lane: deterministic
+  isolation: run_scoped
 scoring_profile:
   id: assistant_continuity_v1
   weights:

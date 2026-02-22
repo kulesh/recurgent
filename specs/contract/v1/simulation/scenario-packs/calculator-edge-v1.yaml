@@ -2,6 +2,9 @@ version: 1
 id: calculator-edge-v1
 class: class_1
 description: Deterministic edge/error pack for calculator readiness gating.
+execution:
+  lane: deterministic
+  isolation: run_scoped
 scoring_profile:
   id: calculator_edge_v1
   weights:
