@@ -1,8 +1,12 @@
 # Tutorial: Personal Assistant (Progressive)
 
-Audience: software engineers who want a practical, stepwise path from first call to governed, observable, profile-aware agent behavior.
+Audience: Readers who want a practical, stepwise path from first call to governed, observable, profile-aware agent behavior.
 
-This tutorial uses one evolving artifact: [`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb).
+This tutorial uses one evolving artifact: [`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb). The three core ideas to focus on are:
+
+1. Model backed dynamic dispatch
+2. Agent emgergence through delegation
+3. Outcome shaped by evolution
 
 ## What You Are Building
 
@@ -34,10 +38,9 @@ flowchart LR
   class C6,C7 governance;
 ```
 
-## Reading Modes
+## Reading Path
 
-- Quick Path (15-25 min): run checkpoints only, inspect logs.
-- Deep Path (60-120 min): apply each chapter and compare traces phase by phase.
+- Deep Path (60-120 min): apply each chapter in order, run each checkpoint, and compare traces phase by phase.
 
 ## Prerequisites
 
@@ -54,10 +57,10 @@ XDG_STATE_HOME=$PWD/../../tmp/tutorial-assistant/phase-0 bundle exec ruby exampl
 
 This tutorial shows Ruby snippets so you can understand system mechanics. In real usage:
 
-1. You define the top-level role, runtime policy, and constraints.
-2. The Agent (Tool Builder) generates and evolves tool code and method behavior.
+1. Humans (or LLMs) can define the top-level role, runtime policy, and constraints.
+2. The Agent (Tool Builder) defines, implements, and evolves tools.
 3. A trainer model inspects outcomes/logs, then tune contracts and policy where needed.
-4. Rinse. Repeat. Review.
+4. Goto 1
 
 Think of snippets as a set of domain specific language, control surfaces, and diagnostics. The snippets are not manual implementations of every tool by a human.
 
@@ -82,6 +85,17 @@ tail -n 8 "$ROOT/recurgent/recurgent.jsonl"
 rg '"depth":0' "$ROOT/recurgent/recurgent.jsonl" | rg '"outcome_status":"error"'
 ```
 
+Expected output shape:
+
+```text
+> What's the top news items in Google News, Yahoo! News, and NY Times
+{... headline items ...}
+> What's are the action adventure movies playing in theaters
+{... movie items ...}
+> What's a good recipe for Jaffna Kool
+{... recipe ...}
+```
+
 What to verify:
 
 1. all three prompts return usable responses,
@@ -90,7 +104,7 @@ What to verify:
 
 ## Baseline Mental Model
 
-- Top-level role is a Tool Builder (`Agent.for(...)`).
+- Top-level role is a Tool Builder (`Agent.for(...)`) and the only one written by humans.
 - Calls return `Agent::Outcome` (`ok?`, `error?`, typed error fields).
 - Delegation creates/reuses Tools under runtime policy.
 - Runtime state + telemetry are first-class (toolstore + JSONL logs).
@@ -103,16 +117,14 @@ References:
 
 ## Recurgent Terms Used Here
 
+Start with these four:
+
 - `Tool Builder`: top-level agent that owns user intent and synthesis.
 - `Tool`: delegated agent for narrower capability boundaries.
 - `Delegate`: one Tool Builder action to materialize/invoke a Tool.
 - `Outcome`: normalized envelope (`ok?`, `value`, typed error fields).
-- `Role Profile`: explicit role-level continuity contract.
-- `State Continuity Guard`: guardrail that enforces role profile constraints.
-- `Shadow Mode`: evaluate/log policy outcomes without blocking success.
-- `Enforcement Mode`: policy/profile failures can trigger retries or typed errors.
-- `Self Model`: runtime awareness snapshot (`awareness_level`, authority, active versions).
-- `Authority Boundary`: observe/propose is open; enact is explicitly gated.
+
+Extended terms used later are listed in **Appendix A: Extended Terms**.
 
 Canonical vocabulary reference:
 
@@ -133,6 +145,10 @@ Run the assistant and understand the raw interaction loop.
 ### What changes in the system
 
 At this stage, almost no explicit contracts are set. You are seeing the base dynamic behavior.
+
+### Edit target
+
+Edit [`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb). Keep only the minimal `Agent.for(...)` + input loop behavior shown below.
 
 ### Code snippet
 
@@ -159,6 +175,14 @@ end
 ```bash
 cd runtimes/ruby
 XDG_STATE_HOME=$PWD/../../tmp/tutorial-assistant/phase-0 ruby examples/assistant.rb
+```
+
+Expected output shape:
+
+```text
+=== Personal Assistant ===
+> Hello!
+{... assistant response ...}
 ```
 
 ### Checkpoint
@@ -198,6 +222,10 @@ For full key set (including authority/dependency/toolstore settings), see:
 
 - [`docs/runtime-configuration.md`](../runtime-configuration.md)
 
+### Edit target
+
+Edit [`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb). Place `Agent.configure_runtime(...)` above `Agent.for(...)` so configuration is applied before agent construction.
+
 ### Code snippet
 
 ```ruby
@@ -214,6 +242,13 @@ Agent.configure_runtime(
 ```bash
 cd runtimes/ruby
 XDG_STATE_HOME=$PWD/../../tmp/tutorial-assistant/phase-1 ruby examples/assistant.rb
+```
+
+Expected log signal:
+
+```text
+..."role_profile_shadow_mode_enabled":true...
+..."promotion_shadow_mode_enabled":true...
 ```
 
 ### Checkpoint
@@ -241,6 +276,10 @@ Delegated behavior is work done by a Tool created/invoked by the Tool Builder vi
 ### Goal
 
 Make delegation explicit and contract-governed.
+
+### Edit target
+
+Edit [`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb). In the path that handles news-style requests, make delegation explicit with `purpose`, `deliverable`, `acceptance`, and `failure_policy`.
 
 ### Code snippet (contract surface)
 
@@ -326,6 +365,10 @@ A continuity contract (Role Profile) defines how sibling methods in one role mus
 ### Goal
 
 Move from implicit conventions to explicit role continuity constraints.
+
+### Edit target
+
+Edit [`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb). Add a `ASSISTANT_ROLE_PROFILE` constant and pass it via `role_profile:` in `Agent.for(...)`.
 
 ### Constraint field semantics
 
@@ -503,6 +546,10 @@ Reflective systems need explicit governance boundaries: observe/propose should b
 
 Allow proposal generation without uncontrolled runtime mutation.
 
+### Edit target
+
+Use this snippet in [`runtimes/ruby/examples/assistant.rb`](../../runtimes/ruby/examples/assistant.rb) or a small scratch runner under [`tmp/`](../../tmp) to verify authority behavior explicitly.
+
 ### Code snippet
 
 ```ruby
@@ -561,9 +608,24 @@ cd runtimes/ruby
 ROOT="$PWD/../../tmp/tutorial-assistant/prod-check"
 mkdir -p "$ROOT"
 
+cat > "$ROOT/assistant_input.txt" <<'EOF2'
+What's the top news items in Google News, Yahoo! News, and NY Times
+What's are the action adventure movies playing in theaters
+What's a good recipe for Jaffna Kool
+quit
+EOF2
+
 mise exec -- env XDG_STATE_HOME="$ROOT" bundle exec rubocop
 mise exec -- env XDG_STATE_HOME="$ROOT" bundle exec rspec
 mise exec -- env XDG_STATE_HOME="$ROOT" ruby examples/assistant.rb < "$ROOT/assistant_input.txt"
+```
+
+Expected result:
+
+```text
+rubocop: no offenses
+rspec: passing
+assistant run: three prompt responses + trace file under $ROOT/recurgent/recurgent.jsonl
 ```
 
 Deep links:
@@ -612,6 +674,15 @@ Interpretation:
    - command output,
    - JSONL trace summary,
    - one-paragraph diagnosis (`what improved`, `what regressed`, `why`).
+
+## Appendix A: Extended Terms
+
+- `Role Profile`: explicit role-level continuity contract.
+- `State Continuity Guard`: guardrail that enforces role profile constraints.
+- `Shadow Mode`: evaluate/log policy outcomes without blocking success.
+- `Enforcement Mode`: policy/profile failures can trigger retries or typed errors.
+- `Self Model`: runtime awareness snapshot (`awareness_level`, authority, active versions).
+- `Authority Boundary`: observe/propose is open; enact is explicitly gated.
 
 ## Common Pitfalls
 
