@@ -155,7 +155,7 @@ class Agent
       sources = _conversation_history_value(provenance, :sources)
       return {} unless sources.is_a?(Array)
 
-      source_entries = sources.select { |entry| entry.is_a?(Hash) }
+      source_entries = sources.grep(Hash)
       return {} if source_entries.empty?
 
       first_source = source_entries.first
