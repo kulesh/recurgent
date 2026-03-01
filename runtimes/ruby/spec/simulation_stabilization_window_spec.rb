@@ -73,8 +73,8 @@ RSpec.describe Agent::SimulationStabilizationWindow do
   end
 
   def _entry(session_id:, pack_id:, recorded_at:, gate_overrides: {})
-    statuses = %w[G0 G1 G2 G3 G4 G5].each_with_object({}) do |gate, acc|
-      acc[gate] = { "status" => gate_overrides.fetch(gate, "pass") }
+    statuses = %w[G0 G1 G2 G3 G4 G5].to_h do |gate|
+      [gate, { "status" => gate_overrides.fetch(gate, "pass") }]
     end
     {
       "schema_version" => 1,

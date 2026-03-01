@@ -503,15 +503,15 @@ class Agent
     end
 
     def _build_gate_results(mode:, replay_stability:, score_state:, trace_validation:, baseline_diff_report:)
-      REQUIRED_GATES.each_with_object({}) do |gate_id, results|
-        results[gate_id] = _gate_result_for(
+      REQUIRED_GATES.to_h do |gate_id|
+        [gate_id, _gate_result_for(
           gate_id,
           mode: mode,
           replay_stability: replay_stability,
           score_state: score_state,
           trace_validation: trace_validation,
           baseline_diff_report: baseline_diff_report
-        )
+        )]
       end
     end
 

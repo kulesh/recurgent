@@ -25,8 +25,8 @@ class Agent
     def _weights_from_pack(loaded_pack)
       profile = loaded_pack.fetch("scoring_profile")
       weights = (profile["weights"] || profile[:weights]).transform_keys(&:to_s).transform_values(&:to_f)
-      Agent::SimulationPackContract::REQUIRED_WEIGHT_KEYS.each_with_object({}) do |key, normalized|
-        normalized[key] = weights.fetch(key, 0.0)
+      Agent::SimulationPackContract::REQUIRED_WEIGHT_KEYS.to_h do |key|
+        [key, weights.fetch(key, 0.0)]
       end
     end
 

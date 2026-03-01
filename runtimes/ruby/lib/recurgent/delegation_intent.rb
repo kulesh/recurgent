@@ -42,7 +42,7 @@ class Agent
     def _delegate_intent_kwargs_segment(kwargs)
       return "" unless kwargs.is_a?(Hash) && !kwargs.empty?
 
-      "kwargs=#{kwargs.keys.first(3).map(&:to_s).join(",")}"
+      "kwargs=#{kwargs.keys.first(3).join(",")}"
     end
 
     def _delegate_intent_segment(value)

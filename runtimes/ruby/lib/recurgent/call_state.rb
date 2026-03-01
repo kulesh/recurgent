@@ -36,8 +36,7 @@ class Agent
     :guardrail_recovery_attempts, :execution_repair_attempts, :outcome_repair_attempts,
     :outcome_repair_triggered, :guardrail_retry_exhausted, :outcome_repair_retry_exhausted,
     :repair_attempted, :repair_succeeded, :failure_class,
-    :generation_attempt, :error, :outcome,
-    keyword_init: true
+    :generation_attempt, :error, :outcome
   )
 
   private

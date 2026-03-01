@@ -160,7 +160,7 @@ class Agent
       def _fetch_unique_integer_array!(payload, key, source_path:)
         value = payload[key] || payload[key.to_sym]
         _assert(value.is_a?(Array) && !value.empty?, "#{key} must be a non-empty integer array", source_path: source_path)
-        _assert(value.all? { |entry| entry.is_a?(Integer) }, "#{key} must contain integers only", source_path: source_path)
+        _assert(value.all?(Integer), "#{key} must contain integers only", source_path: source_path)
         _assert(value.uniq.length == value.length, "#{key} must be unique", source_path: source_path)
         value
       end

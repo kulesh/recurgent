@@ -113,8 +113,8 @@ RSpec.describe Agent do
 
     it "limits known tools rendered in prompt by KNOWN_TOOLS_PROMPT_LIMIT" do
       g = described_class.new("planner")
-      tools = (1..(Agent::KNOWN_TOOLS_PROMPT_LIMIT + 3)).each_with_object({}) do |i, registry|
-        registry["tool_#{i}"] = { purpose: "purpose #{i}" }
+      tools = (1..(Agent::KNOWN_TOOLS_PROMPT_LIMIT + 3)).to_h do |i|
+        ["tool_#{i}", { purpose: "purpose #{i}" }]
       end
       g.remember(tools: tools)
 
