@@ -88,7 +88,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload readiness artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: simulation-readiness-${{ matrix.pack.id }}
           path: tmp/simulation/ci/${{ matrix.pack.id }}
