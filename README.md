@@ -172,6 +172,8 @@ The long game is agents that don't just respond to instructions but develop genu
 - gremllm - https://github.com/awwaiid/gremllm
 - Agentica - https://github.com/symbolica-ai/arcgentica
 - SkillsBench: Benchmarking How Well Agent Skills Work Across Diverse Tasks - https://arxiv.org/abs/2602.12670
+- AutoHarness: improving LLM agents by automatically synthesizing a code harness - https://arxiv.org/pdf/2603.03329
+- Mathematical discoveries from program search with large language models - https://github.com/google-deepmind/funsearch
 
 ## Community and Policy
 
