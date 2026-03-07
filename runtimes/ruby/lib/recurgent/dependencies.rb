@@ -45,8 +45,8 @@ class Agent
     end
 
     def _manifest_additive?(current_manifest, incoming_manifest)
-      incoming_versions = incoming_manifest.each_with_object({}) do |dependency, versions|
-        versions[dependency[:name]] = dependency[:version]
+      incoming_versions = incoming_manifest.to_h do |dependency|
+        [dependency[:name], dependency[:version]]
       end
 
       current_manifest.all? do |dependency|

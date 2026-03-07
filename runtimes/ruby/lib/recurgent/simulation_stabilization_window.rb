@@ -140,8 +140,8 @@ class Agent
 
     def _gate_statuses(entry)
       gates = entry.fetch("gates", {})
-      @required_gates.each_with_object({}) do |gate, statuses|
-        statuses[gate] = gates.dig(gate, "status").to_s
+      @required_gates.to_h do |gate|
+        [gate, gates.dig(gate, "status").to_s]
       end
     end
 

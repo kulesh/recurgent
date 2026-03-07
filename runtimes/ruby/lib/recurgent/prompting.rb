@@ -729,11 +729,11 @@ class Agent
     end
 
     def _merge_known_tool_indexes(persisted, memory)
-      _known_tool_names(persisted, memory).each_with_object({}) do |name, merged|
-        merged[name] = _merge_known_tool_metadata_for_prompt(
+      _known_tool_names(persisted, memory).to_h do |name|
+        [name, _merge_known_tool_metadata_for_prompt(
           _known_tool_metadata_for_name(persisted, name),
           _known_tool_metadata_for_name(memory, name)
-        )
+        )]
       end
     end
 
