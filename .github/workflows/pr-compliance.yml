@@ -12,6 +12,7 @@ permissions:
 jobs:
   compliance:
     name: Enforce PR template and issue-first policy
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR body and issue linkage
