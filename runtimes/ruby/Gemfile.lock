@@ -9,7 +9,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    anthropic (1.23.0)
+    anthropic (1.35.0)
       cgi
       connection_pool
     ast (2.4.3)
@@ -75,7 +75,7 @@ DEPENDENCIES
   rubocop (~> 1.86)
 
 CHECKSUMS
-  anthropic (1.23.0) sha256=6290309d1f6488d132b6fd5a79d8d5414ef09f281d6668f930c2cd88658b9d82
+  anthropic (1.35.0) sha256=a99ff2cfc3109e17c747d6b8ce810754b9af797a07d6ecd4d21c6321798b7abf
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   cgi (0.5.1) sha256=e93fcafc69b8a934fe1e6146121fa35430efa8b4a4047c4893764067036f18e9
