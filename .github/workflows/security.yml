@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Dependency review
         continue-on-error: true
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
 
       - name: Dependency review unavailable notice
         if: failure()
