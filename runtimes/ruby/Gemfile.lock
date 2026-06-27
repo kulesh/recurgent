@@ -9,13 +9,13 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    anthropic (1.49.0)
+    anthropic (1.50.0)
       cgi
       connection_pool
       standardwebhooks
     ast (2.4.3)
     base64 (0.3.0)
-    cgi (0.5.1)
+    cgi (0.5.2)
     connection_pool (3.0.2)
     diff-lcs (1.6.2)
     json (2.19.9)
@@ -77,10 +77,10 @@ DEPENDENCIES
   rubocop (~> 1.88)
 
 CHECKSUMS
-  anthropic (1.49.0) sha256=22a3cc650003c0fee202519199137bd81056080a0c20d729d04d70f774e486f9
+  anthropic (1.50.0) sha256=8fbe4ed9b66d2ee7f94b50b838b1d1f35e252a58a56635786ee7470cd9c3c014
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
-  cgi (0.5.1) sha256=e93fcafc69b8a934fe1e6146121fa35430efa8b4a4047c4893764067036f18e9
+  cgi (0.5.2) sha256=61ca30298171190fd4fa0d8018e57ada456eae9b7a2b78526debf7f0a0e6f8bb
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   json (2.19.9) sha256=9b9025b7cdddafa38d316eca0b2358488e42d417045c1b90d216a9fefe46b79a
