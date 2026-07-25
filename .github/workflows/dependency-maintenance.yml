@@ -1,0 +1,65 @@
+name: Weekly dependency maintenance
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Monday 9am UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  consolidate-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for open Dependabot PRs
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          count=$(gh pr list --repo "${{ github.repository }}" --author "app/dependabot" --state open --json number --jq length)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "Found $count open Dependabot PR(s)"
+
+      - name: Checkout
+        if: steps.check.outputs.count != '0'
+        uses: actions/checkout@v7
+
+      - name: Setup Ruby
+        if: steps.check.outputs.count != '0'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          working-directory: runtimes/ruby
+          bundler-cache: true
+
+      - name: Install Claude Code
+        if: steps.check.outputs.count != '0'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Consolidate dependency updates
+        if: steps.check.outputs.count != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          claude -p "$(cat <<'PROMPT'
+          You are maintaining the kulesh/recurgent repository.
+
+          1. List open Dependabot PRs: gh pr list --author "app/dependabot" --state open --json number,title,body
+          2. For each PR, review the diff: gh pr diff <number>
+          3. Classify each as:
+             - SAFE: patch/minor version bumps, lockfile-only, no breaking changes
+             - NEEDS REVIEW: major version bumps, breaking changes, security advisories needing code changes
+          4. If there are SAFE PRs:
+             a. Create a GitHub issue describing the consolidated update
+             b. Create a branch from main and apply all safe changes
+             c. Run `cd runtimes/ruby && bundle install` if any Ruby deps changed
+             d. Commit, push, and create a PR following .github/pull_request_template.md
+             e. Close superseded Dependabot PRs with a comment referencing the new PR
+          5. If any PRs NEED REVIEW, comment on them explaining the concern so a human can decide.
+          6. If no Dependabot PRs are open, exit saying no action needed.
+          PROMPT
+          )" --yes
