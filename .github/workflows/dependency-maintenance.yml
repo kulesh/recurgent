@@ -62,4 +62,4 @@ jobs:
           5. If any PRs NEED REVIEW, comment on them explaining the concern so a human can decide.
           6. If no Dependabot PRs are open, exit saying no action needed.
           PROMPT
-          )" --yes
+          )" --dangerously-skip-permissions
