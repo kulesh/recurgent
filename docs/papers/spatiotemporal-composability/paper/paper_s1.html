@@ -1,0 +1,173 @@
+<header class="ptitle">
+  <h2>A Programming Paradigm for Spatiotemporal Composability</h2>
+  <p class="pauthors">Yifan Shi<sup>1,2</sup>, Wei Zhang<sup>1</sup>, Tianyi Cui<sup>2</sup></p>
+  <p class="paffil"><sup>1</sup>Peking University&emsp;<sup>2</sup>DeepSeek-AI</p>
+</header>
+
+<section class="psec" id="abstract">
+  <h3 class="ph ph-top">Abstract</h3>
+  <p>Modern software&mdash;from plugin systems to self-evolving agent harnesses&mdash;increasingly
+  requires <em>dynamic composition</em>, yet its formal foundations remain underdeveloped. We identify
+  two orthogonal dimensions of the problem: <em>temporal composability</em>, the ability to completely
+  revert a component&rsquo;s side effects upon removal, and <em>spatial composability</em>, the ability to declare
+  and reactively manage inter-component dependencies. We address the two dimensions by
+  lifting classical effect and coeffect concepts to runtime mechanisms. In particular, we formalize
+  <em>revertible effects</em>, in which every context transformation carries an inverse that the runtime tracks.
+  We formalize <em>reactive coeffects</em>, in which each change of the context notifies a component against
+  its coeffect specification. We unify the effect context and the coeffect context into a single <em>context
+  type</em>, which constitutes a programming paradigm. After that, we combine these mechanisms
+  into the notion of a <em>component</em> and give a calculus of dynamic composition, whose metatheory
+  carries spatiotemporal composability from a single component to a whole system of interleaved
+  components. We implement these ideas in <em>Cordis</em>, a meta-framework of spatiotemporal
+  composability that provides a core library with effect tracking and coeffect resolution, as well as a
+  declarative component loader with configuration reconciliation and hot module replacement.</p>
+</section>
+
+<section class="psec" id="s1">
+  <h3 class="ph ph-top"><span class="pno">1</span> Introduction</h3>
+  <p>Composition&mdash;assembling complex systems from simpler parts&mdash;is a foundational principle of
+  software engineering [1]. Traditionally, composition is <em>static</em>: function calls, module imports,
+  and class inheritance are resolved at compile time and remain fixed throughout execution.
+  However, modern software increasingly demands <em>dynamic</em> composition, where components
+  are loaded, unloaded, and reconfigured at runtime. Plugin architectures [2] and self-evolving
+  agent harnesses both require systems that can safely add and remove functionality on the
+  fly, yet current practice defers to coarse-grained mechanisms [3] that reconfigure only by
+  restarting, discarding runtime state. Despite the growing practical importance of dynamic
+  composition, its theoretical foundations remain underdeveloped, compared to the rich formal
+  frameworks available for static composition.</p>
+
+  <section class="psec" id="s1-1">
+    <h4 class="ph"><span class="pno">1.1</span> Dimensions of Composability</h4>
+    <p>To characterize the requirements of dynamic composition, we identify two orthogonal dimensions
+    beyond the well-studied algebraic aspects of composition:</p>
+    <ul>
+      <li><strong>Temporal composability</strong> addresses the <em>time</em> dimension: upon removal of a component,
+      the modifications the component made to the shared environment must be completely
+      and safely reversed. This requires tracking every resource allocation, event registration,
+      and state mutation the component performs, and guaranteeing their orderly reclamation
+      upon removal.</li>
+      <li><strong>Spatial composability</strong> addresses the <em>space</em> dimension: components must be able to
+      declare, discover, and resolve their dependencies on one another in a structured and
+      verifiable manner. This requires managing dependency topology and coordinating
+      component lifecycles in response to dependency changes.</li>
+    </ul>
+    <p>In the static setting, temporal composability reduces to lexical scoping (e.g., RAII [4],
+    bracket patterns [5]), and spatial composability reduces to module import resolution [6].
+    In the dynamic setting, where components arrive and depart at runtime, both dimensions
+    become significantly harder: temporal composability must handle long-lived, stateful effects
+    whose scope is not lexically bounded; and spatial composability must handle dependencies
+    that appear, disappear, or change identity during execution.</p>
+  </section>
+
+  <section class="psec" id="s1-2">
+    <h4 class="ph"><span class="pno">1.2</span> Motivating Examples</h4>
+
+    <section class="psec" id="s1-2-1">
+      <h5 class="ph"><span class="pno">1.2.1</span> Plugin Systems</h5>
+      <p>Plugin systems are a canonical instance of dynamic composition. We use Visual Studio Code
+      (VSCode), one of the most widely-used extensible IDEs, as a representative example.</p>
+      <p><strong>Temporal limitation.</strong> VSCode runs all extensions in a shared process called the extension
+      host. Although extensions can be installed dynamically, this host provides no mechanism to
+      unload an individual extension&rsquo;s code at runtime. Once an extension&rsquo;s <code>activate</code> function has
+      executed, disabling or uninstalling it requires restarting the entire host, affecting all loaded
+      extensions. Purely declarative extensions such as themes, keybindings, and snippets carry no
+      code and can be removed freely. Among the top 100 extensions by install count, however, 87
+      contain executable code<sup>1</sup> and will therefore require such a restart upon removal. Although
+      VSCode provides a <code>deactivate</code> hook, it serves only as a graceful shutdown callback during the
+      host process&rsquo; termination, and thus does not enable live removal. Moreover, the hook separates
+      effect disposal from effect creation (in <code>activate</code>), violating locality of concern and making
+      complete cleanup difficult to verify.</p>
+      <p class="fn"><sup>1</sup> Data retrieved from the Visual Studio Code Marketplace on June 9, 2026.</p>
+      <p><strong>Spatial limitation.</strong> VSCode does provide <code>extensionDependencies</code> for declaring dependencies
+      between extensions, but it sees little use: among the top 100 extensions by install count,
+      only 7 declare <code>extensionDependencies</code> on non-built-in extensions.<sup>1</sup> This scarcity reflects the
+      shape of the extension API, which exposes fixed, surface-level extension points such as commands,
+      views, and language features. Extensions contribute to the host through these points
+      rather than depending on one another, so inter-extension dependencies rarely arise. Moreover,
+      VSCode&rsquo;s mechanism for inter-extension interaction provides no structural contract: it exposes
+      an extension&rsquo;s functionality to others through <code>vscode.extensions.getExtension(...).exports</code>,
+      but the returned value is untyped (<code>any</code> by default), so the dependent cannot rely on a checked
+      interface. In short, VSCode steers extensions toward a fixed set of host-provided extension
+      points, and offers no safe, structured way for them to depend on one another.</p>
+      <p>These two limitations are not unique to VSCode; they recur across plugin systems generally
+      [2, 7], differing only in degree.</p>
+    </section>
+
+    <section class="psec" id="s1-2-2">
+      <h5 class="ph"><span class="pno">1.2.2</span> Self-Evolving Agent Harnesses</h5>
+      <p>Modern AI agents rely on runtime agent harnesses [8&ndash;10]. These systems may compose diverse
+      tool suites [11] and execution environments, govern permissions and sandboxing, maintain
+      session state and persistence, provide context management and memory systems [12], orchestrate
+      subagents and multi-agent workflows [13], and expose interfaces to users and automation.
+      A future harness may generate and deploy modifications to its own components while continuously
+      serving requests. Model-synthesized reusable tools provide a narrower precursor to
+      component-level self-modification [14]. Each such modification is itself an instance of dynamic
+      composition.</p>
+      <p>Because these modifications occur continuously and with limited or no human oversight,
+      dynamic composability becomes indispensable. Without temporal composability, each self-modification
+      forces a full restart that discards all process-local accumulated state; at such
+      frequency the cumulative unavailability becomes substantial, and in-flight tasks are disrupted
+      repeatedly; even worse, a faulty self-modification can disable the very process needed to
+      recover. Without spatial composability, each module must itself detect and adapt to changes in
+      the modules it depends on as they appear, disappear, or change identity, and can do so only by
+      ad hoc means; even worse, a naive code-replacement strategy may silently break dependents
+      or introduce circular dependencies that surface only at reload time.</p>
+    </section>
+
+    <section class="psec" id="s1-2-3">
+      <h5 class="ph"><span class="pno">1.2.3</span> The Coarse-Grained Workaround</h5>
+      <p>One reason dynamic composability has received limited formal attention is that operating
+      systems and container orchestrators already provide a coarse-grained substitute. Operating
+      systems yield temporal composability at the granularity of a process; container orchestrators
+      [3] yield spatial composability at the granularity of a service. In practice, most software tolerates
+      the lack of fine-grained composability by deferring to these coarse-grained mechanisms:
+      a misbehaving module is handled by restarting the process, and a service dependency is
+      managed by the container orchestrator.</p>
+      <p>However, this workaround imposes substantial costs. Temporally, each restart discards all
+      process-local accumulated state (e.g., caches, connections, partial computations), and rebuilding
+      it takes seconds to minutes [15]; maintaining availability in the interim requires redundant
+      replicas, incurring resource overhead to compensate for the inability to recover a single
+      component. Spatially, container-level orchestration cannot express dependencies between components
+      sharing an address space, and introduces network overhead for interactions that could
+      be local function calls. Both mechanisms operate at the boundary of processes and containers,
+      yet modern systems increasingly compose at a finer level. This granularity mismatch demands
+      a compositional abstraction that manages effects and dependencies at the same level as the
+      components themselves.</p>
+    </section>
+  </section>
+
+  <section class="psec" id="s1-3">
+    <h4 class="ph"><span class="pno">1.3</span> Contributions</h4>
+    <p>The two dimensions of dynamic composability concern, respectively, how computations <em>modify</em>
+    and how they <em>depend on</em> their environment. These two directions are what <em>effect systems</em> [16,
+    17] and <em>coeffect systems</em> [18, 19] formalize: effects provide the formal vocabulary for reasoning
+    about environmental modifications, and coeffects for reasoning about environmental requirements.
+    However, existing formulations restrict reasoning to compile-time analysis over lexically
+    fixed scopes, and do not extend to dynamic scenarios where components arrive and depart at
+    runtime. By lifting effects to a revertible runtime model and coeffects to a reactive dependency
+    resolution mechanism, we obtain a unified formal foundation for dynamic composability,
+    one that is language-agnostic and applicable to any software architecture requiring dynamic
+    composition. We make the following contributions:</p>
+    <ol>
+      <li>We formalize <strong>revertible effects</strong> (<a class="xref" href="#s3-1">Section 3.1</a>): every context transformation carries an
+      explicit inverse that the runtime tracks, and both tracking and recovery preserve composition,
+      so the context is recovered upon component removal. This establishes local
+      temporal composability.</li>
+      <li>We formalize <strong>reactive coeffects</strong> (<a class="xref" href="#s3-2">Section 3.2</a>): a component declares the coeffects it
+      requires as a specification, and each change of the context notifies the component against
+      that specification as activating, deactivating, or neutral. This establishes local spatial
+      composability.</li>
+      <li>We unify the effect context and the coeffect context into a single <strong>context type</strong> (<a class="xref" href="#beyond">Section 3.3</a>),
+      in which an observational equivalence on the coeffects supplies the effects with
+      independence, constituting a programming paradigm for spatiotemporal composability.</li>
+      <li>We give a <strong>calculus of dynamic composition</strong> (<a class="xref" href="#beyond">Section 4</a>), which combines the two
+      mechanisms into the notion of a component and equips its lifecycle with an operational
+      semantics. Its metatheory carries spatiotemporal composability from a single component
+      to a whole system of interleaved components.</li>
+      <li>We implement these ideas in <strong>Cordis</strong> (<a class="xref" href="#beyond">Section 5</a>), a meta-framework of spatiotemporal
+      composability that provides a core library realizing the formal model with effect tracking
+      and coeffect resolution, as well as a declarative component loader with configuration
+      reconciliation and hot module replacement.</li>
+    </ol>
+  </section>
+</section>

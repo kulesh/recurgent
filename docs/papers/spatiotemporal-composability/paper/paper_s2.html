@@ -1,0 +1,129 @@
+<section class="psec" id="s2">
+  <h3 class="ph ph-top"><span class="pno">2</span> Preliminaries</h3>
+
+  <p>This section provides a concise overview of effect and coeffect systems&mdash;the two
+  theoretical pillars underlying our work. We assume familiarity with basic type theory and
+  category theory; the goal here is to fix notation and introduce the key abstractions that
+  <a class="xref" href="#s3">Section 3</a> will operationalize as runtime mechanisms.</p>
+
+  <section class="psec" id="s2-1">
+    <h4 class="ph"><span class="pno">2.1</span> Effects</h4>
+
+    <p>In the simply typed lambda calculus (STLC) [20, 21], a typing judgment
+    <i>Γ</i> ⊢ <i>t</i> : <i>T</i> states that term <i>t</i> has type <i>T</i> under context
+    <i>Γ</i>. An <em>effect system</em> refines the type to describe what side effects a
+    computation may produce, yielding judgments of the form</p>
+
+    <div class="eq" id="eq1">
+      <div class="eq-body"><i>Γ</i> ⊢ <i>t</i> : <i>T</i><sub>effect</sub></div>
+      <span class="eq-no">(1)</span>
+    </div>
+
+    <p>Here, the result type is annotated with an element of an effect algebra that describes
+    which side effects the computation may produce, enabling compositional reasoning about
+    stateful computations. This approach originates with Lucassen and Gifford [22], who
+    introduced a kinded type system distinguishing types, effects, and regions to discover
+    scheduling constraints in parallel programs.</p>
+
+    <p><strong>Monadic effects.</strong> Moggi [16] first modeled computational effects
+    categorically via monads; Wadler [23] popularized the approach in Haskell. A monad
+    (<i>T</i>, <i>η</i>, <i>μ</i>) on a category 𝒞 encapsulates an effectful computation as a
+    value of type <i>T</i>(<i>A</i>), with <i>η</i> : <i>A</i> → <i>T</i>(<i>A</i>) lifting
+    pure values and <i>μ</i> : <i>T</i>(<i>T</i>(<i>A</i>)) → <i>T</i>(<i>A</i>) sequencing
+    nested computations. Classic instances include the Maybe monad (for partiality), State
+    monad (for mutable state), and IO monad (for external interaction).</p>
+
+    <p><strong>Algebraic effects.</strong> Plotkin and Power [17, 24] showed that algebraic
+    operations determine monads, establishing a framework in which effect interfaces are
+    decoupled from their implementations. An effect signature <i>Σ</i> declares a set of
+    operations (e.g., <span class="op">get</span> : () → <i>S</i>,
+    <span class="op">put</span> : <i>S</i> → () for state); programs invoke operations freely
+    without committing to a particular interpretation. Plotkin and Pretnar [25] subsequently
+    introduced <em>effect handlers</em>, which interpret operations by providing continuation
+    semantics:</p>
+
+    <div class="eq" id="eq2">
+      <div class="eq-body"><span class="kw">handle</span> <i>e</i> <span class="kw">with</span> { <span class="op">op</span>(<i>v</i>, <i>κ</i>) ↦ … }</div>
+      <span class="eq-no">(2)</span>
+    </div>
+
+    <p>The handler receives the operation argument <i>v</i> and the delimited continuation
+    <i>κ</i>, which it may invoke zero, one, or multiple times, enabling exceptions,
+    coroutines, and non-determinism within a uniform framework [26]. Languages such as
+    Koka [27, 28], Eff [29], and OCaml 5 [30] have adopted algebraic effects with varying
+    design trade-offs.</p>
+  </section>
+
+  <section class="psec" id="s2-2">
+    <h4 class="ph"><span class="pno">2.2</span> Coeffects</h4>
+
+    <p>Dually to effects, a <em>coeffect system</em> [18, 31] enriches the context rather than
+    the type, yielding judgments of the form</p>
+
+    <div class="eq" id="eq3">
+      <div class="eq-body"><i>Γ</i><sub>coeffect</sub> ⊢ <i>t</i> : <i>T</i></div>
+      <span class="eq-no">(3)</span>
+    </div>
+
+    <p>Here, the context is annotated with an element of a coeffect algebra describing what
+    the computation requires from its environment, such as resources to access, permissions
+    to hold, or services to depend on. While effects model a program&rsquo;s impact on the
+    world, coeffects model the world&rsquo;s constraints on the program.</p>
+
+    <p><strong>Comonadic coeffects.</strong> The idea of using comonads to structure
+    context-dependent computation was first developed by Uustalu and Vene [32], who proposed
+    symmetric (semi)monoidal comonads as the dual of Moggi&rsquo;s monadic framework for
+    effects, capturing notions such as dataflow and attribute evaluation. Petricek et al. [18]
+    built on this foundation to propose coeffects as a unified static analysis of
+    context-dependence. A comonad (<i>D</i>, <i>ε</i>, <i>δ</i>) captures context-dependent
+    computation: <i>ε</i> : <i>D</i>(<i>A</i>) → <i>A</i> extracts the current value from a
+    context, and <i>δ</i> : <i>D</i>(<i>A</i>) → <i>D</i>(<i>D</i>(<i>A</i>)) duplicates
+    context for nested access. The Environment comonad
+    <i>D</i>(<i>X</i>) = <i>E</i> × <i>X</i> models dependence on a fixed environment
+    <i>E</i>; the Stream comonad <i>D</i>(<i>X</i>) = ℕ → <i>X</i> models dependence on
+    temporal data.</p>
+
+    <p><strong>Graded coeffects.</strong> For finer-grained tracking, <em>graded</em> coeffect
+    systems use a pre-ordered semiring 𝒮 = (<i>S</i>, ≤, +, ×, 0, 1) as the coeffect
+    algebra [33], a discipline later unified with graded effects by Gaboardi et al. [19].
+    Elements of <i>S</i> annotate each variable binding to quantify its usage: 0 for unused,
+    1 for linear use, <i>n</i> for bounded use, ∞ for unrestricted use. The semiring
+    operations compose coeffects sequentially (×) and in parallel (+), enabling precise
+    resource tracking, sensitivity analysis [34], and information-flow control [35, 36]
+    within a unified algebraic framework [37].</p>
+  </section>
+
+  <section class="psec" id="s2-3">
+    <h4 class="ph"><span class="pno">2.3</span> Relationship to Dynamic Composability</h4>
+
+    <p>Effect and coeffect systems organize reasoning about computation along two
+    complementary directions: effects describe how a computation <em>modifies</em> its
+    environment, whereas coeffects describe how it <em>depends on</em> its environment.
+    These two directions correspond to the two dimensions of dynamic composability
+    identified in <a class="xref" href="#s1">Section 1</a>:</p>
+
+    <ul>
+      <li><strong>Temporal composability</strong> demands that a component&rsquo;s
+      modifications to the shared environment be revertible upon unloading. The relevant
+      effects are the stateful ones, which durably transform that environment; undoing such
+      a transformation requires it to admit an inverse.</li>
+      <li><strong>Spatial composability</strong> demands that inter-component dependencies
+      be declared and managed reactively. Such dependencies are the very thing coeffects
+      capture, and managing them amounts to resolving each against what the environment
+      supplies.</li>
+    </ul>
+
+    <p>However, classical effect and coeffect systems are static instruments: effects are
+    tracked within lexically fixed scopes and discharged by compile-time handlers; coeffect
+    annotations are verified against contexts determined before execution. Dynamic
+    composition, by contrast, requires these guarantees to hold for components that arrive
+    and depart at runtime, against contexts that evolve continuously. No fixed lexical scope
+    can delimit a plugin loaded after deployment; no compile-time context can anticipate
+    dependencies that emerge from runtime configuration.</p>
+
+    <p>This motivates a shift in perspective: rather than extending static type systems with
+    more annotations, we reify the conceptual structures of effects and coeffects so that a
+    runtime can operate on them directly, establishing dynamically the guarantees these
+    systems provide statically.</p>
+  </section>
+</section>

@@ -1,0 +1,1031 @@
+<title>Cordis in Ruby</title>
+<style>
+  /* ---------- tokens: three-state theming ---------- */
+  :root {
+    --bg: #FAF9F6;
+    --bg-raised: #FFFFFF;
+    --bg-sunken: #F1F0EB;
+    --ink: #23272B;
+    --muted: #676D74;
+    --faint: #9AA0A6;
+    --rule: #E4E2DB;
+    --temporal: #8E3038;
+    --temporal-soft: rgba(142, 48, 56, 0.09);
+    --spatial: #2F5D7C;
+    --spatial-soft: rgba(47, 93, 124, 0.09);
+    --ok: #3E6B4F;
+    --code-bg: #F4F3EE;
+    --code-ink: #2B2F33;
+    --tok-c: #71767C;   /* comments */
+    --tok-s: #3E6B4F;   /* strings */
+    --tok-y: #8E3038;   /* symbols */
+    --tok-k: #4A3F73;   /* keywords */
+    --tok-C: #2F5D7C;   /* constants */
+    --tok-n: #7A5218;   /* numbers */
+    --flash: rgba(142, 48, 56, 0.16);
+    --serif: "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161A;
+      --bg-raised: #1B1E24;
+      --bg-sunken: #101215;
+      --ink: #E2E0DA;
+      --muted: #9BA1A8;
+      --faint: #6E747B;
+      --rule: #2B2F37;
+      --temporal: #D9939B;
+      --temporal-soft: rgba(217, 147, 155, 0.13);
+      --spatial: #8AB2CF;
+      --spatial-soft: rgba(138, 178, 207, 0.13);
+      --ok: #96C2A4;
+      --code-bg: #1E222A;
+      --code-ink: #D6D4CE;
+      --tok-c: #858B92;
+      --tok-s: #96C2A4;
+      --tok-y: #D9939B;
+      --tok-k: #B0A6DC;
+      --tok-C: #8AB2CF;
+      --tok-n: #D0A96A;
+      --flash: rgba(217, 147, 155, 0.20);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161A;
+    --bg-raised: #1B1E24;
+    --bg-sunken: #101215;
+    --ink: #E2E0DA;
+    --muted: #9BA1A8;
+    --faint: #6E747B;
+    --rule: #2B2F37;
+    --temporal: #D9939B;
+    --temporal-soft: rgba(217, 147, 155, 0.13);
+    --spatial: #8AB2CF;
+    --spatial-soft: rgba(138, 178, 207, 0.13);
+    --ok: #96C2A4;
+    --code-bg: #1E222A;
+    --code-ink: #D6D4CE;
+    --tok-c: #858B92;
+    --tok-s: #96C2A4;
+    --tok-y: #D9939B;
+    --tok-k: #B0A6DC;
+    --tok-C: #8AB2CF;
+    --tok-n: #D0A96A;
+    --flash: rgba(217, 147, 155, 0.20);
+  }
+
+  /* ---------- base ---------- */
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 2rem; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.6;
+  }
+  a { color: var(--spatial); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--spatial);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  [id] { scroll-margin-top: 1.5rem; }
+
+  .frame { max-width: 1180px; margin: 0 auto; padding: 0 1.25rem; display: flex; gap: 3rem; }
+  main { min-width: 0; flex: 1; max-width: 780px; }
+
+  /* ---------- toc rail ---------- */
+  nav.toc {
+    width: 210px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 2.5rem 0 2rem;
+    font-size: 0.82rem;
+  }
+  nav.toc .toc-title { font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.68rem; color: var(--faint); margin: 0 0 0.75rem; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 0; }
+  nav.toc a { display: block; padding: 0.22rem 0.6rem; color: var(--muted); border-left: 2px solid var(--rule); }
+  nav.toc a:hover { color: var(--ink); text-decoration: none; }
+  nav.toc a.active { color: var(--ink); border-left-color: var(--temporal); }
+  nav.toc ol ol a { padding-left: 1.4rem; font-size: 0.78rem; }
+  @media (max-width: 900px) { nav.toc { display: none; } }
+
+  /* ---------- hero ---------- */
+  header.hero { padding: 3.5rem 0 2.25rem; }
+  .eyebrow { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 1rem; }
+  .eyebrow .dim-t { color: var(--temporal); }
+  .eyebrow .dim-s { color: var(--spatial); }
+  h1 { font-family: var(--serif); font-size: clamp(2.2rem, 4.5vw, 3rem); line-height: 1.12; margin: 0 0 1rem; font-weight: 700; text-wrap: balance; }
+  .standfirst { font-size: 1.08rem; color: var(--muted); max-width: 62ch; margin: 0 0 1.5rem; }
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+  .split-rule { height: 3px; display: flex; margin: 1.75rem 0 1.25rem; max-width: 260px; }
+  .split-rule span:first-child { flex: 1; background: var(--temporal); }
+  .split-rule span:last-child { flex: 1; background: var(--spatial); }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-size: 0.82rem; color: var(--muted); }
+  .meta-row b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- section scaffolding ---------- */
+  section.band { padding: 2.5rem 0 1rem; border-top: 1px solid var(--rule); }
+  .band-eyebrow { font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--faint); margin: 0 0 0.4rem; }
+  h2 { font-family: var(--serif); font-size: 1.85rem; margin: 0 0 1rem; line-height: 1.2; text-wrap: balance; }
+  .lede { color: var(--muted); max-width: 65ch; }
+  .lede strong, .band p strong { color: var(--ink); }
+  .band > p, .band > .lede { max-width: 65ch; }
+
+  /* ---------- figures ---------- */
+  figure { margin: 2rem 0; }
+  figure svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+  figcaption { font-size: 0.82rem; color: var(--muted); text-align: center; max-width: 58ch; margin: 0.75rem auto 0; }
+  .figwrap { overflow-x: auto; }
+
+  /* ---------- pattern cards ---------- */
+  .pat-group { margin: 2.25rem 0 0; }
+  .pat-group-title { display: flex; align-items: baseline; gap: 0.6rem; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 1rem; }
+  .pat-group-title::after { content: ""; flex: 1; height: 1px; background: var(--rule); align-self: center; }
+  .pat-group-title .dot { width: 9px; height: 9px; border-radius: 50%; align-self: center; }
+  .dot-t { background: var(--temporal); } .dot-s { background: var(--spatial); }
+  .dot-u { background: linear-gradient(90deg, var(--temporal) 50%, var(--spatial) 50%); }
+  .pat {
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 1.25rem 1.4rem 1.1rem;
+    margin: 0 0 1rem;
+  }
+  .pat h3 { margin: 0 0 0.35rem; font-size: 1.06rem; font-weight: 650; }
+  .pat h3 .pat-no { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; margin-right: 0.5rem; }
+  .pat .intent { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.92rem; }
+  .pat .mech { margin: 0 0 0.9rem; font-size: 0.92rem; max-width: 68ch; }
+  .pat pre {
+    background: var(--bg-sunken);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 0.7rem 0.9rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.55;
+    overflow-x: auto;
+    margin: 0 0 0.9rem;
+    color: var(--code-ink);
+  }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; font-size: 0.75rem; }
+  .chip-row .lbl { color: var(--faint); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.66rem; margin-right: 0.1rem; }
+  .chip {
+    display: inline-block;
+    padding: 0.1rem 0.55rem;
+    border-radius: 99px;
+    border: 1px solid var(--rule);
+    color: var(--muted);
+    background: var(--bg-raised);
+    white-space: nowrap;
+  }
+  a.chip:hover { text-decoration: none; border-color: currentColor; }
+  .chip-t { color: var(--temporal); background: var(--temporal-soft); border-color: transparent; }
+  .chip-s { color: var(--spatial); background: var(--spatial-soft); border-color: transparent; }
+  .chip-code { font-family: var(--mono); font-size: 0.72rem; }
+
+  /* ---------- the paper voice ---------- */
+  .paper-shell { margin: 2rem 0 0; }
+  .paper {
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 2.5rem clamp(1.25rem, 4vw, 3rem) 2rem;
+    font-family: var(--serif);
+    font-size: 1.02rem;
+    line-height: 1.68;
+  }
+  .paper .ptitle { font-size: 1.55rem; font-weight: 700; text-align: center; margin: 0 0 0.5rem; line-height: 1.25; text-wrap: balance; }
+  .paper .pauthors { text-align: center; color: var(--muted); margin: 0 0 0.25rem; }
+  .paper .paffil { text-align: center; color: var(--faint); font-size: 0.9rem; margin: 0 0 2rem; }
+  .paper h3.ph, .paper h4.ph, .paper h5.ph { font-family: var(--serif); line-height: 1.3; }
+  .paper h3.ph { font-size: 1.3rem; margin: 2.2rem 0 0.9rem; }
+  .paper h4.ph { font-size: 1.12rem; margin: 1.9rem 0 0.8rem; }
+  .paper h5.ph { font-size: 1rem; font-style: italic; margin: 1.6rem 0 0.7rem; }
+  .paper .pno { color: var(--temporal); margin-right: 0.55rem; font-style: normal; }
+  .paper p { margin: 0 0 0.9rem; }
+  .paper p code, .paper li code, main p code, main li code { overflow-wrap: anywhere; }
+  .paper ul { margin: 0 0 0.9rem; padding-left: 1.4rem; }
+  .paper li { margin: 0 0 0.35rem; }
+  .paper .fn { font-size: 0.82rem; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 0.8rem; }
+  .paper i, .paper var { font-style: italic; }
+  .paper .op { font-style: normal; font-family: var(--serif); }
+  .paper .kw { font-weight: 700; font-style: normal; }
+
+  .blk {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--temporal);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem 0.15rem;
+    margin: 1.2rem 0;
+    background: color-mix(in srgb, var(--bg-raised) 92%, var(--bg-sunken));
+  }
+  #s3-2 .blk, #s3-2-1 .blk, #s3-2-2 .blk, #s3-2-3 .blk { border-left-color: var(--spatial); }
+  .blk-head { margin: 0 0 0.5rem; }
+  .blk-tag { font-family: var(--sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--temporal); }
+  #s3-2 .blk-tag, #s3-2-1 .blk-tag, #s3-2-2 .blk-tag, #s3-2-3 .blk-tag { color: var(--spatial); }
+
+  .eq { display: flex; align-items: center; gap: 1rem; margin: 1rem 0.25rem 1rem 0; overflow-x: auto; padding: 0.2rem 0; }
+  .eq-body { flex: 1; text-align: center; white-space: nowrap; }
+  .eq-no { color: var(--faint); font-size: 0.9rem; flex-shrink: 0; }
+  table.cases { margin: 0 auto; border-collapse: collapse; }
+  table.cases td { padding: 0.1rem 0.75rem; border: none; }
+
+  details.proof { margin: 0.75rem 0 1.1rem; font-size: 0.94rem; }
+  details.proof summary { cursor: pointer; color: var(--muted); font-style: italic; }
+  details.proof summary:hover { color: var(--ink); }
+  details.proof[open] { border-left: 2px solid var(--rule); padding-left: 0.9rem; margin-left: 0.1rem; }
+  details.proof .eq { margin: 0.6rem 0; }
+
+  .diagram-note { font-size: 0.85rem; color: var(--muted); font-style: italic; text-align: center; }
+  figure.pfig { margin: 1.6rem 0; }
+  figure.pfig figcaption { font-family: var(--sans); }
+
+  .bl-row { font-family: var(--sans); font-size: 0.72rem; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin: 0.7rem 0 0.75rem; padding-top: 0.55rem; border-top: 1px dashed var(--rule); }
+  .bl-label { color: var(--faint); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.62rem; }
+  a.bl { font-family: var(--mono); font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 99px; background: var(--bg-sunken); color: var(--muted); border: 1px solid var(--rule); }
+  a.bl:hover { text-decoration: none; color: var(--ink); border-color: var(--faint); }
+
+  a.xref { color: var(--spatial); border-bottom: 1px dotted currentColor; }
+  a.xref:hover { text-decoration: none; border-bottom-style: solid; }
+
+  .excerpt-note { font-size: 0.85rem; color: var(--muted); background: var(--bg-sunken); border: 1px solid var(--rule); border-radius: 4px; padding: 0.8rem 1rem; font-family: var(--sans); }
+
+  /* ---------- code ---------- */
+  .code-section { margin: 2.5rem 0 0; }
+  .code-section h3 { font-size: 1.15rem; margin: 0 0 0.25rem; font-weight: 650; }
+  .code-section h4 { font-size: 0.98rem; margin: 1.75rem 0 0.25rem; font-weight: 650; font-family: var(--mono); }
+  .code-meta { font-family: var(--mono); font-size: 0.72rem; color: var(--faint); margin: 0 0 0.6rem; }
+  .code-section > p, .code-section .expl { max-width: 68ch; font-size: 0.94rem; color: var(--muted); margin: 0.4rem 0 0.9rem; }
+  .code-section .expl strong { color: var(--ink); }
+  .codewrap {
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0 0 1rem;
+  }
+  pre.code {
+    margin: 0;
+    padding: 0.9rem 1.1rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--code-ink);
+    min-width: max-content;
+  }
+  pre.code .no { display: inline-block; width: 2.6em; color: var(--faint); user-select: none; -webkit-user-select: none; text-align: right; padding-right: 1.1em; font-variant-numeric: tabular-nums; }
+  pre.code .c { color: var(--tok-c); font-style: italic; }
+  pre.code .s { color: var(--tok-s); }
+  pre.code .y { color: var(--tok-y); }
+  pre.code .k { color: var(--tok-k); font-weight: 600; }
+  pre.code .C { color: var(--tok-C); }
+  pre.code .n { color: var(--tok-n); }
+  a.trace { border-bottom: 1px dashed currentColor; font-style: normal; }
+  a.trace:hover { text-decoration: none; border-bottom-style: solid; background: var(--temporal-soft); }
+  a.tr-t { color: var(--temporal); }
+  a.tr-s { color: var(--spatial); }
+  a.tr-s:hover { background: var(--spatial-soft); }
+  a.tr-n { color: var(--muted); }
+
+  pre.term {
+    background: var(--bg-sunken);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    color: var(--code-ink);
+    margin: 0 0 1rem;
+  }
+  pre.term .prompt { color: var(--faint); }
+  pre.term .pass { color: var(--ok); }
+
+  /* ---------- flash + return pill ---------- */
+  @keyframes flashfade { 0% { background-color: var(--flash); } 100% { background-color: transparent; } }
+  .flash { animation: flashfade 1.8s ease-out 1; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { .flash { animation: none; background-color: var(--flash); } }
+  #return-pill {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 50;
+    display: none;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 99px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  }
+  #return-pill.show { display: block; }
+
+  /* ---------- provenance ---------- */
+  .prov { font-size: 0.9rem; color: var(--muted); max-width: 68ch; }
+  .prov b { color: var(--ink); }
+  dl.runmap { font-size: 0.88rem; max-width: 68ch; }
+  dl.runmap dt { font-family: var(--mono); font-size: 0.8rem; color: var(--ink); margin-top: 0.6rem; }
+  dl.runmap dd { margin: 0.1rem 0 0 0; color: var(--muted); }
+  footer.end { border-top: 1px solid var(--rule); margin-top: 3rem; padding: 1.5rem 0 3rem; font-size: 0.8rem; color: var(--faint); }
+</style>
+
+<div class="frame">
+<nav class="toc" aria-label="Contents">
+  <p class="toc-title">Contents</p>
+  <ol>
+    <li><a href="#idea">The idea</a></li>
+    <li><a href="#patterns">The patterns</a></li>
+    <li><a href="#paper">The paper</a>
+      <ol>
+        <li><a href="#s1">1 · Introduction</a></li>
+        <li><a href="#s2">2 · Preliminaries</a></li>
+        <li><a href="#s3-1">3.1 · Revertible effects</a></li>
+        <li><a href="#s3-2">3.2 · Reactive coeffects</a></li>
+      </ol>
+    </li>
+    <li><a href="#ruby">The Ruby</a>
+      <ol>
+        <li><a href="#rb-temporal">Temporal machinery</a></li>
+        <li><a href="#rb-spatial">Spatial machinery</a></li>
+        <li><a href="#rb-runtime">The reactive runtime</a></li>
+        <li><a href="#rb-checks">Theorem checks</a></li>
+        <li><a href="#rb-demo">Hot-swap demo</a></li>
+      </ol>
+    </li>
+    <li><a href="#beyond">Beyond the excerpt</a></li>
+    <li><a href="#provenance">Provenance</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="hero">
+  <p class="eyebrow">A paper, its patterns, and their Ruby &nbsp;·&nbsp; <span class="dim-t">temporal</span> × <span class="dim-s">spatial</span> composability</p>
+  <h1>Cordis in Ruby</h1>
+  <p class="standfirst">
+    Shi, Zhang &amp; Cui's <em>A Programming Paradigm for Spatiotemporal Composability</em> asks what it takes
+    to add and remove software components <strong>while the system runs</strong> — and answers with two runtime
+    mechanisms: effects that carry their own inverses, and dependencies that react to context change.
+    This page distills the paper into language-agnostic patterns, implements them in
+    <strong>~650 lines of dependency-free Ruby</strong>, and proves the implementation against the paper's own
+    theorems. Every construct links back to the definition it implements — click any
+    <a class="trace tr-t" href="#d8">Definition 8</a>-style reference to jump to the paper, then use the return
+    button to come back.
+  </p>
+  <div class="split-rule" aria-hidden="true"><span></span><span></span></div>
+  <div class="meta-row">
+    <span><b>21-page</b> excerpt reproduced (§1–§3.2.3)</span>
+    <span><b>11</b> patterns</span>
+    <span><b>25/25</b> theorem checks pass</span>
+    <span><b>0</b> gems beyond stdlib</span>
+  </div>
+</header>
+
+<!-- ============================================================ THE IDEA -->
+<section class="band" id="idea">
+  <p class="band-eyebrow">Orientation</p>
+  <h2>The idea: undo for time, contracts for space</h2>
+  <p class="lede">
+    Static composition — imports, function calls, inheritance — is resolved before a program runs and never
+    changes. Plugin hosts and self-evolving agent harnesses need the opposite: components that arrive,
+    depart, and get replaced <em>during</em> execution. The paper names the two guarantees that make that safe
+    (<a class="xref" href="#s1-1">§1.1</a>):
+  </p>
+  <p>
+    <strong style="color:var(--temporal)">Temporal composability</strong> — removing a component must
+    completely revert what it did to the shared environment. The theory of <em>effects</em> describes how
+    computations modify their environment; the paper lifts it to runtime by demanding every effect carry an
+    inverse, and by making the runtime track those inverses (<a class="xref" href="#s3-1">§3.1</a>).
+  </p>
+  <p>
+    <strong style="color:var(--spatial)">Spatial composability</strong> — components must declare what they
+    need from one another, and the system must resolve those needs as they appear and disappear. The theory
+    of <em>coeffects</em> describes what computations require of their environment; the paper lifts it to
+    runtime by classifying every context change against every declared requirement
+    (<a class="xref" href="#s3-2">§3.2</a>).
+  </p>
+  <p>
+    The unification is the quiet punchline: the dependency table <em>is</em> the context that effects act on.
+    Providing a dependency is an effect, so it is revertible; revoking one is a revert, so it is classified —
+    and component lifecycle stops being something you call and becomes something that <em>happens</em> to a
+    component when the context around it changes. In the paper's words: <em>"coeffect operations are effects,
+    and effects are revertible"</em> (<a class="xref" href="#s3-2-1">§3.2.1</a>).
+  </p>
+
+  <figure>
+    <div class="figwrap">
+    <svg viewBox="0 0 760 316" role="img" aria-label="One transition of the shared context: an effect maps state sigma to sigma-prime and returns an inverse kept in the owner's accumulator; the transition is then classified against every declared dependency specification as activating, deactivating, or neutral." style="color: var(--ink); font-family: var(--sans);">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"></path>
+        </marker>
+        <marker id="arr-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--temporal)"></path>
+        </marker>
+        <marker id="arr-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--spatial)"></path>
+        </marker>
+      </defs>
+      <!-- state boxes -->
+      <rect x="60" y="52" width="170" height="64" rx="6" fill="none" stroke="currentColor" stroke-width="1.4"></rect>
+      <text x="145" y="79" text-anchor="middle" font-size="15" font-style="italic" fill="currentColor">σ</text>
+      <text x="145" y="99" text-anchor="middle" font-size="11" fill="var(--muted)">context before</text>
+      <rect x="530" y="52" width="170" height="64" rx="6" fill="none" stroke="currentColor" stroke-width="1.4"></rect>
+      <text x="615" y="79" text-anchor="middle" font-size="15" font-style="italic" fill="currentColor">σ′</text>
+      <text x="615" y="99" text-anchor="middle" font-size="11" fill="var(--muted)">context after</text>
+      <!-- forward effect -->
+      <line x1="232" y1="70" x2="526" y2="70" stroke="currentColor" stroke-width="1.4" marker-end="url(#arr)"></line>
+      <text x="379" y="60" text-anchor="middle" font-size="12" fill="currentColor">effect&nbsp; e(σ) = (σ′, g)</text>
+      <!-- inverse back -->
+      <line x1="526" y1="98" x2="232" y2="98" stroke="var(--temporal)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#arr-t)"></line>
+      <text x="379" y="116" text-anchor="middle" font-size="12" fill="var(--temporal)">inverse&nbsp; g(σ′) = σ, kept in the owner's accumulator φ</text>
+      <!-- classification fan -->
+      <line x1="615" y1="120" x2="615" y2="158" stroke="var(--spatial)" stroke-width="1.4" marker-end="url(#arr-s)"></line>
+      <line x1="145" y1="120" x2="145" y2="158" stroke="var(--spatial)" stroke-width="1.4" marker-end="url(#arr-s)"></line>
+      <text x="380" y="150" text-anchor="middle" font-size="12" fill="var(--spatial)">notify_d(σ, σ′) — every declared specification d classifies the transition</text>
+      <!-- verdict chips -->
+      <rect x="112" y="170" width="150" height="34" rx="17" fill="var(--spatial-soft)" stroke="var(--spatial)"></rect>
+      <text x="187" y="192" text-anchor="middle" font-size="12" fill="var(--spatial)">activating → run effects</text>
+      <rect x="296" y="170" width="168" height="34" rx="17" fill="var(--temporal-soft)" stroke="var(--temporal)"></rect>
+      <text x="380" y="192" text-anchor="middle" font-size="12" fill="var(--temporal)">deactivating → run φ</text>
+      <rect x="498" y="170" width="120" height="34" rx="17" fill="none" stroke="var(--muted)"></rect>
+      <text x="558" y="192" text-anchor="middle" font-size="12" fill="var(--muted)">neutral → nothing</text>
+      <!-- captions under chips -->
+      <text x="187" y="228" text-anchor="middle" font-size="11" fill="var(--muted)">spec became satisfied</text>
+      <text x="380" y="228" text-anchor="middle" font-size="11" fill="var(--muted)">spec lost a key</text>
+      <text x="558" y="228" text-anchor="middle" font-size="11" fill="var(--muted)">satisfaction unchanged</text>
+      <!-- bottom claim -->
+      <line x1="60" y1="258" x2="700" y2="258" stroke="var(--rule)" stroke-width="1"></line>
+      <text x="380" y="286" text-anchor="middle" font-size="12" fill="var(--muted)">every write carries its undo (temporal) · every transition is classified against every need (spatial)</text>
+    </svg>
+    </div>
+    <figcaption>One reactive step of the paradigm: the effect returns its inverse (<a class="xref" href="#d8">Definition 8</a>), the accumulator keeps it (<a class="xref" href="#d2">Definition 2</a>), and the transition is classified against every component's specification (<a class="xref" href="#d26">Definition 26</a>).</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ PATTERNS -->
+<section class="band" id="patterns">
+  <p class="band-eyebrow">Distillation</p>
+  <h2>Eleven patterns, language-agnostic</h2>
+  <p class="lede">
+    The paper's machinery decomposes into patterns any runtime can adopt — an object heap, a plugin host, an
+    agent harness. Pseudocode here is deliberately generic; the next section is the paper itself; the one
+    after that is the Ruby. Chips under each card link both ways.
+  </p>
+
+  <div class="pat-group">
+    <p class="pat-group-title"><span class="dot dot-u"></span>Foundation</p>
+
+    <article class="pat" id="p1">
+      <h3><span class="pat-no">P1</span>Reified Context</h3>
+      <p class="intent">Make the environment a first-class value, so side effects become data you can store, compose, invert, and classify.</p>
+      <pre>impure  f : X → Y                 # effects hidden in the world
+pure    f : (Γ, X) → (Γ, Y)       # the world is a parameter
+a side effect is now just a transformation Γ → Γ</pre>
+      <p class="mech">Everything else follows from this move. The paper performs it twice: once for effects (the context Γ an effect transforms) and once for coeffects (the dependency table Σ a component reads) — then reveals they are the same object.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-t" href="#s3-1-1">§3.1.1</a>
+        <a class="chip chip-s" href="#d22">Def 22</a>
+        <a class="chip chip-s" href="#s2-3">§2.3</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-coeffect-context">CoeffectContext</a>
+      </div>
+    </article>
+  </div>
+
+  <div class="pat-group">
+    <p class="pat-group-title"><span class="dot dot-t"></span>Temporal — undo as structure</p>
+
+    <article class="pat" id="p2">
+      <h3><span class="pat-no">P2</span>Witnessed Undo</h3>
+      <p class="intent">Every mutation returns, along with the new state, an inverse chosen <em>at that state</em> — and the inverse provably reverts it.</p>
+      <pre>effect(ctx):
+  ctx′  = transform(ctx)
+  undo  = λc. restore what ctx held    # chosen here, not a priori
+  # the witness contract:  undo(ctx′) == ctx
+  return (ctx′, undo)</pre>
+      <p class="mech">This is the Command pattern with its debt paid: the undo is not a best-effort method but a per-state function with a checkable contract (g(δ) = γ). A fixed, state-independent undo is the degenerate case.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-t" href="#d8">Def 8</a>
+        <a class="chip chip-t" href="#d1">Def 1</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-effect">Effect</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p3">
+      <h3><span class="pat-no">P3</span>Undo Accumulator</h3>
+      <p class="intent">Pair the live state with the running composition of every inverse; unloading is applying that composition.</p>
+      <pre>state   = (ctx, φ)                  # φ starts as identity
+apply   : (ctx, φ) → (e.fwd(ctx), φ ∘ e.undo)
+unload  : ctx ← φ(ctx); φ ← id
+invariant, checkable anywhere:  φ(ctx) == ctx₀</pre>
+      <p class="mech">Recovery stops being a cleanup routine someone remembered to write and becomes a structural guarantee — the soundness invariant φ(γ) = γ₀ holds at every reachable state, so "can we unload cleanly?" is a runtime assertion, not a hope.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-t" href="#d2">Def 2</a>
+        <a class="chip chip-t" href="#d3">Def 3</a>
+        <a class="chip chip-t" href="#d6">Def 6</a>
+        <a class="chip chip-t" href="#t7">Thm 7</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-effect-context">EffectContext</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p4">
+      <h3><span class="pat-no">P4</span>Reversed-Order Composition</h3>
+      <p class="intent">Compose do/undo pairs so that doing chains forward while undoing accumulates backward.</p>
+      <pre>(f ⋄ g)(ctx):
+  (c₁, undo_g) = g(ctx)
+  (c₂, undo_f) = f(c₁)
+  return (c₂, undo_g ∘ undo_f)      # undo f first, then g</pre>
+      <p class="mech">The reversal is what makes composition safe: each inverse meets exactly the state its own application produced. Composition preserves the witness contract, so composite effects are as revertible as their parts — LIFO teardown for free.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-t" href="#d9">Def 9</a>
+        <a class="chip chip-t" href="#t10">Thm 10</a>
+        <a class="chip chip-t" href="#t11">Thm 11</a>
+        <a class="chip chip-t" href="#t16">Thm 16</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-effect">Effect#compose</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p5">
+      <h3><span class="pat-no">P5</span>Undo Is Itself an Effect</h3>
+      <p class="intent">Treat reverting as a first-class effect whose own inverse is redoing — so single effects can be plucked out of history.</p>
+      <pre>apply(e) at (ctx, φ) also yields:
+  undo★ = track(e.undo, e.fwd)      # redo is the undo's undo
+undo★ may run later — after other effects have moved the state —
+and withdraws e's contribution, nothing else</pre>
+      <p class="mech">All-or-nothing rollback can't remove one plugin from the middle of a running system. Lifting undo to the effect level gives selective revert, and the soundness invariant survives it in every case.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-t" href="#d12">Def 12</a>
+        <a class="chip chip-t" href="#t13">Thm 13</a>
+        <a class="chip chip-t" href="#t15">Thm 15</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-effect-context">EffectContext#apply</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p6">
+      <h3><span class="pat-no">P6</span>Independence Buys Any-Order Teardown</h3>
+      <p class="intent">When effects commute and never disturb each other's inverses, components can be withdrawn in any order — not just last-in-first-out.</p>
+      <pre>independent(e₁, e₂) ⇔
+    every transformation of one commutes with every one of the other
+  ∧ neither moves the inverse the other yields
+keyed store + disjoint keys  ⇒  independent, for free
+⇒ any permutation of the reverts reaches ctx₀</pre>
+      <p class="mech">This is why the dependency table is the right shape for the shared context: effects confined to their own keys are independent by construction, and real systems unload components in arbitrary order.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-t" href="#d17">Def 17</a>
+        <a class="chip chip-t" href="#d19">Def 19</a>
+        <a class="chip chip-t" href="#l18">Lemma 18</a>
+        <a class="chip chip-t" href="#c21">Cor 21</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-independence">Independence</a>
+      </div>
+    </article>
+  </div>
+
+  <div class="pat-group">
+    <p class="pat-group-title"><span class="dot dot-s"></span>Spatial — dependencies as data</p>
+
+    <article class="pat" id="p7">
+      <h3><span class="pat-no">P7</span>Dependencies as Typed Data</h3>
+      <p class="intent">Model the dependency registry as a typed partial map with preconditions — and make provision itself a witnessed effect.</p>
+      <pre>provide(k, v) : σ → (σ[k↦v], λσ′. σ′ \ k)   # an effect, so revertible
+get(k)        : defined only when k ∈ dom(σ)
+never provide the same key twice; never revoke the absent</pre>
+      <p class="mech">The IoC container, formalized. Because provision is an effect, registrations are tracked and recovered by the temporal machinery with no extra code — the synergy the whole paradigm rests on.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-s" href="#d22">Def 22</a>
+        <a class="chip chip-s" href="#d23">Def 23</a>
+        <a class="chip chip-s" href="#d24">Def 24</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-coeffect-context">CoeffectContext</a>
+        <a class="chip chip-code" href="#rb-coeffects">Coeffects</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p8">
+      <h3><span class="pat-no">P8</span>Declared Needs, Classified Transitions</h3>
+      <p class="intent">Components declare a dependency set; every context transition is classified against every declaration.</p>
+      <pre>satisfied(d, σ)  =  d ⊆ dom(σ)
+notify(d, σ, σ′) =  activating | deactivating | neutral
+every mutation is an effect ⇒ no transition escapes classification</pre>
+      <p class="mech">Reactivity here is algebraic, not infrastructural: no polling, no event bus to forget to subscribe to. Because all mutation flows through effect functions, satisfaction change is detectable at every effect boundary — the classification is total.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-s" href="#eq24">eq. 24</a>
+        <a class="chip chip-s" href="#d25">Def 25</a>
+        <a class="chip chip-s" href="#d26">Def 26</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-coeffects">Coeffects.notify</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p9">
+      <h3><span class="pat-no">P9</span>Withdraw After Deactivation</h3>
+      <p class="intent">Before a key disappears, deactivate everything that declared it — teardown order is derived from the dependency graph, not hand-maintained.</p>
+      <pre>withdraw(k):
+  for each active c with k ∈ c.requires: deactivate(c)
+  then remove k
+# deactivation replays c's inverses, which withdraw c's own keys
+# ⇒ the cascade recurses in exactly the right order</pre>
+      <p class="mech">Notification alone can't keep a binding alive while a dependent tears down; the ordering is a constraint on other components. The excerpt states the requirement and defers the formal machinery to §4.3.1 — this is the natural operational reading.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-s" href="#s3-2-2">§3.2.2</a>
+        <a class="chip chip-t" href="#s3-1-3">§3.1.3</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-runtime">System#transition</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p10">
+      <h3><span class="pat-no">P10</span>Isolation Realms</h3>
+      <p class="intent">Resolve the same logical key to different values in different contexts by adding a realm layer — sandboxing as data, not machinery.</p>
+      <pre>resolve(k) = ρ(k), defaulting to k itself
+isolate(k, r): derive a fresh context with ρ[k↦r]
+               # shared table untouched — no inverse to track
+reads and writes at k now land in realm r</pre>
+      <p class="mech">Isolation is a <em>derived</em> realization: it returns a new context instead of mutating the shared one, so recovery is discard. Multi-tenancy, test doubles, and per-component sandboxes fall out of one two-layer lookup.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-s" href="#d27">Def 27</a>
+        <a class="chip chip-s" href="#d28">Def 28</a>
+        <a class="chip chip-s" href="#d29">Def 29</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-isolated">IsolatedContext</a>
+      </div>
+    </article>
+  </div>
+
+  <div class="pat-group">
+    <p class="pat-group-title"><span class="dot dot-u"></span>Unified</p>
+
+    <article class="pat" id="p11">
+      <h3><span class="pat-no">P11</span>Components React, They Aren't Called</h3>
+      <p class="intent">A component is a dependency specification plus tracked effects; its whole lifecycle is a function of context transitions.</p>
+      <pre>component = (requires: {keys}, activate: scope → effects)
+on every transition (σ → σ′):
+  for each mounted c:
+    case notify(c.requires, σ, σ′)
+      activating   → run c.activate, inverses joining φ_c
+      deactivating → run φ_c, LIFO</pre>
+      <p class="mech">Nobody calls <code>start()</code> on anything. Mount a component and it waits; provide its last missing dependency and it activates; withdraw one and it deactivates — cleanly, because φ_c was maintained by construction. Hot module replacement is just unmount + mount.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip chip-s" href="#d26">Def 26</a>
+        <a class="chip chip-s" href="#s3-2-2">§3.2.2</a>
+        <a class="chip chip-t" href="#s3-1-3">§3.1.3</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-runtime">Component · System</a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============================================================ THE PAPER -->
+<section class="band" id="paper">
+  <p class="band-eyebrow">Source</p>
+  <h2>The paper, reproduced</h2>
+  <p class="lede">
+    The uploaded excerpt — title through §3.2.3, pages 1–21 — reproduced below with the paper's own
+    numbering, so every definition, theorem, and equation is a stable anchor. Statements are verbatim;
+    proofs are folded but intact. Commutative diagrams are redrawn. Dashed-underline references inside the
+    Ruby sections land here; the <em>In the Ruby</em> rows under each block link back to the code that
+    implements it.
+  </p>
+
+  <div class="paper-shell">
+  <div class="paper">
+    <p class="ptitle">A Programming Paradigm for Spatiotemporal Composability</p>
+    <p class="pauthors">Yifan Shi, Wei Zhang, Tianyi Cui</p>
+    <p class="paffil">Peking University · DeepSeek-AI</p>
+
+    <!--@@PAPER@@-->
+
+    <div class="excerpt-note" id="excerpt-end">
+      <strong>The excerpt ends here.</strong> The full paper continues with coeffect interception, the unified
+      context type and observational equivalence (§3.3), the calculus of dynamic composition and its
+      metatheory (§4), the Cordis implementation and Koishi case study (§5), discussion (§6), and related
+      work (§7) — see <a href="#beyond">Beyond the excerpt</a>.
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- ============================================================ THE RUBY -->
+<section class="band" id="ruby">
+  <p class="band-eyebrow">Implementation</p>
+  <h2>The Ruby, traced to the paper</h2>
+  <p class="lede">
+    <code>cordis.rb</code> — the complete library, pure Ruby stdlib, contexts immutable so the theorems stay
+    executable. The code below is generated from the committed source by <code>build.rb</code>; it cannot
+    drift from what runs. Every dashed reference is a link into the paper above —
+    <span style="color:var(--temporal)">oxblood</span> for the temporal machinery,
+    <span style="color:var(--spatial)">blue</span> for the spatial. A floating button returns you to where
+    you left off.
+  </p>
+
+  <div class="code-section" id="rb-temporal">
+    <h3>Temporal machinery — effects that remember how to leave</h3>
+    <p class="expl">
+      Three constructs carry all of §3.1: <strong>Effect</strong> (a function returning its own inverse),
+      <strong>EffectContext</strong> (state paired with the accumulator), and <strong>Independence</strong>
+      (the discipline that licenses out-of-order withdrawal).
+    </p>
+
+    <h4 id="rb-prelude">module Cordis</h4>
+    @@CODE:Prelude@@
+
+    <h4 id="rb-effect">Cordis::Effect</h4>
+    <p class="expl">The witnessed effect function: called at a state, returns the successor and the inverse chosen there. <code>compose</code> is the ⋄ operation — forwards chain, inverses accumulate reversed.</p>
+    @@CODE:Effect@@
+
+    <h4 id="rb-effect-context">Cordis::EffectContext</h4>
+    <p class="expl">The pair (γ, φ). <code>track</code> composes an inverse onto the accumulator; <code>apply</code> is the lift — it also hands back the undo <em>as a trackable effect</em>, enabling selective revert; <code>recover</code> unloads; <code>sound?</code> asserts the invariant φ(γ) = γ₀ at any moment.</p>
+    @@CODE:EffectContext@@
+
+    <h4 id="rb-independence">Cordis::Independence</h4>
+    <p class="expl">Definition 19, made checkable: commutation on generators, inverse-stability, both extensional over caller-supplied sample states. Key-disjoint effects on a table pass; same-key effects fail.</p>
+    @@CODE:Independence@@
+  </div>
+
+  <div class="code-section" id="rb-spatial">
+    <h3>Spatial machinery — the dependency table as context</h3>
+    <p class="expl">
+      The coeffect context and its operations. Note what is <em>absent</em>: no subscription list, no event
+      emitter. <code>set</code> returns an Effect, so the temporal machinery tracks provisions like any other
+      write — that one design decision is the paper's synergy.
+    </p>
+
+    <h4 id="rb-coeffect-context">Cordis::Satisfaction · Cordis::CoeffectContext</h4>
+    @@CODE:Satisfaction@@
+    @@CODE:CoeffectContext@@
+
+    <h4 id="rb-coeffects">Cordis::Coeffects</h4>
+    @@CODE:Coeffects@@
+
+    <h4 id="rb-coeffect">Cordis::Coeffect</h4>
+    <p class="expl">The per-key triple (V_k, ≈_k, A_k): operations act on the value alone and lift to the whole context, inverses confined to their key.</p>
+    @@CODE:Coeffect@@
+
+    <h4 id="rb-isolated">Cordis::IsolatedContext</h4>
+    <p class="expl">The two-layer context (ρ, σ): keys resolve through realms before touching the table. <code>isolate</code> derives instead of mutating — nothing to track, recovery is discard.</p>
+    @@CODE:IsolatedContext@@
+  </div>
+
+  <div class="code-section" id="rb-runtime">
+    <h3>The reactive runtime — where both dimensions meet</h3>
+    <p class="expl">
+      <strong>Component</strong> declares its specification; <strong>System</strong> makes the reactive
+      invariant operational: every mutation is a classified transition, activation runs effects with
+      tracking, deactivation replays the component's own accumulator, and withdrawals are ordered after the
+      deactivations they cause.
+    </p>
+
+    <h4 id="rb-component">Cordis::Component · Cordis::ActivationScope</h4>
+    @@CODE:Component@@
+    @@CODE:ActivationScope@@
+
+    <h4 id="rb-system">Cordis::System</h4>
+    @@CODE:System@@
+  </div>
+
+  <div class="code-section" id="rb-checks">
+    <h3>The theorems, executed</h3>
+    <p class="expl">
+      <code>theorem_checks.rb</code> verifies the paper's results on concrete contexts — extensional equality
+      over probe states, exactly as far as running code can witness a proof — and closes with regression
+      checks on the runtime's failure discipline. Two excerpts, then the full run.
+    </p>
+
+    <h4>The canonical witnessed effect</h4>
+    <p class="expl"><code>assign</code> chooses its inverse per state — restore the previous value, or delete the key if there was none. This is the effect the checks throw at every theorem.</p>
+    @@EXCERPT:assign@@
+
+    <h4>Any-order withdrawal, all six permutations</h4>
+    @@EXCERPT:cor21@@
+
+    <h4>The run</h4>
+    @@OUT:checks@@
+  </div>
+
+  <div class="code-section" id="rb-demo">
+    <h3>Hot module replacement, reactively</h3>
+    <p class="expl">
+      The capstone: a logger, a metrics component that needs the logger, a dashboard that needs both.
+      Nobody wires anything. One provision activates the tree; unmounting the logger deactivates its
+      dependents <em>before</em> the key disappears; mounting v2 reactivates them against the new provider;
+      final teardown recovers the initial context exactly.
+    </p>
+
+    <figure>
+      <div class="figwrap">
+      <svg viewBox="0 0 760 330" role="img" aria-label="Left: providing config cascades activations downward through logger, metrics, dashboard. Right: revoking config triggers the same cascade as deactivations in reverse dependency order, each component replaying its own inverses." style="color: var(--ink); font-family: var(--sans);">
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"></path>
+          </marker>
+          <marker id="arr2-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--temporal)"></path>
+          </marker>
+          <marker id="arr2-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--spatial)"></path>
+          </marker>
+        </defs>
+        <!-- headers -->
+        <text x="190" y="26" text-anchor="middle" font-size="12.5" fill="var(--spatial)" font-weight="600">provide :config — activation cascade</text>
+        <text x="570" y="26" text-anchor="middle" font-size="12.5" fill="var(--temporal)" font-weight="600">revoke :config — teardown cascade</text>
+        <!-- left column: activation -->
+        <rect x="80" y="42" width="220" height="30" rx="4" fill="none" stroke="currentColor"></rect>
+        <text x="190" y="62" text-anchor="middle" font-size="11.5" fill="currentColor">σ gains :config</text>
+        <line x1="190" y1="72" x2="190" y2="94" stroke="var(--spatial)" marker-end="url(#arr2-s)"></line>
+        <rect x="80" y="96" width="220" height="30" rx="4" fill="var(--spatial-soft)" stroke="var(--spatial)"></rect>
+        <text x="190" y="116" text-anchor="middle" font-size="11.5" fill="var(--spatial)">logger activates → :log</text>
+        <line x1="190" y1="126" x2="190" y2="148" stroke="var(--spatial)" marker-end="url(#arr2-s)"></line>
+        <rect x="80" y="150" width="220" height="30" rx="4" fill="var(--spatial-soft)" stroke="var(--spatial)"></rect>
+        <text x="190" y="170" text-anchor="middle" font-size="11.5" fill="var(--spatial)">metrics activates → :count</text>
+        <line x1="190" y1="180" x2="190" y2="202" stroke="var(--spatial)" marker-end="url(#arr2-s)"></line>
+        <rect x="80" y="204" width="220" height="30" rx="4" fill="var(--spatial-soft)" stroke="var(--spatial)"></rect>
+        <text x="190" y="224" text-anchor="middle" font-size="11.5" fill="var(--spatial)">dashboard activates → :render</text>
+        <text x="190" y="262" text-anchor="middle" font-size="11" fill="var(--muted)">each provision is one classified transition;</text>
+        <text x="190" y="278" text-anchor="middle" font-size="11" fill="var(--muted)">each activation is notify_d = activating</text>
+        <!-- right column: teardown -->
+        <rect x="460" y="42" width="220" height="30" rx="4" fill="none" stroke="currentColor"></rect>
+        <text x="570" y="62" text-anchor="middle" font-size="11.5" fill="currentColor">:config about to go</text>
+        <line x1="570" y1="72" x2="570" y2="94" stroke="var(--temporal)" stroke-dasharray="5 4" marker-end="url(#arr2-t)"></line>
+        <rect x="460" y="96" width="220" height="30" rx="4" fill="var(--temporal-soft)" stroke="var(--temporal)"></rect>
+        <text x="570" y="116" text-anchor="middle" font-size="11.5" fill="var(--temporal)">logger deactivates first…</text>
+        <line x1="570" y1="126" x2="570" y2="148" stroke="var(--temporal)" stroke-dasharray="5 4" marker-end="url(#arr2-t)"></line>
+        <rect x="460" y="150" width="220" height="30" rx="4" fill="var(--temporal-soft)" stroke="var(--temporal)"></rect>
+        <text x="570" y="170" text-anchor="middle" font-size="11.5" fill="var(--temporal)">…metrics before :log goes…</text>
+        <line x1="570" y1="180" x2="570" y2="202" stroke="var(--temporal)" stroke-dasharray="5 4" marker-end="url(#arr2-t)"></line>
+        <rect x="460" y="204" width="220" height="30" rx="4" fill="var(--temporal-soft)" stroke="var(--temporal)"></rect>
+        <text x="570" y="224" text-anchor="middle" font-size="11.5" fill="var(--temporal)">…dashboard before :count goes</text>
+        <text x="570" y="262" text-anchor="middle" font-size="11" fill="var(--muted)">withdrawal ordered after the deactivations</text>
+        <text x="570" y="278" text-anchor="middle" font-size="11" fill="var(--muted)">it causes; each φ_c replays LIFO</text>
+        <!-- center divider -->
+        <line x1="380" y1="42" x2="380" y2="290" stroke="var(--rule)"></line>
+        <text x="380" y="315" text-anchor="middle" font-size="11.5" fill="var(--muted)">after both: σ == σ₀, exactly — temporal composability, witnessed</text>
+      </svg>
+      </div>
+      <figcaption>The demo's two cascades. Activation flows down the dependency graph (<a class="xref" href="#d26">Definition 26</a>); teardown deactivates dependents before each key is withdrawn (<a class="xref" href="#s3-2-2">§3.2.2</a>), each component replaying its own accumulator (<a class="xref" href="#s3-1-3">§3.1.3</a>).</figcaption>
+    </figure>
+
+    <h4>demo_hot_swap.rb</h4>
+    @@CODE:demo@@
+
+    <h4>The run</h4>
+    @@OUT:demo@@
+  </div>
+</section>
+
+<!-- ============================================================ BEYOND -->
+<section class="band" id="beyond">
+  <p class="band-eyebrow">Boundary</p>
+  <h2>Beyond the excerpt</h2>
+  <p class="lede">
+    The uploaded PDF carries the paper's first 21 pages; its table of contents shows the full work running to
+    ~80. References on this page that point past §3.2.3 land here. What the remainder contains, per the
+    table of contents:
+  </p>
+  <p>
+    <strong>§3.3 The Context Paradigm</strong> — the unified context type carrying both effects and
+    coeffects, the observational equivalence on coeffects that supplies effects with independence, and the
+    paradigm's situation among its neighbors. <strong>§4 A Calculus of Dynamic Composition</strong> —
+    components and fibers, an operational semantics for load/unload/withdraw/iterate/async/failure, and the
+    metatheory (preservation, temporal and spatial composability at system scope, progress, confluence);
+    §4.3.1 in particular supplies the formal ordering of withdrawals that the runtime here implements
+    operationally. <strong>§5 Implementation</strong> — the authors' Cordis core library (effect tracking,
+    coeffect operations, component lifecycle) and declarative component loader (configuration
+    reconciliation, hot module replacement), with the Koishi chatbot-framework case study. <strong>§6–§8</strong> —
+    discussion of system boundaries, multiplexing, sandboxing, language independence, dependency typing, and
+    related work across effect systems, paradigms, and composability.
+  </p>
+</section>
+
+<!-- ============================================================ PROVENANCE -->
+<section class="band" id="provenance">
+  <p class="band-eyebrow">Colophon</p>
+  <h2>Provenance &amp; running the code</h2>
+  <p class="prov">
+    <b>Paper:</b> Yifan Shi, Wei Zhang, Tianyi Cui, <em>A Programming Paradigm for Spatiotemporal
+    Composability</em> (Peking University / DeepSeek-AI). Reproduced here from the uploaded 21-page excerpt
+    (title–§3.2.3) for study alongside its implementation; all definitions, theorems, and equation numbers
+    are the paper's own. <b>Ruby:</b> written for this guide, stdlib only, in
+    <code>docs/papers/spatiotemporal-composability/</code> of the recurgent repository. The code sections
+    above are generated from the committed sources by <code>build.rb</code>, which also verifies that every
+    trace link on this page resolves.
+  </p>
+  <dl class="runmap">
+    <dt>ruby theorem_checks.rb</dt>
+    <dd>runs the 25 executable checks shown above</dd>
+    <dt>ruby demo_hot_swap.rb</dt>
+    <dd>runs the reactive hot-swap scenario and prints the transition trace</dd>
+    <dt>ruby build.rb</dt>
+    <dd>regenerates index.html from guide.template.html + sources + fresh runs</dd>
+  </dl>
+  <p class="prov">
+    <b>Why it's in this repository:</b> recurgent's Agent objects are the paper's motivating example made
+    concrete — an agent harness that composes capabilities at runtime (§1.2.2). A child Agent that registers
+    tools, spawns delegates, or mutates shared state is performing exactly the dynamic composition the paper
+    formalizes; witnessed effects and declared coeffects are a candidate discipline for making delegation
+    trees revertible and delegation dependencies reactive.
+  </p>
+</section>
+
+<footer class="end">
+  Built from the committed sources · every reference on this page is checked at build time · serif voice =
+  the paper, sans voice = this guide, mono voice = code that runs.
+</footer>
+
+</main>
+</div>
+
+<button id="return-pill" type="button" aria-label="Return to previous position">↩ Return</button>
+
+<script>
+(function () {
+  "use strict";
+  var stack = [];
+  var pill = document.getElementById("return-pill");
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function flash(el) {
+    var target = el.closest(".blk, .eq, .psec > .ph, h4, h5") || el;
+    target.classList.remove("flash");
+    void target.offsetWidth;
+    target.classList.add("flash");
+  }
+
+  document.addEventListener("click", function (ev) {
+    var a = ev.target.closest ? ev.target.closest("a") : null;
+    if (!a) return;
+    var href = a.getAttribute("href") || "";
+    if (href.charAt(0) !== "#") return;
+    var target = document.getElementById(href.slice(1));
+    if (!target) return;
+    if (a.classList.contains("trace") || a.classList.contains("xref") ||
+        a.classList.contains("chip") || a.classList.contains("bl")) {
+      stack.push(window.scrollY);
+      pill.classList.add("show");
+    }
+    flash(target);
+  });
+
+  pill.addEventListener("click", function () {
+    var y = stack.pop();
+    if (y !== undefined) {
+      window.scrollTo({ top: y, behavior: reduced ? "auto" : "smooth" });
+    }
+    if (!stack.length) pill.classList.remove("show");
+  });
+
+  // Highlight the active TOC entry as the reader scrolls.
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.toc a"));
+  var byId = {};
+  links.forEach(function (l) { byId[l.getAttribute("href").slice(1)] = l; });
+  if ("IntersectionObserver" in window) {
+    var current = null;
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var link = byId[entry.target.id];
+        if (!link) return;
+        if (current) current.classList.remove("active");
+        link.classList.add("active");
+        current = link;
+      });
+    }, { rootMargin: "0px 0px -70% 0px" });
+    Object.keys(byId).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+  }
+})();
+</script>

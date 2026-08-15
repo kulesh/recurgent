@@ -1,0 +1,564 @@
+<section class="psec" id="s3">
+  <h3 class="ph ph-top"><span class="pno">3</span> Revertible Effects and Reactive Coeffects</h3>
+
+  <p>This section lifts the concepts of effects and coeffects introduced in
+  <a class="xref" href="#s2">Section 2</a> to runtime mechanisms, constructing a theory of
+  dynamic composition. The central idea is to turn the <em>typing contexts</em> carrying
+  effects and coeffects into <em>context types</em>, i.e., runtime-operable types that reify
+  the context as a first-class entity. For the effect type, we model it as a context
+  transformation paired with an inverse, achieving local temporal composability. For the
+  coeffect context, we model it as a type carrying dependency information, achieving local
+  spatial composability. An observational equivalence on the coeffects then supplies the
+  effects with independence. The unified context that carries both effects and coeffects
+  constitutes a programming paradigm in its own right.</p>
+
+  <section class="psec" id="s3-1">
+    <h4 class="ph"><span class="pno">3.1</span> Revertible Effects</h4>
+
+    <p><em>Temporal composability</em> is the ability to load and unload components at
+    runtime such that, upon unloading, the shared environment is recovered to its
+    pre-composition state. This requires that every modification a component makes to the
+    environment be both trackable and recoverable. We therefore model an effect as a
+    function of type <i>Γ</i> → <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>): applied to the current
+    context, it yields the modified context together with an explicit inverse. Supplying
+    that inverse is what lets the effect be reverted, and returning it to the runtime is
+    what makes the effect trackable. We call such effects <em>revertible</em>: by tracking
+    and composing these inverses during execution, complete environment recovery becomes a
+    structural guarantee.</p>
+
+    <section class="psec" id="s3-1-1">
+      <h5 class="ph"><span class="pno">3.1.1</span> Effect Context</h5>
+
+      <p>Given any impure function <i>f</i><sub>impure</sub> : <i>X</i> → <i>Y</i>, we
+      transform it into a pure form <i>f</i> : <i>Γ</i> × <i>X</i> → <i>Γ</i> × <i>Y</i>,
+      where <i>Γ</i> is the context and all possible side effects can be represented as
+      transformations on <i>Γ</i>. For any fixed input <i>x</i> : <i>X</i>, the induced map
+      <i>γ</i> ↦ pr<sub>1</sub>(<i>f</i>(<i>γ</i>, <i>x</i>)) captures the side effect of
+      <i>f</i> independently of the return value. Effects on <i>Γ</i> therefore live in the
+      monoid of transformations <i>Γ</i> → <i>Γ</i> under composition ∘, where each monoid
+      axiom has a direct reading as a property of effects:</p>
+      <ul>
+        <li><em>Closure</em>: the sequential composition of two effects is again an effect;</li>
+        <li><em>Associativity</em>: a composite effect is independent of how it is bracketed;</li>
+        <li><em>Identity</em>: id<sub><i>Γ</i></sub>, the identity function on <i>Γ</i>, acts as the unit of composition.</li>
+      </ul>
+
+      <p>To model effects that can be undone, we pair each transformation <i>f</i> with
+      another transformation <i>g</i> that undoes <i>f</i>, and call <i>g</i> a
+      <em>left inverse</em> of <i>f</i>, abbreviated to <em>inverse</em> throughout the
+      paper. Undoing is one-sided: what an inverse is held to is <i>g</i> ∘ <i>f</i> and
+      never <i>f</i> ∘ <i>g</i>. Pairs of transformations carry a multiplication of their
+      own:</p>
+
+      <div class="blk blk-def" id="d1">
+        <p class="blk-head"><span class="blk-tag">Definition 1</span></p>
+        <p>Define the <em>twisted composition</em> of pairs of context transformations by</p>
+        <div class="eq" id="eq4">
+          <div class="eq-body">(<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>) ∘ (<i>f</i><sub>2</sub>, <i>g</i><sub>2</sub>) := (<i>f</i><sub>1</sub> ∘ <i>f</i><sub>2</sub>, <i>g</i><sub>2</sub> ∘ <i>g</i><sub>1</sub>)</div>
+          <span class="eq-no">(4)</span>
+        </div>
+        <p>As for ∘ itself, the left operand acts after the right, and the inverses
+        accumulate in the opposite order. It makes
+        (<i>Γ</i> → <i>Γ</i>) × (<i>Γ</i> → <i>Γ</i>) a monoid with unit
+        (id<sub><i>Γ</i></sub>, id<sub><i>Γ</i></sub>), the product of the monoid of
+        transformations with its opposite, which we call the twisted composition monoid
+        𝔗<sub><i>Γ</i></sub> over <i>Γ</i>.</p>
+        <!--BL:d1-->
+      </div>
+
+      <p>To track effects within the context itself, we introduce the following
+      definition:</p>
+
+      <div class="blk blk-def" id="d2">
+        <p class="blk-head"><span class="blk-tag">Definition 2</span></p>
+        <p>Given a context <i>Γ</i>, define its <em>effect context</em> as:</p>
+        <div class="eq" id="eq5">
+          <div class="eq-body">∂<i>Γ</i> := <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>)</div>
+          <span class="eq-no">(5)</span>
+        </div>
+        <p>It can be understood as a pair (<i>γ</i>, <i>φ</i>), where:</p>
+        <ul>
+          <li><i>γ</i> : <i>Γ</i> is the current context state;</li>
+          <li><i>φ</i> : <i>Γ</i> → <i>Γ</i> is the <em>accumulator</em>, the composite of
+          the inverses of the effects performed so far, and the function that recovers the
+          context to its initial state.</li>
+        </ul>
+        <p>In particular, the initial effect context can be represented as
+        (<i>γ</i><sub>0</sub>, id<sub><i>Γ</i></sub>).</p>
+        <!--BL:d2-->
+      </div>
+
+      <p>We also write ∂<sup>2</sup><i>Γ</i> = ∂<i>Γ</i> × (∂<i>Γ</i> → ∂<i>Γ</i>), and so
+      on up the tower.</p>
+
+      <p>Given the presence of the accumulator <i>φ</i>, all effects performed on
+      ∂<i>Γ</i> can be tracked and recovered. We now give the concrete constructions for
+      tracking and recovery.</p>
+
+      <div class="blk blk-def" id="d3">
+        <p class="blk-head"><span class="blk-tag">Definition 3</span></p>
+        <p>Define the transformation <span class="op">track</span><sub><i>Γ</i></sub> on
+        pairs of context functions:</p>
+        <div class="eq" id="eq6">
+          <div class="eq-body">
+            <span class="op">track</span><sub><i>Γ</i></sub> &nbsp;:&nbsp; (<i>Γ</i> → <i>Γ</i>) × (<i>Γ</i> → <i>Γ</i>) &nbsp;→&nbsp; ∂<i>Γ</i> &nbsp;→&nbsp; ∂<i>Γ</i><br>
+            <span class="op">track</span><sub><i>Γ</i></sub> &nbsp;=&nbsp; (<i>f</i>, <i>g</i>) &nbsp;↦&nbsp; (<i>γ</i>, <i>φ</i>) &nbsp;↦&nbsp; (<i>f</i>(<i>γ</i>), <i>φ</i> ∘ <i>g</i>)
+          </div>
+          <span class="eq-no">(6)</span>
+        </div>
+        <!--BL:d3-->
+      </div>
+
+      <p>This transformation converts a forward function <i>f</i> together with a candidate
+      inverse <i>g</i> into a transformation of the effect context ∂<i>Γ</i>. Applying
+      <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i>, <i>g</i>) to a state
+      (<i>γ</i>, <i>φ</i>) transforms <i>γ</i> by <i>f</i> and composes the inverse
+      <i>g</i> onto <i>φ</i>, thereby tracking the effect of <i>f</i> in the context.</p>
+
+      <div class="blk blk-thm" id="t4">
+        <p class="blk-head"><span class="blk-tag">Theorem 4</span></p>
+        <p>For every (<i>f</i>, <i>g</i>) ∈ (<i>Γ</i> → <i>Γ</i>) × (<i>Γ</i> → <i>Γ</i>)
+        the following diagram commutes, that is,</p>
+        <div class="eq" id="eq7">
+          <div class="eq-body">pr<sub>1</sub> ∘ <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i>, <i>g</i>) = <i>f</i> ∘ pr<sub>1</sub></div>
+          <span class="eq-no">(7)</span>
+        </div>
+        <p class="diagram-note">[Diagram: A commutative square with <i>f</i> mapping <i>Γ</i> to <i>Γ</i> along the top, <i>f</i>′ = track<sub><i>Γ</i></sub>(<i>f</i>, <i>g</i>) mapping ∂<i>Γ</i> to ∂<i>Γ</i> along the bottom, pr<sub>1</sub> projecting each ∂<i>Γ</i> up to <i>Γ</i>, and track carrying (<i>f</i>, <i>g</i>) down to <i>f</i>′.]</p>
+        <details class="proof">
+          <summary>Proof</summary>
+          <p>For all (<i>γ</i>, <i>φ</i>) ∈ ∂<i>Γ</i>:</p>
+          <div class="eq">
+            <div class="eq-body">
+              (pr<sub>1</sub> ∘ <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i>, <i>g</i>))(<i>γ</i>, <i>φ</i>) = pr<sub>1</sub>(<i>f</i>(<i>γ</i>), <i>φ</i> ∘ <i>g</i>)<br>
+              = <i>f</i>(<i>γ</i>)<br>
+              = (<i>f</i> ∘ pr<sub>1</sub>)(<i>γ</i>, <i>φ</i>) &nbsp;□
+            </div>
+          </div>
+        </details>
+        <!--BL:t4-->
+      </div>
+
+      <div class="blk blk-thm" id="t5">
+        <p class="blk-head"><span class="blk-tag">Theorem 5</span></p>
+        <p><span class="op">track</span><sub><i>Γ</i></sub> is a monoid homomorphism from
+        𝔗<sub><i>Γ</i></sub> into ∂<i>Γ</i> → ∂<i>Γ</i>. That is,</p>
+        <ol>
+          <li><span class="op">track</span><sub><i>Γ</i></sub>(id<sub><i>Γ</i></sub>, id<sub><i>Γ</i></sub>) = id<sub>∂<i>Γ</i></sub>;</li>
+          <li>for all (<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>), (<i>f</i><sub>2</sub>, <i>g</i><sub>2</sub>) ∈ 𝔗<sub><i>Γ</i></sub>,
+            <div class="eq" id="eq8">
+              <div class="eq-body"><span class="op">track</span><sub><i>Γ</i></sub>((<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>) ∘ (<i>f</i><sub>2</sub>, <i>g</i><sub>2</sub>)) = <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>) ∘ <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub>2</sub>, <i>g</i><sub>2</sub>)</div>
+              <span class="eq-no">(8)</span>
+            </div>
+          </li>
+        </ol>
+        <details class="proof">
+          <summary>Proof</summary>
+          <ol>
+            <li>The unit is carried to the unit, since
+            <span class="op">track</span><sub><i>Γ</i></sub>(id<sub><i>Γ</i></sub>, id<sub><i>Γ</i></sub>)(<i>γ</i>, <i>φ</i>) = (<i>γ</i>, <i>φ</i> ∘ id<sub><i>Γ</i></sub>) = (<i>γ</i>, <i>φ</i>).</li>
+            <li>For the multiplication, take any (<i>γ</i>, <i>φ</i>) ∈ ∂<i>Γ</i>:
+              <div class="eq">
+                <div class="eq-body">
+                  (<span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>) ∘ <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub>2</sub>, <i>g</i><sub>2</sub>))(<i>γ</i>, <i>φ</i>) = <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>)(<i>f</i><sub>2</sub>(<i>γ</i>), <i>φ</i> ∘ <i>g</i><sub>2</sub>)<br>
+                  = (<i>f</i><sub>1</sub>(<i>f</i><sub>2</sub>(<i>γ</i>)), <i>φ</i> ∘ <i>g</i><sub>2</sub> ∘ <i>g</i><sub>1</sub>)<br>
+                  = <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub>1</sub> ∘ <i>f</i><sub>2</sub>, <i>g</i><sub>2</sub> ∘ <i>g</i><sub>1</sub>)(<i>γ</i>, <i>φ</i>) &nbsp;□
+                </div>
+              </div>
+            </li>
+          </ol>
+        </details>
+        <!--BL:t5-->
+      </div>
+
+      <div class="blk blk-def" id="d6">
+        <p class="blk-head"><span class="blk-tag">Definition 6</span></p>
+        <p>Define the transformation <span class="op">recover</span><sub><i>Γ</i></sub> on
+        ∂<i>Γ</i>:</p>
+        <div class="eq" id="eq9">
+          <div class="eq-body">
+            <span class="op">recover</span><sub><i>Γ</i></sub> &nbsp;:&nbsp; ∂<i>Γ</i> &nbsp;→&nbsp; ∂<i>Γ</i><br>
+            <span class="op">recover</span><sub><i>Γ</i></sub> &nbsp;=&nbsp; (<i>γ</i>, <i>φ</i>) &nbsp;↦&nbsp; (<i>φ</i>(<i>γ</i>), id<sub><i>Γ</i></sub>)
+          </div>
+          <span class="eq-no">(9)</span>
+        </div>
+        <!--BL:d6-->
+      </div>
+
+      <p>This transformation applies the recovery function <i>φ</i> to the current state
+      <i>γ</i> and resets <i>φ</i> to the identity. The following diagram illustrates how
+      <span class="op">recover</span> recovers the context to its initial state after a
+      sequence of effects
+      <span class="op">track</span>(<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>), ⋯,
+      <span class="op">track</span>(<i>f</i><sub><i>n</i></sub>, <i>g</i><sub><i>n</i></sub>)
+      has been applied to ∂<i>Γ</i>:</p>
+
+      <p class="diagram-note">[Diagram: A chain of commutative squares in which each track(<i>f</i><sub><i>i</i></sub>, <i>g</i><sub><i>i</i></sub>) sends ∂<i>Γ</i> to ∂<i>Γ</i> beneath the corresponding <i>f</i><sub><i>i</i></sub> on <i>Γ</i>, with a long recover arrow returning the final ∂<i>Γ</i> back to the initial one.]</p>
+
+      <p>The diagram shows that the tracked effects followed by
+      <span class="op">recover</span> carry the initial effect context back to itself. What
+      each tracking step preserves is the result of recovery itself, from whatever state it
+      is taken:</p>
+
+      <div class="blk blk-thm" id="t7">
+        <p class="blk-head"><span class="blk-tag">Theorem 7</span></p>
+        <p>For every (<i>γ</i>, <i>φ</i>) ∈ ∂<i>Γ</i> and every pair (<i>f</i>, <i>g</i>)
+        with <i>g</i>(<i>f</i>(<i>γ</i>)) = <i>γ</i>,</p>
+        <div class="eq" id="eq10">
+          <div class="eq-body"><span class="op">recover</span><sub><i>Γ</i></sub>(<span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i>, <i>g</i>)(<i>γ</i>, <i>φ</i>)) = <span class="op">recover</span><sub><i>Γ</i></sub>(<i>γ</i>, <i>φ</i>)</div>
+          <span class="eq-no">(10)</span>
+        </div>
+        <details class="proof">
+          <summary>Proof</summary>
+          <div class="eq">
+            <div class="eq-body">
+              <span class="op">recover</span><sub><i>Γ</i></sub>(<span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i>, <i>g</i>)(<i>γ</i>, <i>φ</i>)) = <span class="op">recover</span><sub><i>Γ</i></sub>(<i>f</i>(<i>γ</i>), <i>φ</i> ∘ <i>g</i>)<br>
+              = (<i>φ</i>(<i>g</i>(<i>f</i>(<i>γ</i>))), id<sub><i>Γ</i></sub>)<br>
+              = (<i>φ</i>(<i>γ</i>), id<sub><i>Γ</i></sub>) = <span class="op">recover</span><sub><i>Γ</i></sub>(<i>γ</i>, <i>φ</i>) &nbsp;□
+            </div>
+          </div>
+        </details>
+        <!--BL:t7-->
+      </div>
+
+      <p>A sequence of pairs needs no separate argument. Let
+      (<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>), ⋯,
+      (<i>f</i><sub><i>n</i></sub>, <i>g</i><sub><i>n</i></sub>) be applied in order from
+      (<i>γ</i>, <i>φ</i>), and write <i>δ</i><sub>0</sub> = <i>γ</i> and
+      <i>δ</i><sub><i>i</i></sub> = <i>f</i><sub><i>i</i></sub>(<i>δ</i><sub><i>i</i>−1</sub>).
+      By <a class="xref" href="#t5">Theorem 5</a> the composite
+      <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub><i>n</i></sub>, <i>g</i><sub><i>n</i></sub>) ∘ ⋯ ∘
+      <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>)
+      is <span class="op">track</span><sub><i>Γ</i></sub> of the twisted composite
+      (<i>f</i><sub><i>n</i></sub> ∘ ⋯ ∘ <i>f</i><sub>1</sub>, <i>g</i><sub>1</sub> ∘ ⋯ ∘ <i>g</i><sub><i>n</i></sub>),
+      and if <i>g</i><sub><i>i</i></sub>(<i>δ</i><sub><i>i</i></sub>) = <i>δ</i><sub><i>i</i>−1</sub>
+      for every <i>i</i> then
+      (<i>g</i><sub>1</sub> ∘ ⋯ ∘ <i>g</i><sub><i>n</i></sub>)(<i>δ</i><sub><i>n</i></sub>) = <i>δ</i><sub>0</sub> = <i>γ</i>.
+      That pair therefore meets the hypothesis of <a class="xref" href="#t7">Theorem 7</a>
+      at <i>γ</i>, and one application of the theorem gives</p>
+      <div class="eq" id="eq11">
+        <div class="eq-body"><span class="op">recover</span><sub><i>Γ</i></sub>((<span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub><i>n</i></sub>, <i>g</i><sub><i>n</i></sub>) ∘ ⋯ ∘ <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>))(<i>γ</i>, <i>φ</i>)) = <span class="op">recover</span><sub><i>Γ</i></sub>(<i>γ</i>, <i>φ</i>)</div>
+        <span class="eq-no">(11)</span>
+      </div>
+
+      <p>Taking (<i>γ</i>, <i>φ</i>) = (<i>γ</i><sub>0</sub>, id<sub><i>Γ</i></sub>),
+      recovery carries every state reached this way back to
+      (<i>γ</i><sub>0</sub>, id<sub><i>Γ</i></sub>). A pair with
+      <i>g</i> ∘ <i>f</i> = id<sub><i>Γ</i></sub> meets the hypothesis at every state.</p>
+
+      <p>Recovery reads a state through the quantity <i>φ</i>(<i>γ</i>), and we refer to
+      <i>φ</i>(<i>γ</i>) = <i>γ</i><sub>0</sub> as the <em>soundness invariant</em> of a
+      state in ∂<i>Γ</i>.</p>
+    </section>
+
+    <section class="psec" id="s3-1-2">
+      <h5 class="ph"><span class="pno">3.1.2</span> Revertible Effect Functions</h5>
+
+      <p>The <span class="op">track</span>/<span class="op">recover</span> model of the
+      previous section takes inverses as given a priori:
+      <span class="op">track</span><sub><i>Γ</i></sub>(<i>f</i>, <i>g</i>) fixes <i>g</i>
+      before any context state is seen, so one <i>g</i> has to serve every state the effect
+      is applied at. In practice, however, the inverse of each effect is not known a
+      priori: it must be supplied by the caller at the point of effect application.
+      Moreover, <span class="op">recover</span> is all-or-nothing: it cannot selectively
+      undo one effect while retaining others. To address both issues, we enhance the model
+      at both the input and output sides:</p>
+      <ol>
+        <li>On the input side, we not only transform <i>Γ</i> but also return an inverse
+        function alongside it, so that the inverse is supplied where the effect is applied:
+        <i>Γ</i> → <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>), i.e., <i>Γ</i> → ∂<i>Γ</i>;</li>
+        <li>On the output side, we not only transform ∂<i>Γ</i> but also return an inverse
+        function alongside it, so that one effect can be undone while the others are
+        retained: ∂<i>Γ</i> → ∂<i>Γ</i> × (∂<i>Γ</i> → ∂<i>Γ</i>), i.e.,
+        ∂<i>Γ</i> → ∂<sup>2</sup><i>Γ</i>.</li>
+      </ol>
+
+      <p>This enhancement preserves structural consistency between input and output, so we
+      can still define corresponding theory that maintains the mathematical properties of
+      <span class="op">track</span>. The resulting types are the effect functions
+      𝔈<sub><i>Γ</i></sub> and their witnessed refinement
+      𝔈<sup>∗</sup><sub><i>Γ</i></sub>:</p>
+
+      <div class="blk blk-def" id="d8">
+        <p class="blk-head"><span class="blk-tag">Definition 8</span></p>
+        <p>Define the effect function 𝔈<sub><i>Γ</i></sub> and <em>witnessed</em> effect
+        function 𝔈<sup>∗</sup><sub><i>Γ</i></sub> as:</p>
+        <div class="eq" id="eq12">
+          <div class="eq-body">
+            𝔈<sub><i>Γ</i></sub> := <i>Γ</i> → <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>)<br>
+            𝔈<sup>∗</sup><sub><i>Γ</i></sub> := (<i>e</i> : <i>Γ</i> → <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>))<br>
+            &emsp;&emsp;× ((<i>γ</i> : <i>Γ</i>) → ((<i>δ</i> : <i>Γ</i>) × (<i>g</i> : <i>Γ</i> → <i>Γ</i>) × ((<i>δ</i>, <i>g</i>) = <i>e</i>(<i>γ</i>) → <i>g</i>(<i>δ</i>) = <i>γ</i>)))
+          </div>
+          <span class="eq-no">(12)</span>
+        </div>
+        <p>where <i>e</i>(<i>γ</i>) yields a pair (<i>δ</i>, <i>g</i>) representing:</p>
+        <ul>
+          <li><i>δ</i> : <i>Γ</i> is the new context;</li>
+          <li><i>g</i> : <i>Γ</i> → <i>Γ</i> is the inverse function of the current effect.</li>
+        </ul>
+        <!--BL:d8-->
+      </div>
+
+      <p>An element of 𝔈<sup>∗</sup><sub><i>Γ</i></sub> chooses its inverse per state, and
+      the constraint <i>g</i>(<i>δ</i>) = <i>γ</i> holds that choice to reverting the
+      effect where it was applied, leaving <i>g</i> unconstrained everywhere else. A single
+      <i>g</i> with <i>g</i> ∘ <i>f</i> = id<sub><i>Γ</i></sub> meets the constraint at
+      every state at once, and induces an element of 𝔈<sup>∗</sup><sub><i>Γ</i></sub> by
+      (<i>f</i>, <i>g</i>) ↦ <i>γ</i> ↦ (<i>f</i>(<i>γ</i>), <i>g</i>), which
+      <a class="xref" href="#t11">Theorem 11</a> shows to be a homomorphism. The constraint
+      can be visualized as the following commutative diagram, ensuring that the inverse
+      <i>e</i> returns indeed reverses the transformation at the state where <i>e</i> was
+      applied:</p>
+
+      <p class="diagram-note">[Diagram: A triangle in which <i>e</i> sends <i>Γ</i> down to ∂<i>Γ</i>, whose projections pr<sub>1</sub> and pr<sub>2</sub> recover the forward map <i>f</i> and the inverse <i>g</i> running between the two copies of <i>Γ</i> along the top.]</p>
+
+      <p>Since effect functions 𝔈<sub><i>Γ</i></sub> are no longer endomorphisms on the
+      context, they cannot be directly composed. We therefore define a new operation for
+      effect composition:</p>
+
+      <div class="blk blk-def" id="d9">
+        <p class="blk-head"><span class="blk-tag">Definition 9</span></p>
+        <p>Given functions <i>f</i>, <i>g</i> ∈ 𝔈<sub><i>Γ</i></sub>, define their
+        <em>effect composition</em> <i>f</i> ⋄ <i>g</i> as:</p>
+        <div class="eq" id="eq13">
+          <div class="eq-body">
+            <i>f</i> ⋄ <i>g</i> &nbsp;:&nbsp; <i>Γ</i> &nbsp;→&nbsp; ∂<i>Γ</i><br>
+            <i>f</i> ⋄ <i>g</i> &nbsp;=&nbsp; <i>γ</i> &nbsp;↦&nbsp; <span class="kw">let</span> (<i>δ</i>, <i>s</i>) = <i>g</i>(<i>γ</i>) <span class="kw">in</span><br>
+            &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<span class="kw">let</span> (<i>ε</i>, <i>t</i>) = <i>f</i>(<i>δ</i>) <span class="kw">in</span><br>
+            &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(<i>ε</i>, <i>s</i> ∘ <i>t</i>)
+          </div>
+          <span class="eq-no">(13)</span>
+        </div>
+        <!--BL:d9-->
+      </div>
+
+      <div class="blk blk-thm" id="t10">
+        <p class="blk-head"><span class="blk-tag">Theorem 10</span></p>
+        <p>Effect composition carries the monoid structure of 𝔗<sub><i>Γ</i></sub> over to
+        𝔈<sub><i>Γ</i></sub>. That is,</p>
+        <ol>
+          <li>(𝔈<sub><i>Γ</i></sub>, ⋄) is a monoid with unit
+          <i>η</i><sub><i>Γ</i></sub> := <i>γ</i> ↦ (<i>γ</i>, id<sub><i>Γ</i></sub>);</li>
+          <li>the assignment (<i>f</i>, <i>g</i>) ↦ <i>γ</i> ↦ (<i>f</i>(<i>γ</i>), <i>g</i>)
+          is a monoid homomorphism from 𝔗<sub><i>Γ</i></sub> into 𝔈<sub><i>Γ</i></sub>.</li>
+        </ol>
+        <details class="proof">
+          <summary>Proof</summary>
+          <ol>
+            <li>Associativity and the unit laws follow componentwise from those of ∘.</li>
+            <li>Write <i>e</i><sub><i>i</i></sub> = <i>γ</i> ↦ (<i>f</i><sub><i>i</i></sub>(<i>γ</i>), <i>g</i><sub><i>i</i></sub>);
+            then (<i>e</i><sub>1</sub> ⋄ <i>e</i><sub>2</sub>)(<i>γ</i>) = (<i>f</i><sub>1</sub>(<i>f</i><sub>2</sub>(<i>γ</i>)), <i>g</i><sub>2</sub> ∘ <i>g</i><sub>1</sub>),
+            which is the image of (<i>f</i><sub>1</sub>, <i>g</i><sub>1</sub>) ∘ (<i>f</i><sub>2</sub>, <i>g</i><sub>2</sub>),
+            and (id<sub><i>Γ</i></sub>, id<sub><i>Γ</i></sub>) maps to <i>η</i><sub><i>Γ</i></sub>. □</li>
+          </ol>
+        </details>
+        <!--BL:t10-->
+      </div>
+
+      <div class="blk blk-thm" id="t11">
+        <p class="blk-head"><span class="blk-tag">Theorem 11</span></p>
+        <p>Witnessing survives effect composition, and a uniform inverse witnesses at every
+        state. That is,</p>
+        <ol>
+          <li>𝔈<sup>∗</sup><sub><i>Γ</i></sub> is a submonoid of 𝔈<sub><i>Γ</i></sub>;</li>
+          <li>the homomorphism of <a class="xref" href="#t10">Theorem 10</a> carries every
+          pair with <i>g</i> ∘ <i>f</i> = id<sub><i>Γ</i></sub> into
+          𝔈<sup>∗</sup><sub><i>Γ</i></sub>.</li>
+        </ol>
+        <details class="proof">
+          <summary>Proof</summary>
+          <ol>
+            <li>The unit lies in 𝔈<sup>∗</sup><sub><i>Γ</i></sub> since
+            id<sub><i>Γ</i></sub>(<i>γ</i>) = <i>γ</i>. For closure, take
+            <i>f</i>, <i>g</i> ∈ 𝔈<sup>∗</sup><sub><i>Γ</i></sub> and any
+            <i>γ</i> ∈ <i>Γ</i>, and let (<i>δ</i>, <i>s</i>) = <i>g</i>(<i>γ</i>),
+            (<i>ε</i>, <i>t</i>) = <i>f</i>(<i>δ</i>), so that
+            (<i>f</i> ⋄ <i>g</i>)(<i>γ</i>) = (<i>ε</i>, <i>s</i> ∘ <i>t</i>). Then
+            <i>s</i>(<i>δ</i>) = <i>γ</i> and <i>t</i>(<i>ε</i>) = <i>δ</i>, therefore
+            (<i>s</i> ∘ <i>t</i>)(<i>ε</i>) = <i>s</i>(<i>δ</i>) = <i>γ</i>.</li>
+            <li><i>g</i> ∘ <i>f</i> = id<sub><i>Γ</i></sub> gives
+            <i>g</i>(<i>f</i>(<i>γ</i>)) = <i>γ</i> at every <i>γ</i>, so the image of such
+            a pair is witnessed at every state. □</li>
+          </ol>
+        </details>
+        <!--BL:t11-->
+      </div>
+
+      <p>Just as <span class="op">track</span> lifts a pair of transformations on <i>Γ</i>
+      to ∂<i>Γ</i>, we define <span class="op">effect</span> to lift 𝔈<sub><i>Γ</i></sub>
+      to 𝔈<sub>∂<i>Γ</i></sub>:</p>
+
+      <div class="blk blk-def" id="d12">
+        <p class="blk-head"><span class="blk-tag">Definition 12</span></p>
+        <p>Define the effect function transformation
+        <span class="op">effect</span><sub><i>Γ</i></sub> as:</p>
+        <div class="eq" id="eq14">
+          <div class="eq-body">
+            <span class="op">effect</span><sub><i>Γ</i></sub> &nbsp;:&nbsp; 𝔈<sub><i>Γ</i></sub> &nbsp;→&nbsp; ∂<i>Γ</i> &nbsp;→&nbsp; ∂<sup>2</sup><i>Γ</i><br>
+            <span class="op">effect</span><sub><i>Γ</i></sub> &nbsp;=&nbsp; <i>e</i> &nbsp;↦&nbsp; (<i>γ</i>, <i>φ</i>) &nbsp;↦&nbsp; <span class="kw">let</span> (<i>δ</i>, <i>g</i>) = <i>e</i>(<i>γ</i>) <span class="kw">in</span><br>
+            &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;((<i>δ</i>, <i>φ</i> ∘ <i>g</i>), <span class="op">track</span><sub><i>Γ</i></sub>(<i>g</i>, pr<sub>1</sub> ∘ <i>e</i>))
+          </div>
+          <span class="eq-no">(14)</span>
+        </div>
+        <!--BL:d12-->
+      </div>
+
+      <p>Since <span class="op">effect</span><sub><i>Γ</i></sub>(<i>e</i>) is itself
+      𝔈<sub>∂<i>Γ</i></sub>, what it returns is an inverse in the sense of
+      <a class="xref" href="#d8">Definition 8</a> read one level up. That inverse is itself
+      a <span class="op">track</span> of the pair obtained by swapping the two directions
+      of the effect. The ordinary tracking rule applies once more: undoing the effect is an
+      effect in its own right, transforming the state by <i>g</i>, and the way to undo
+      <em>that</em> is to perform the effect again, which is what
+      pr<sub>1</sub> ∘ <i>e</i> does. The inverse therefore composes onto the accumulator
+      it is handed, exactly as <span class="op">track</span> prescribes.</p>
+
+      <p>We can now prove properties for <span class="op">effect</span> analogous to those
+      of <span class="op">track</span>.</p>
+
+      <div class="blk blk-thm" id="t13">
+        <p class="blk-head"><span class="blk-tag">Theorem 13</span></p>
+        <p><span class="op">effect</span> preserves the ⋄ operation. That is,
+        ∀ <i>f</i>, <i>g</i> ∈ 𝔈<sub><i>Γ</i></sub>:</p>
+        <div class="eq" id="eq15">
+          <div class="eq-body"><span class="op">effect</span><sub><i>Γ</i></sub>(<i>f</i>) ⋄ <span class="op">effect</span><sub><i>Γ</i></sub>(<i>g</i>) = <span class="op">effect</span><sub><i>Γ</i></sub>(<i>f</i> ⋄ <i>g</i>)</div>
+          <span class="eq-no">(15)</span>
+        </div>
+        <details class="proof">
+          <summary>Proof</summary>
+          <p>Take any (<i>γ</i>, <i>φ</i>) ∈ ∂<i>Γ</i>, and let
+          (<i>δ</i>, <i>s</i>) = <i>g</i>(<i>γ</i>) and
+          (<i>ε</i>, <i>t</i>) = <i>f</i>(<i>δ</i>), so that
+          (<i>f</i> ⋄ <i>g</i>)(<i>γ</i>) = (<i>ε</i>, <i>s</i> ∘ <i>t</i>) and
+          pr<sub>1</sub> ∘ (<i>f</i> ⋄ <i>g</i>) = (pr<sub>1</sub> ∘ <i>f</i>) ∘ (pr<sub>1</sub> ∘ <i>g</i>).
+          Then</p>
+          <div class="eq">
+            <div class="eq-body">
+              (<span class="op">effect</span><sub><i>Γ</i></sub>(<i>f</i>) ⋄ <span class="op">effect</span><sub><i>Γ</i></sub>(<i>g</i>))(<i>γ</i>, <i>φ</i>) = ((<i>ε</i>, <i>φ</i> ∘ <i>s</i> ∘ <i>t</i>), <span class="op">track</span><sub><i>Γ</i></sub>(<i>s</i>, pr<sub>1</sub> ∘ <i>g</i>) ∘ <span class="op">track</span><sub><i>Γ</i></sub>(<i>t</i>, pr<sub>1</sub> ∘ <i>f</i>))<br>
+              = ((<i>ε</i>, <i>φ</i> ∘ <i>s</i> ∘ <i>t</i>), <span class="op">track</span><sub><i>Γ</i></sub>(<i>s</i> ∘ <i>t</i>, (pr<sub>1</sub> ∘ <i>f</i>) ∘ (pr<sub>1</sub> ∘ <i>g</i>)))<br>
+              = <span class="op">effect</span><sub><i>Γ</i></sub>(<i>f</i> ⋄ <i>g</i>)(<i>γ</i>, <i>φ</i>)
+            </div>
+          </div>
+          <p>where the first step unfolds <a class="xref" href="#d12">Definition 12</a> at
+          (<i>γ</i>, <i>φ</i>) and at (<i>δ</i>, <i>φ</i> ∘ <i>s</i>), the second is
+          <a class="xref" href="#t5">Theorem 5</a>, and the third folds
+          <a class="xref" href="#d12">Definition 12</a>. □</p>
+        </details>
+        <!--BL:t13-->
+      </div>
+
+      <p>How the two levels relate is what the following diagram shows. Its upper triangle
+      is the witness condition of <i>e</i>, according to
+      <a class="xref" href="#d8">Definition 8</a>, and its lower triangle is the question
+      of whether <i>e</i>′ is witnessed the way <i>e</i> is.</p>
+
+      <p class="diagram-note">[Diagram: Two stacked witness triangles — <i>e</i> over <i>Γ</i> with forward map <i>f</i> and inverse <i>g</i>, and <i>e</i>′ = effect<sub><i>Γ</i></sub>(<i>e</i>) over ∂<i>Γ</i> with <i>f</i>′ and <i>g</i>′ — connected by an effect arrow, with pr<sub>1</sub> and pr<sub>2</sub> projecting each level's ∂ object back to its maps.]</p>
+
+      <p>Between the levels, the projection pr<sub>1</sub> relates each lifted map to the
+      map it lifts, as it does for <span class="op">track</span><sub><i>Γ</i></sub> in
+      <a class="xref" href="#t4">Theorem 4</a>.</p>
+
+      <div class="blk blk-thm" id="t14">
+        <p class="blk-head"><span class="blk-tag">Theorem 14</span></p>
+        <p>Let <i>e</i> ∈ 𝔈<sub><i>Γ</i></sub>, write
+        <i>f</i> := pr<sub>1</sub> ∘ <i>e</i>, and let
+        <i>e</i>′ := <span class="op">effect</span><sub><i>Γ</i></sub>(<i>e</i>) with
+        forward map <i>f</i>′ := pr<sub>1</sub> ∘ <i>e</i>′. Then</p>
+        <ol>
+          <li>pr<sub>1</sub> ∘ <i>f</i>′ = <i>f</i> ∘ pr<sub>1</sub>;</li>
+          <li>for each (<i>γ</i>, <i>φ</i>) ∈ ∂<i>Γ</i>, the lifted inverse
+          <i>g</i>′ := pr<sub>2</sub>(<i>e</i>′(<i>γ</i>, <i>φ</i>)) and the inverse
+          <i>g</i> := pr<sub>2</sub>(<i>e</i>(<i>γ</i>)) witnessed there satisfy
+          pr<sub>1</sub> ∘ <i>g</i>′ = <i>g</i> ∘ pr<sub>1</sub>.</li>
+        </ol>
+        <details class="proof">
+          <summary>Proof</summary>
+          <ol>
+            <li>By <a class="xref" href="#d12">Definition 12</a>,
+            <i>f</i>′(<i>γ</i>, <i>φ</i>) = (<i>f</i>(<i>γ</i>), <i>φ</i> ∘ <i>g</i>),
+            whose state is <i>f</i>(<i>γ</i>) = (<i>f</i> ∘ pr<sub>1</sub>)(<i>γ</i>, <i>φ</i>).</li>
+            <li>This is <a class="xref" href="#t4">Theorem 4</a> applied to
+            <i>g</i>′ = <span class="op">track</span><sub><i>Γ</i></sub>(<i>g</i>, <i>f</i>). □</li>
+          </ol>
+        </details>
+        <!--BL:t14-->
+      </div>
+
+      <p>Whether the lower triangle closes is settled by computing what the lifted inverse
+      returns:</p>
+
+      <div class="blk blk-thm" id="t15">
+        <p class="blk-head"><span class="blk-tag">Theorem 15</span></p>
+        <p>Let <i>e</i> ∈ 𝔈<sup>∗</sup><sub><i>Γ</i></sub> and write
+        <i>f</i> := pr<sub>1</sub> ∘ <i>e</i>. Fix (<i>γ</i>, <i>φ</i>) ∈ ∂<i>Γ</i>, let
+        (<i>δ</i>, <i>g</i>) = <i>e</i>(<i>γ</i>), and write (<i>Δ</i>, <i>g</i>′) for the
+        value of <span class="op">effect</span><sub><i>Γ</i></sub>(<i>e</i>) at
+        (<i>γ</i>, <i>φ</i>). Then</p>
+        <div class="eq" id="eq16">
+          <div class="eq-body"><i>g</i>′(<i>Δ</i>) = (<i>γ</i>, <i>φ</i> ∘ <i>g</i> ∘ <i>f</i>)</div>
+          <span class="eq-no">(16)</span>
+        </div>
+        <p>The state is recovered exactly. The accumulator is restored as well,
+        equivalently <span class="op">effect</span><sub><i>Γ</i></sub>(<i>e</i>) ∈
+        𝔈<sup>∗</sup><sub>∂<i>Γ</i></sub>, if and only if
+        <i>g</i> ∘ <i>f</i> = id<sub><i>Γ</i></sub>; and in every case
+        (<i>φ</i> ∘ <i>g</i> ∘ <i>f</i>)(<i>γ</i>) = <i>φ</i>(<i>γ</i>), so the soundness
+        invariant is preserved.</p>
+        <details class="proof">
+          <summary>Proof</summary>
+          <p>By <a class="xref" href="#d12">Definition 12</a>,
+          <i>Δ</i> = (<i>δ</i>, <i>φ</i> ∘ <i>g</i>) and
+          <i>g</i>′ = <span class="op">track</span><sub><i>Γ</i></sub>(<i>g</i>, <i>f</i>),
+          so</p>
+          <div class="eq">
+            <div class="eq-body"><i>g</i>′(<i>Δ</i>) = (<i>g</i>(<i>δ</i>), <i>φ</i> ∘ <i>g</i> ∘ <i>f</i>) = (<i>γ</i>, <i>φ</i> ∘ <i>g</i> ∘ <i>f</i>)</div>
+          </div>
+          <p>using <i>g</i>(<i>δ</i>) = <i>γ</i>. Membership in
+          𝔈<sup>∗</sup><sub>∂<i>Γ</i></sub> requires this to equal (<i>γ</i>, <i>φ</i>) at
+          every input; taking <i>φ</i> = id<sub><i>Γ</i></sub> turns the equality of
+          accumulators into <i>g</i> ∘ <i>f</i> = id<sub><i>Γ</i></sub>, and that condition
+          conversely gives the equality of accumulators for every <i>φ</i>. Finally
+          (<i>φ</i> ∘ <i>g</i> ∘ <i>f</i>)(<i>γ</i>) = <i>φ</i>(<i>g</i>(<i>δ</i>)) = <i>φ</i>(<i>γ</i>). □</p>
+        </details>
+        <!--BL:t15-->
+      </div>
+
+      <p>The lower triangle therefore closes only when the inverse witnessed at <i>γ</i>
+      reverts <i>f</i> at every state, so <span class="op">effect</span><sub><i>Γ</i></sub>
+      does not carry 𝔈<sup>∗</sup><sub><i>Γ</i></sub> into
+      𝔈<sup>∗</sup><sub>∂<i>Γ</i></sub>. What holds in every case is agreement at
+      <i>γ</i>:
+      <span class="op">recover</span><sub><i>Γ</i></sub>(<i>g</i>′(<i>Δ</i>)) = <span class="op">recover</span><sub><i>Γ</i></sub>(<i>γ</i>, <i>φ</i>),
+      which is the whole of what <a class="xref" href="#t7">Theorem 7</a> assumes of an
+      accumulator, so reverting leaves the recovery target untouched.</p>
+
+      <p>Reverting effects in the reverse of the order in which they were applied requires
+      nothing further, because each inverse then meets the state its own application
+      produced:</p>
+
+      <div class="blk blk-thm" id="t16">
+        <p class="blk-head"><span class="blk-tag">Theorem 16</span></p>
+        <p>Let <i>e</i><sub>1</sub>, ⋯, <i>e</i><sub><i>n</i></sub> ∈
+        𝔈<sup>∗</sup><sub><i>Γ</i></sub> be applied in order from
+        (<i>γ</i><sub>0</sub>, id<sub><i>Γ</i></sub>) and reverted in the reverse order.
+        Then</p>
+        <ol>
+          <li>each revert recovers the context state its application ran against;</li>
+          <li>every intermediate state satisfies the soundness invariant.</li>
+        </ol>
+        <details class="proof">
+          <summary>Proof</summary>
+          <p>Each step is an application or a revert. An application carries
+          (<i>γ</i>, <i>φ</i>) to (<i>δ</i>, <i>φ</i> ∘ <i>g</i>) with
+          <i>g</i>(<i>δ</i>) = <i>γ</i>, so it preserves <i>φ</i>(<i>γ</i>) by
+          <a class="xref" href="#t7">Theorem 7</a>, whose hypothesis is exactly the witness
+          of 𝔈<sup>∗</sup><sub><i>Γ</i></sub>. Reverting in the reverse order hands each
+          inverse the state its own application produced, so by
+          <a class="xref" href="#t15">Theorem 15</a> that revert recovers the preceding
+          state exactly and preserves <i>φ</i>(<i>γ</i>) as well; neither conclusion
+          depends on the accumulator the inverse receives. □</p>
+        </details>
+        <!--BL:t16-->
+      </div>
+    </section>
+  </section>
+</section>
