@@ -18,7 +18,9 @@ module Cordis
     # Definition 74 — an entry declares a single fiber: a stable id (the
     # reconciliation key), the component to instantiate (here a builder
     # applied to config, standing in for the url's module), the config bound
-    # into the effect function, and the administrative disabled flag.
+    # into the effect function, and the administrative disabled flag The
+    # isolate and intercept fields are omitted with the calculus's no-realms
+    # choice (Definition 43; see the modeling notes in cordis_calculus.rb).
     Entry = Struct.new(:id, :builder, :config, :disabled, keyword_init: true) do
       def component = builder.call(config)
     end
@@ -44,10 +46,14 @@ module Cordis
 
       private
 
-      # Per-field dispatch (§5.2.1): a changed config or component rebuilds
-      # the entry — the least disruptive operation that realizes the new
-      # record; disabled unloads the fiber when set and reloads it when
-      # cleared; an unchanged entry is left exactly as it stands.
+      # Per-field dispatch (§5.2.1), coarsened to what the modeled calculus
+      # can express: retirement is monotone (Lemma 54(5)), so both a config
+      # change (which §5.2.1 hands to the component to diff) and a disabled
+      # toggle (which §5.2.1 reads as unload/reload of the same fiber) are
+      # realized here as a rebuild — retire, remove, reinsert. Theorem 73 is
+      # what makes the coarsening safe: the quiescent state is a function of
+      # the final configuration alone. An unchanged entry is left as it
+      # stands.
       def reconcile_entry(id, entry)
         previous = @loaded[id]
         if previous.nil?

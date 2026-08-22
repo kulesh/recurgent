@@ -88,6 +88,7 @@ end
 # Turn paper citations inside an HTML-escaped string into trace links.
 KIND_PREFIX = { "Definition" => "d", "Theorem" => "t", "Lemma" => "l", "Corollary" => "c" }.freeze
 
+# rubocop:disable Metrics/AbcSize -- one gsub per citation family
 def linkify(escaped)
   out = escaped.gsub(
     %r{(Definitions?|Theorems?|Lemmas?|Corollar(?:y|ies))([-\s]|&nbsp;)(\d+)((?:\.\d+)?)((?:\s*(?:,|&amp;|/|–|—|and)\s*\d+)*)}
@@ -98,10 +99,25 @@ def linkify(escaped)
     "#{kind}#{sep}#{trace_link("#{prefix}#{num}", "#{num}#{clause}")}#{linked_rest}"
   end
   out = out.gsub(/eq\.\s*(\d+)/) { trace_link("eq#{Regexp.last_match(1)}", Regexp.last_match(0)) }
+  out = out.gsub(/\b([OL])-(Insert|Retire|Remove|Reload|Begin|Iter|Finish|Divert|Raise|Leave|Unload)\b/) do
+    trace_link("rule-#{Regexp.last_match(1).downcase}-#{Regexp.last_match(2).downcase}", Regexp.last_match(0))
+  end
+  out = out.gsub(/(?<![\w:])([ol])_(insert|retire|remove|begin|iter|finish|divert|raise|leave|unload|step)\b/) do
+    kind, rule = Regexp.last_match[1..2]
+    trace_link("rule-#{kind}-#{rule == "step" ? "iter" : rule}", Regexp.last_match(0))
+  end
+  out = out.gsub(%r{Algorithms?\s+(\d+)((?:\s*(?:,|&amp;|/|–|and)\s*\d+)*)}) do
+    num, rest = Regexp.last_match[1..2]
+    linked_rest = rest.gsub(/\d+/) { |n| trace_link("alg#{n}", n) }
+    "Algorithm#{"s" unless rest.empty?} #{trace_link("alg#{num}", num)}#{linked_rest}"
+  end
+  out = out.gsub(/Table ([12])\b/) { "Table #{trace_link("tbl#{Regexp.last_match(1)}", Regexp.last_match(1))}" }
+  out = out.gsub(/Figure ([12])\b/) { "Figure #{trace_link("fig#{Regexp.last_match(1)}", Regexp.last_match(1))}" }
   out.gsub(/§(\d+(?:\.\d+)*)/) do
     trace_link("s#{Regexp.last_match(1).tr(".", "-")}", Regexp.last_match(0))
   end
 end
+# rubocop:enable Metrics/AbcSize
 
 # --- Ruby syntax highlighting -------------------------------------------------
 

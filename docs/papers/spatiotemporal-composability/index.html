@@ -2838,7 +2838,7 @@ emission (write, send): crosses the boundary — withhold, or
         <li><i>p</i> : 𝔓<sub>Γ</sub> := <span class="ctor">Set</span>(<i>K</i>) is the <em>provision</em>, declaring the coeffect keys the component may provide, and no key outside <i>p</i> is one its effect function writes;</li>
         <li><i>e</i> : 𝔈<sup>∗</sup><sub>Γ</sub> is the witnessed effect function of <a class="xref" href="#d8">Definition 8</a>, defining the effects contributed when the component is active together with the inverse that withdraws them.</li>
       </ul>
-      <p class="bl-row"><span class="bl-label">In the Ruby</span> <a class="bl" href="#rb-calculus-objects">Calculus::Component</a> <a class="bl" href="#rb-calculus-machine">Calculus::Machine</a></p>
+      <p class="bl-row"><span class="bl-label">In the Ruby</span> <a class="bl" href="#rb-calculus">Calculus</a> <a class="bl" href="#rb-calculus-objects">Calculus::Component</a> <a class="bl" href="#rb-calculus-machine">Calculus::Machine</a> <a class="bl" href="#rb-loader-core">Loader::Entry</a></p>
     </div>
 
     <p>The two declarations are the two directions of one interface, <i>d</i> what the component reads from the environment and <i>p</i> what the component writes to the environment, and <a class="xref" href="#s4-2">Section 4.2</a> admits no two fibers of one registry whose provisions meet. Subscripts are taken on <i>Γ</i> throughout, the coeffect context being one of its projections (<a class="xref" href="#d32">Definition 32</a>), so the 𝔇<sub>Σ</sub> of <a class="xref" href="#d25">Definition 25</a> is written 𝔇<sub>Γ</sub> here.</p>
@@ -3299,7 +3299,7 @@ emission (write, send): crosses the boundary — withhold, or
       <p>(4) <span class="op">installed</span><sub>n</sub> is <i>θ</i><sub>n</sub> ≠ <span class="ctor">Inactive</span>(−), and by the reading above <a class="xref" href="#rule-l-begin">L-Begin</a> and <a class="xref" href="#rule-l-unload">L-Unload</a> are the only rules whose premise and conclusion differ in whether <i>θ</i><sub>n</sub> is <span class="ctor">Inactive</span>. A step acting on some <i>m</i> ≠ <i>n</i> writes no <i>θ</i><sub>n</sub>, and the entry a registration adds is at a name not present at <i>γ</i><sup>t</sup>.</p>
       <p>(5) No row of the fifth column names a <i>π</i>, <i>d</i>, <i>p</i>, or <i>e</i>; those come into existence with the entry <a class="xref" href="#rule-o-insert">O-Insert</a> adds, which its conclusion writes, as does the <a class="xref" href="#rule-o-insert">O-Insert</a> a registration takes. Only <a class="xref" href="#rule-o-retire">O-Retire</a> writes a <i>τ</i>, at ⊤, whether taken by the orchestrator or as the inverse of a registration (<a class="xref" href="#d47">Definition 47</a>); <a class="xref" href="#rule-o-insert">O-Insert</a> sets <i>τ</i> = ⊥ at a name not already present, so no step returns a <i>τ</i> to ⊥. □</p>
     </details>
-    
+    <p class="bl-row"><span class="bl-label">In the Ruby</span> <a class="bl" href="#rb-loader-core">Loader::Reconciler</a></p>
   </div>
 
   <p>Three further lookups say what the rules cannot see. The first is that they read the state only through the observations above, so that the whole calculus descends to <i>Γ</i> / ≃.</p>
@@ -3644,7 +3644,7 @@ emission (write, send): crosses the boundary — withhold, or
         <p><em>Episodes are sorted and made contiguous, by induction on |<i>A</i>|.</em> Let <i>n</i><sub>1</sub> be ⊲-minimal in <i>A</i>. Then <i>d</i><sub>n<sub>1</sub></sub> = ∅ and <i>π</i><sub>n<sub>1</sub></sub> = <span class="ctor">root</span>, since <a class="xref" href="#d67">Definition 67</a> puts a provider of a key of <i>d</i><sub>n<sub>1</sub></sub> and the fiber registering <i>n</i><sub>1</sub> in <i>A</i> while ⊲ puts both below <i>n</i><sub>1</sub>. So <span class="op">target</span><sub>n<sub>1</sub></sub> reads no field of another fiber and, no orchestration step remaining to write <i>τ</i><sub>n<sub>1</sub></sub> and no fiber below <i>n</i><sub>1</sub> remaining to retire it, is constant. Every step acting on <i>n</i><sub>1</sub> is an activation step, no episode closing, and its remaining premises read <i>θ</i><sub>n<sub>1</sub></sub> and <i>i</i><sub>n<sub>1</sub></sub>, which by <a class="xref" href="#tbl1">Table 1</a> only <i>n</i><sub>1</sub> writes; each is therefore applicable at every earlier state, and <a class="xref" href="#l71">Lemma 71</a> moves it one place earlier without moving the endpoint. The number of steps of other fibers preceding a step of <i>n</i><sub>1</sub> drops by one at each application, so the episode of <i>n</i><sub>1</sub> becomes an initial contiguous block. The argument repeats on <i>A</i> \ {<i>n</i><sub>1</sub>} over the suffix that follows the block, where <i>n</i><sub>1</sub> is <span class="ctor">Active</span> throughout and takes no further step, so it too contributes a constant <span class="op">target</span>. The enumeration this produces linearizes ⊲ by construction.</p>
         <p>For (2), both sequences reduce by (1) to a canonical one, and the two reductions run over the same <i>A</i> up to a renaming. <a class="xref" href="#d67">Definition 67</a> reads <i>τ</i>, <i>π</i>, <i>d</i>, and <i>p</i>, of which the last three are written once with a fiber&rsquo;s entry (<a class="xref" href="#l54">Lemma 54</a>(5)), so what has to be seen is that the same names come into existence carrying the same <i>d</i>, <i>p</i>, and <i>π</i>, and that the same names are retired. Insertions the two sequences share by hypothesis. Registrations they share as well: an activation of a fiber of <i>A</i> registers, at each of its iterations, the component the iterator names there, which the second condition of <a class="xref" href="#d60">Definition 60</a> holds fixed across interleavings, so the tree of registrations below an <i>A</i>-fiber is a function of that fiber&rsquo;s component; the names those registrations draw are not shared, and it is here that <a class="xref" href="#l56">Lemma 56</a> is applied, matching the two trees by a bijection. And a retirement is either an orchestration step, shared, or the <a class="xref" href="#rule-o-retire">O-Retire</a> an accumulator takes, which retires exactly the names the same activation registered. Two enumerations linearizing ⊲ differ by transpositions of incomparable episodes, which <a class="xref" href="#l71">Lemma 71</a> again leaves the endpoint unchanged by, so the two canonical sequences agree. With the termination of <a class="xref" href="#t66">Theorem 66</a>, the lifecycle relation therefore has unique normal forms. □</p>
       </details>
-      <p class="bl-row"><span class="bl-label">In the Ruby</span> <a class="bl" href="#rb-checks">calculus_checks.rb</a> <a class="bl" href="#rb-demo2">demo_reconcile.rb</a></p>
+      <p class="bl-row"><span class="bl-label">In the Ruby</span> <a class="bl" href="#rb-loader-core">Loader::Reconciler</a> <a class="bl" href="#rb-checks">calculus_checks.rb</a> <a class="bl" href="#rb-demo2">demo_reconcile.rb</a></p>
     </div>
 
     <p>Failure is excluded from the statement because it is a genuine source of divergence, and the calculus should not be read as denying it: whether a step raises depends on the state it ran against, so one schedule may fail a fiber where another completes it, and the two quiescent states then differ in that fiber&rsquo;s lifecycle state. They do not differ in anything else, by <a class="xref" href="#c62">Corollary 62</a>, which puts a failed fiber&rsquo;s contribution to the state at nothing.</p>
@@ -4164,7 +4164,7 @@ emission (write, send): crosses the boundary — withhold, or
             <code>apply</code>;</li>
           <li><code>disabled</code> — whether the entry is administratively turned off.</li>
         </ul>
-        <p class="bl-row"><span class="bl-label">In the Ruby</span> <a class="bl" href="#rb-loader-core">Loader::Entry</a> <a class="bl" href="#rb-demo2">demo_reconcile.rb</a> <a class="bl" href="#rb-checks">calculus_checks.rb</a></p>
+        <p class="bl-row"><span class="bl-label">In the Ruby</span> <a class="bl" href="#rb-calculus">Calculus</a> <a class="bl" href="#rb-loader-core">Loader::Entry</a> <a class="bl" href="#rb-demo2">demo_reconcile.rb</a> <a class="bl" href="#rb-checks">calculus_checks.rb</a></p>
       </div>
 
       <p>An entry can serve as a faithful specification because what supports a fiber is exactly what an entry
@@ -5501,7 +5501,7 @@ emission (write, send): crosses the boundary — withhold, or
     </p>
 
     <h4 id="rb-calculus-objects">Component · Fiber</h4>
-    <p class="code-meta">cordis_calculus.rb · lines 1–31</p>
+    <p class="code-meta">cordis_calculus.rb · lines 1–36</p>
 <div class="codewrap"><pre class="code"><code><span class="no">1</span><span class="c"># frozen_string_literal: true</span>
 <span class="no">2</span>
 <span class="no">3</span><span class="c"># The calculus of dynamic composition (<a class="trace tr-u" href="#s4">§4</a>), executable.</span>
@@ -5517,10 +5517,10 @@ emission (write, send): crosses the boundary — withhold, or
 <span class="no">13</span><span class="c">#</span>
 <span class="no">14</span><span class="c"># Modeling choices, stated once:</span>
 <span class="no">15</span><span class="c"># - Effects are iterators (Definition <a class="trace tr-u" href="#d51">51</a>): a component&#39;s body is a sequence</span>
-<span class="no">16</span><span class="c">#   of steps, one consumed per L-Iter, each yielding its inverse; a step is</span>
+<span class="no">16</span><span class="c">#   of steps, one consumed per <a class="trace tr-u" href="#rule-l-iter">L-Iter</a>, each yielding its inverse; a step is</span>
 <span class="no">17</span><span class="c">#   a provision into the fiber&#39;s own table (confinement, Definition <a class="trace tr-u" href="#d48">48</a>), a</span>
 <span class="no">18</span><span class="c">#   registration of a child component (Definition <a class="trace tr-u" href="#d47">47</a>), or a raise (<a class="trace tr-u" href="#s4-3-4">§4.3.4</a>).</span>
-<span class="no">19</span><span class="c"># - Steps are atomic, so the aborting and landing alternatives of L-Divert</span>
+<span class="no">19</span><span class="c"># - Steps are atomic, so the aborting and landing alternatives of <a class="trace tr-u" href="#rule-l-divert">L-Divert</a></span>
 <span class="no">20</span><span class="c">#   coincide at every iteration boundary (<a class="trace tr-u" href="#s4-3-3">§4.3.3</a>&#39;s inertia is the statement</span>
 <span class="no">21</span><span class="c">#   that only the landing alternative exists once an iteration is in</span>
 <span class="no">22</span><span class="c">#   flight; with atomic iterations the boundary is always at hand).</span>
@@ -5528,411 +5528,425 @@ emission (write, send): crosses the boundary — withhold, or
 <span class="no">24</span><span class="c">#   names deterministically per (parent, component, occurrence) so that two</span>
 <span class="no">25</span><span class="c">#   schedules of the same orchestration steps are comparable without the</span>
 <span class="no">26</span><span class="c">#   renaming of Lemma <a class="trace tr-u" href="#l56">56</a>.</span>
-<span class="no">27</span>
-<span class="no">28</span><span class="k">require_relative</span> <span class="s">&quot;cordis&quot;</span>
-<span class="no">29</span>
-<span class="no">30</span><span class="k">module</span> <span class="C">Cordis</span>
-<span class="no">31</span>  <span class="k">module</span> <span class="C">Calculus</span></code></pre></div>
+<span class="no">27</span><span class="c"># - Following Definition <a class="trace tr-u" href="#d43">43</a>, this calculus carries no realms and no</span>
+<span class="no">28</span><span class="c">#   interception: every key reads at one shared realm, which is what makes</span>
+<span class="no">29</span><span class="c">#   provision disjointness the right condition (<a class="trace tr-u" href="#s4-1">§4.1</a>). The loader built on</span>
+<span class="no">30</span><span class="c">#   top inherits that choice — its entries omit Definition <a class="trace tr-u" href="#d74">74</a>&#39;s isolate and</span>
+<span class="no">31</span><span class="c">#   intercept fields, and Algorithm <a class="trace tr-u" href="#alg7">7</a>&#39;s realm reassignment with them.</span>
+<span class="no">32</span>
+<span class="no">33</span><span class="k">require_relative</span> <span class="s">&quot;cordis&quot;</span>
+<span class="no">34</span>
+<span class="no">35</span><span class="k">module</span> <span class="C">Cordis</span>
+<span class="no">36</span>  <span class="k">module</span> <span class="C">Calculus</span></code></pre></div>
 
-    <p class="code-meta">cordis_calculus.rb · lines 32–73</p>
-<div class="codewrap"><pre class="code"><code><span class="no">32</span>    <span class="c"># Definition <a class="trace tr-u" href="#d43">43</a> — a component over Γ is a triple (d, p, e): the coeffect</span>
-<span class="no">33</span>    <span class="c"># specification, the provision, and the effect function, here an iterator</span>
-<span class="no">34</span>    <span class="c"># given as a list of steps.</span>
-<span class="no">35</span>    <span class="k">class</span> <span class="C">Component</span>
-<span class="no">36</span>      <span class="k">attr_reader</span> <span class="y">:id</span>, <span class="y">:inject</span>, <span class="y">:provide</span>, <span class="y">:steps</span>
-<span class="no">37</span>
-<span class="no">38</span>      <span class="k">def</span> initialize(id, inject: [], provide: [], steps: [])
-<span class="no">39</span>        @id = id
-<span class="no">40</span>        @inject = inject.freeze
-<span class="no">41</span>        @provide = provide.freeze
-<span class="no">42</span>        @steps = steps.freeze
-<span class="no">43</span>        freeze
-<span class="no">44</span>      <span class="k">end</span>
-<span class="no">45</span>
-<span class="no">46</span>      <span class="c"># Small builder: set/register/fail! append steps (Definition <a class="trace tr-u" href="#d51">51</a>&#39;s</span>
-<span class="no">47</span>      <span class="c"># iterations, in order).</span>
-<span class="no">48</span>      <span class="k">def</span> <span class="k">self</span>.build(id, inject: [], provide: [])
-<span class="no">49</span>        builder = <span class="C">StepBuilder</span>.new
-<span class="no">50</span>        <span class="k">yield</span> builder <span class="k">if</span> block_given?
-<span class="no">51</span>        new(id, inject: inject, provide: provide, steps: builder.steps)
-<span class="no">52</span>      <span class="k">end</span>
-<span class="no">53</span>
-<span class="no">54</span>      <span class="k">class</span> <span class="C">StepBuilder</span>
-<span class="no">55</span>        <span class="k">attr_reader</span> <span class="y">:steps</span>
-<span class="no">56</span>
-<span class="no">57</span>        <span class="k">def</span> initialize
-<span class="no">58</span>          @steps = []
-<span class="no">59</span>        <span class="k">end</span>
-<span class="no">60</span>
-<span class="no">61</span>        <span class="k">def</span> set(key, value = <span class="k">nil</span>, &amp;block)
-<span class="no">62</span>          @steps &lt;&lt; [<span class="y">:set</span>, key, block || value]
-<span class="no">63</span>        <span class="k">end</span>
-<span class="no">64</span>
-<span class="no">65</span>        <span class="k">def</span> register(component, config = <span class="k">nil</span>)
-<span class="no">66</span>          @steps &lt;&lt; [<span class="y">:register</span>, component, config]
-<span class="no">67</span>        <span class="k">end</span>
-<span class="no">68</span>
-<span class="no">69</span>        <span class="k">def</span> fail!(error)
-<span class="no">70</span>          @steps &lt;&lt; [<span class="y">:fail</span>, error]
-<span class="no">71</span>        <span class="k">end</span>
-<span class="no">72</span>      <span class="k">end</span>
-<span class="no">73</span>    <span class="k">end</span></code></pre></div>
+    <p class="code-meta">cordis_calculus.rb · lines 37–78</p>
+<div class="codewrap"><pre class="code"><code><span class="no">37</span>    <span class="c"># Definition <a class="trace tr-u" href="#d43">43</a> — a component over Γ is a triple (d, p, e): the coeffect</span>
+<span class="no">38</span>    <span class="c"># specification, the provision, and the effect function, here an iterator</span>
+<span class="no">39</span>    <span class="c"># given as a list of steps.</span>
+<span class="no">40</span>    <span class="k">class</span> <span class="C">Component</span>
+<span class="no">41</span>      <span class="k">attr_reader</span> <span class="y">:id</span>, <span class="y">:inject</span>, <span class="y">:provide</span>, <span class="y">:steps</span>
+<span class="no">42</span>
+<span class="no">43</span>      <span class="k">def</span> initialize(id, inject: [], provide: [], steps: [])
+<span class="no">44</span>        @id = id
+<span class="no">45</span>        @inject = inject.freeze
+<span class="no">46</span>        @provide = provide.freeze
+<span class="no">47</span>        @steps = steps.freeze
+<span class="no">48</span>        freeze
+<span class="no">49</span>      <span class="k">end</span>
+<span class="no">50</span>
+<span class="no">51</span>      <span class="c"># Small builder: set/register/fail! append steps (Definition <a class="trace tr-u" href="#d51">51</a>&#39;s</span>
+<span class="no">52</span>      <span class="c"># iterations, in order).</span>
+<span class="no">53</span>      <span class="k">def</span> <span class="k">self</span>.build(id, inject: [], provide: [])
+<span class="no">54</span>        builder = <span class="C">StepBuilder</span>.new
+<span class="no">55</span>        <span class="k">yield</span> builder <span class="k">if</span> block_given?
+<span class="no">56</span>        new(id, inject: inject, provide: provide, steps: builder.steps)
+<span class="no">57</span>      <span class="k">end</span>
+<span class="no">58</span>
+<span class="no">59</span>      <span class="k">class</span> <span class="C">StepBuilder</span>
+<span class="no">60</span>        <span class="k">attr_reader</span> <span class="y">:steps</span>
+<span class="no">61</span>
+<span class="no">62</span>        <span class="k">def</span> initialize
+<span class="no">63</span>          @steps = []
+<span class="no">64</span>        <span class="k">end</span>
+<span class="no">65</span>
+<span class="no">66</span>        <span class="k">def</span> set(key, value = <span class="k">nil</span>, &amp;block)
+<span class="no">67</span>          @steps &lt;&lt; [<span class="y">:set</span>, key, block || value]
+<span class="no">68</span>        <span class="k">end</span>
+<span class="no">69</span>
+<span class="no">70</span>        <span class="k">def</span> register(component, config = <span class="k">nil</span>)
+<span class="no">71</span>          @steps &lt;&lt; [<span class="y">:register</span>, component, config]
+<span class="no">72</span>        <span class="k">end</span>
+<span class="no">73</span>
+<span class="no">74</span>        <span class="k">def</span> fail!(error)
+<span class="no">75</span>          @steps &lt;&lt; [<span class="y">:fail</span>, error]
+<span class="no">76</span>        <span class="k">end</span>
+<span class="no">77</span>      <span class="k">end</span>
+<span class="no">78</span>    <span class="k">end</span></code></pre></div>
 
-    <p class="code-meta">cordis_calculus.rb · lines 75–108</p>
-<div class="codewrap"><pre class="code"><code><span class="no">75</span>    <span class="c"># Definition <a class="trace tr-u" href="#d44">44</a> — a fiber ⟨d, p, e, π, σ, τ, θ⟩: the component fields, the</span>
-<span class="no">76</span>    <span class="c"># parent, the fiber&#39;s own coeffect table, the retirement flag, and the</span>
-<span class="no">77</span>    <span class="c"># lifecycle state θ (Definition <a class="trace tr-u" href="#d49">49</a>):</span>
-<span class="no">78</span>    <span class="c">#   Inactive(ζ) | Reloading(i, g, ω) | Active(g, ω) | Unloading(g, ω, ζ)</span>
-<span class="no">79</span>    <span class="c"># where i is the remaining iterator, g the accumulator built so far</span>
-<span class="no">80</span>    <span class="c"># (a stack of inverses, applied LIFO), ω the committed view d → 𝔑, and ζ</span>
-<span class="no">81</span>    <span class="c"># the outcome — ⊥ or an error (<a class="trace tr-u" href="#s4-3-4">§4.3.4</a>).</span>
-<span class="no">82</span>    <span class="k">class</span> <span class="C">Fiber</span>
-<span class="no">83</span>      <span class="k">attr_reader</span> <span class="y">:component</span>, <span class="y">:parent</span>
-<span class="no">84</span>      attr_accessor <span class="y">:table</span>, <span class="y">:retired</span>, <span class="y">:state</span>, <span class="y">:remaining</span>, <span class="y">:accumulator</span>, <span class="y">:committed</span>, <span class="y">:outcome</span>
-<span class="no">85</span>
-<span class="no">86</span>      <span class="k">def</span> initialize(component, parent)
-<span class="no">87</span>        @component = component
-<span class="no">88</span>        @parent = parent
-<span class="no">89</span>        @table = {}        <span class="c"># σ_n — empty until its effects run (Definition <a class="trace tr-u" href="#d44">44</a>)</span>
-<span class="no">90</span>        @retired = <span class="k">false</span>   <span class="c"># τ_n</span>
-<span class="no">91</span>        @state = <span class="y">:inactive</span> <span class="c"># θ_n</span>
-<span class="no">92</span>        @remaining = <span class="k">nil</span>   <span class="c"># i — remaining iterations while Reloading</span>
-<span class="no">93</span>        @accumulator = []  <span class="c"># g — inverses, most recent last</span>
-<span class="no">94</span>        @committed = <span class="k">nil</span>   <span class="c"># ω — the committed view</span>
-<span class="no">95</span>        @outcome = <span class="k">nil</span>     <span class="c"># ζ — ⊥ (nil) or an error</span>
-<span class="no">96</span>      <span class="k">end</span>
-<span class="no">97</span>
-<span class="no">98</span>      <span class="k">def</span> inject = component.inject
-<span class="no">99</span>      <span class="k">def</span> provide = component.provide
-<span class="no">100</span>
-<span class="no">101</span>      <span class="c"># installed_n(γ) := θ_n ≠ Inactive(−)  (<a class="trace tr-u" href="#eq44">eq. 44</a>)</span>
-<span class="no">102</span>      <span class="k">def</span> installed? = state != <span class="y">:inactive</span>
-<span class="no">103</span>
-<span class="no">104</span>      <span class="k">def</span> failed? = state == <span class="y">:inactive</span> &amp;&amp; !outcome.<span class="k">nil</span>?
+    <p class="code-meta">cordis_calculus.rb · lines 80–115</p>
+<div class="codewrap"><pre class="code"><code><span class="no">80</span>    <span class="c"># Definition <a class="trace tr-u" href="#d44">44</a> — a fiber ⟨d, p, e, π, σ, τ, θ⟩: the component fields, the</span>
+<span class="no">81</span>    <span class="c"># parent, the fiber&#39;s own coeffect table, the retirement flag, and the</span>
+<span class="no">82</span>    <span class="c"># lifecycle state θ (Definition <a class="trace tr-u" href="#d49">49</a>):</span>
+<span class="no">83</span>    <span class="c">#   Inactive(ζ) | Reloading(i, g, ω) | Active(g, ω) | Unloading(g, ω, ζ)</span>
+<span class="no">84</span>    <span class="c"># where i is the remaining iterator, g the accumulator built so far</span>
+<span class="no">85</span>    <span class="c"># (a stack of inverses, applied LIFO), ω the committed view d → 𝔑, and ζ</span>
+<span class="no">86</span>    <span class="c"># the outcome — ⊥ or an error (<a class="trace tr-u" href="#s4-3-4">§4.3.4</a>).</span>
+<span class="no">87</span>    <span class="k">class</span> <span class="C">Fiber</span>
+<span class="no">88</span>      <span class="k">attr_reader</span> <span class="y">:component</span>, <span class="y">:parent</span>
+<span class="no">89</span>      attr_accessor <span class="y">:table</span>, <span class="y">:retired</span>, <span class="y">:state</span>, <span class="y">:remaining</span>, <span class="y">:accumulator</span>, <span class="y">:committed</span>, <span class="y">:outcome</span>
+<span class="no">90</span>
+<span class="no">91</span>      <span class="k">def</span> initialize(component, parent)
+<span class="no">92</span>        @component = component
+<span class="no">93</span>        @parent = parent
+<span class="no">94</span>        @table = {}        <span class="c"># σ_n — empty until its effects run (Definition <a class="trace tr-u" href="#d44">44</a>)</span>
+<span class="no">95</span>        @retired = <span class="k">false</span>   <span class="c"># τ_n</span>
+<span class="no">96</span>        @state = <span class="y">:inactive</span> <span class="c"># θ_n</span>
+<span class="no">97</span>        @remaining = <span class="k">nil</span>   <span class="c"># i — remaining iterations while Reloading</span>
+<span class="no">98</span>        @accumulator = []  <span class="c"># g — inverses, most recent last</span>
+<span class="no">99</span>        @committed = <span class="k">nil</span>   <span class="c"># ω — the committed view</span>
+<span class="no">100</span>        @outcome = <span class="k">nil</span>     <span class="c"># ζ — ⊥ (nil) or an error</span>
+<span class="no">101</span>      <span class="k">end</span>
+<span class="no">102</span>
+<span class="no">103</span>      <span class="k">def</span> inject = component.inject
+<span class="no">104</span>      <span class="k">def</span> provide = component.provide
 <span class="no">105</span>
-<span class="no">106</span>      <span class="c"># Lemma <a class="trace tr-u" href="#l57">57</a> — a vestigial entry: retired, Inactive(⊥), empty table.</span>
-<span class="no">107</span>      <span class="k">def</span> vestigial? = retired &amp;&amp; state == <span class="y">:inactive</span> &amp;&amp; outcome.<span class="k">nil</span>? &amp;&amp; table.empty?
-<span class="no">108</span>    <span class="k">end</span></code></pre></div>
+<span class="no">106</span>      <span class="c"># installed_n(γ) := θ_n ≠ Inactive(−)  (<a class="trace tr-u" href="#eq44">eq. 44</a>)</span>
+<span class="no">107</span>      <span class="k">def</span> installed? = state != <span class="y">:inactive</span>
+<span class="no">108</span>
+<span class="no">109</span>      <span class="k">def</span> failed? = state == <span class="y">:inactive</span> &amp;&amp; !outcome.<span class="k">nil</span>?
+<span class="no">110</span>
+<span class="no">111</span>      <span class="c"># The three local clauses of Lemma <a class="trace tr-u" href="#l57">57</a>&#39;s vestigial entry: retired,</span>
+<span class="no">112</span>      <span class="c"># Inactive(⊥), empty table. The fourth clause — no fiber names this one</span>
+<span class="no">113</span>      <span class="c"># as parent — needs the registry, so Machine#vestigial? supplies it.</span>
+<span class="no">114</span>      <span class="k">def</span> locally_vestigial? = retired &amp;&amp; state == <span class="y">:inactive</span> &amp;&amp; outcome.<span class="k">nil</span>? &amp;&amp; table.empty?
+<span class="no">115</span>    <span class="k">end</span></code></pre></div>
 
 
     <h4 id="rb-calculus-machine">Machine — the registry and the ten rules</h4>
-    <p class="code-meta">cordis_calculus.rb · lines 110–425</p>
-<div class="codewrap"><pre class="code"><code><span class="no">110</span>    <span class="c"># The state γ: the registry F_γ (Definition <a class="trace tr-u" href="#d45">45</a>) plus the rule engine.</span>
-<span class="no">111</span>    <span class="k">class</span> <span class="C">Machine</span>
-<span class="no">112</span>      <span class="k">attr_reader</span> <span class="y">:fibers</span>, <span class="y">:trace</span>
-<span class="no">113</span>
-<span class="no">114</span>      <span class="k">def</span> initialize(seed: <span class="n">0</span>)
-<span class="no">115</span>        @fibers = {}
-<span class="no">116</span>        @trace = []
-<span class="no">117</span>        @rng = <span class="C">Random</span>.new(seed)
-<span class="no">118</span>        @registration_counters = <span class="C">Hash</span>.new(<span class="n">0</span>)
-<span class="no">119</span>      <span class="k">end</span>
+    <p class="code-meta">cordis_calculus.rb · lines 117–439</p>
+<div class="codewrap"><pre class="code"><code><span class="no">117</span>    <span class="c"># The state γ: the registry F_γ (Definition <a class="trace tr-u" href="#d45">45</a>) plus the rule engine.</span>
+<span class="no">118</span>    <span class="k">class</span> <span class="C">Machine</span>
+<span class="no">119</span>      <span class="k">attr_reader</span> <span class="y">:fibers</span>, <span class="y">:trace</span>
 <span class="no">120</span>
-<span class="no">121</span>      <span class="c"># --- Definition <a class="trace tr-u" href="#d45">45</a> / <a class="trace tr-u" href="#eq40">eq. 40</a>: the derived coeffect context -------------</span>
-<span class="no">122</span>      <span class="c"># σ_γ := ⋃ { σ_m | θ_m = Active(−, −) } — Active fibers alone, which is</span>
-<span class="no">123</span>      <span class="c"># what makes a withdrawal visible one step before it happens (L-Leave).</span>
-<span class="no">124</span>      <span class="k">def</span> sigma
-<span class="no">125</span>        @fibers.values.select { |f| f.state == <span class="y">:active</span> }.each_with_object({}) <span class="k">do</span> |fiber, table|
-<span class="no">126</span>          table.merge!(fiber.table)
-<span class="no">127</span>        <span class="k">end</span>
-<span class="no">128</span>      <span class="k">end</span>
-<span class="no">129</span>
-<span class="no">130</span>      <span class="c"># provider_k(γ) — unique because provisions are disjoint (Definition <a class="trace tr-u" href="#d43">43</a>).</span>
-<span class="no">131</span>      <span class="k">def</span> provider(key)
-<span class="no">132</span>        @fibers.find { |_, f| f.state == <span class="y">:active</span> &amp;&amp; f.table.key?(key) }&amp;.first
-<span class="no">133</span>      <span class="k">end</span>
-<span class="no">134</span>
-<span class="no">135</span>      <span class="c"># --- Definition <a class="trace tr-u" href="#d46">46</a> / <a class="trace tr-u" href="#eq41">eq. 41</a>: the target view --------------------------</span>
-<span class="no">136</span>      <span class="c"># ⊥ when the fiber ought not to be running; otherwise each declared key</span>
-<span class="no">137</span>      <span class="c"># mapped to its provider.</span>
-<span class="no">138</span>      <span class="k">def</span> target(name)
-<span class="no">139</span>        fiber = @fibers.fetch(name)
-<span class="no">140</span>        <span class="k">return</span> <span class="k">nil</span> <span class="k">if</span> fiber.retired
+<span class="no">121</span>      <span class="k">def</span> initialize(seed: <span class="n">0</span>)
+<span class="no">122</span>        @fibers = {}
+<span class="no">123</span>        @trace = []
+<span class="no">124</span>        @rng = <span class="C">Random</span>.new(seed)
+<span class="no">125</span>        @registration_counters = <span class="C">Hash</span>.new(<span class="n">0</span>)
+<span class="no">126</span>      <span class="k">end</span>
+<span class="no">127</span>
+<span class="no">128</span>      <span class="c"># --- Definition <a class="trace tr-u" href="#d45">45</a> / <a class="trace tr-u" href="#eq40">eq. 40</a>: the derived coeffect context -------------</span>
+<span class="no">129</span>      <span class="c"># σ_γ := ⋃ { σ_m | θ_m = Active(−, −) } — Active fibers alone, which is</span>
+<span class="no">130</span>      <span class="c"># what makes a withdrawal visible one step before it happens (<a class="trace tr-u" href="#rule-l-leave">L-Leave</a>).</span>
+<span class="no">131</span>      <span class="k">def</span> sigma
+<span class="no">132</span>        @fibers.values.select { |f| f.state == <span class="y">:active</span> }.each_with_object({}) <span class="k">do</span> |fiber, table|
+<span class="no">133</span>          table.merge!(fiber.table)
+<span class="no">134</span>        <span class="k">end</span>
+<span class="no">135</span>      <span class="k">end</span>
+<span class="no">136</span>
+<span class="no">137</span>      <span class="c"># provider_k(γ) — unique because provisions are disjoint (Definition <a class="trace tr-u" href="#d43">43</a>).</span>
+<span class="no">138</span>      <span class="k">def</span> provider(key)
+<span class="no">139</span>        @fibers.find { |_, f| f.state == <span class="y">:active</span> &amp;&amp; f.table.key?(key) }&amp;.first
+<span class="no">140</span>      <span class="k">end</span>
 <span class="no">141</span>
-<span class="no">142</span>        view = {}
-<span class="no">143</span>        fiber.inject.each <span class="k">do</span> |key|
-<span class="no">144</span>          provider_name = provider(key)
-<span class="no">145</span>          <span class="k">return</span> <span class="k">nil</span> <span class="k">unless</span> provider_name
-<span class="no">146</span>
-<span class="no">147</span>          view[key] = provider_name
-<span class="no">148</span>        <span class="k">end</span>
-<span class="no">149</span>        view
-<span class="no">150</span>      <span class="k">end</span>
-<span class="no">151</span>
-<span class="no">152</span>      <span class="c"># --- <a class="trace tr-u" href="#eq45">eq. 45</a>: quiescence on the four-state space ------------------------</span>
-<span class="no">153</span>      <span class="k">def</span> quiet?
-<span class="no">154</span>        @fibers.all? <span class="k">do</span> |name, fiber|
-<span class="no">155</span>          <span class="k">case</span> fiber.state
-<span class="no">156</span>          <span class="k">when</span> <span class="y">:inactive</span> <span class="k">then</span> !fiber.outcome.<span class="k">nil</span>? || target(name).<span class="k">nil</span>?
-<span class="no">157</span>          <span class="k">when</span> <span class="y">:active</span> <span class="k">then</span> target(name) == fiber.committed
-<span class="no">158</span>          <span class="k">else</span> <span class="k">false</span>
-<span class="no">159</span>          <span class="k">end</span>
-<span class="no">160</span>        <span class="k">end</span>
-<span class="no">161</span>      <span class="k">end</span>
-<span class="no">162</span>
-<span class="no">163</span>      <span class="c"># --- Definition <a class="trace tr-u" href="#d50">50</a> / <a class="trace tr-u" href="#eq46">eq. 46</a>: relied upon --------------------------------</span>
-<span class="no">164</span>      <span class="c"># Some other installed fiber resolves a key to n through its committed view.</span>
-<span class="no">165</span>      <span class="k">def</span> relied?(name)
-<span class="no">166</span>        @fibers.any? <span class="k">do</span> |m, fiber|
-<span class="no">167</span>          m != name &amp;&amp; fiber.installed? &amp;&amp; fiber.committed&amp;.value?(name)
-<span class="no">168</span>        <span class="k">end</span>
-<span class="no">169</span>      <span class="k">end</span>
-<span class="no">170</span>
-<span class="no">171</span>      <span class="c"># --- Definition <a class="trace tr-u" href="#d58">58</a>: well-formedness (checked by Theorem <a class="trace tr-u" href="#t59">59</a>&#39;s client) ---</span>
-<span class="no">172</span>      <span class="k">def</span> well_formed?
-<span class="no">173</span>        @fibers.all? <span class="k">do</span> |name, fiber|
-<span class="no">174</span>          parent_ok = fiber.parent == <span class="y">:root</span> || @fibers.key?(fiber.parent)
-<span class="no">175</span>          disjoint = @fibers.none? { |m, other| m != name &amp;&amp; other.provide.intersect?(fiber.provide) }
-<span class="no">176</span>          parent_ok &amp;&amp; disjoint &amp;&amp; committed_view_well_formed?(fiber)
-<span class="no">177</span>        <span class="k">end</span>
-<span class="no">178</span>      <span class="k">end</span>
-<span class="no">179</span>
-<span class="no">180</span>      <span class="c"># Clauses (3) and (4) of Definition <a class="trace tr-u" href="#d58">58</a>: an installed fiber&#39;s committed</span>
-<span class="no">181</span>      <span class="c"># view is total on its specification, valued in the registry, and names</span>
-<span class="no">182</span>      <span class="c"># installed providers only.</span>
-<span class="no">183</span>      <span class="k">def</span> committed_view_well_formed?(fiber)
-<span class="no">184</span>        <span class="k">return</span> <span class="k">true</span> <span class="k">unless</span> fiber.installed?
-<span class="no">185</span>
-<span class="no">186</span>        fiber.inject.all? { |k| @fibers.key?(fiber.committed&amp;.[](k)) } &amp;&amp;
-<span class="no">187</span>          fiber.committed.values.all? { |m| @fibers[m].installed? }
-<span class="no">188</span>      <span class="k">end</span>
-<span class="no">189</span>
-<span class="no">190</span>      <span class="c"># ====================== orchestration rules (γ ⇒ δ) =====================</span>
-<span class="no">191</span>
-<span class="no">192</span>      <span class="c"># O-Insert: freshness, parent present, provisions disjoint from every</span>
-<span class="no">193</span>      <span class="c"># fiber&#39;s (the single-source discipline).</span>
-<span class="no">194</span>      <span class="k">def</span> o_insert(name, component, parent: <span class="y">:root</span>)
-<span class="no">195</span>        premise !@fibers.key?(name), <span class="s">&quot;O-Insert: #{name} not fresh&quot;</span>
-<span class="no">196</span>        premise parent == <span class="y">:root</span> || @fibers.key?(parent), <span class="s">&quot;O-Insert: parent absent&quot;</span>
-<span class="no">197</span>        clash = @fibers.values.any? { |f| f.provide.intersect?(component.provide) }
-<span class="no">198</span>        premise !clash, <span class="s">&quot;O-Insert: provisions not disjoint&quot;</span>
-<span class="no">199</span>        @fibers[name] = <span class="C">Fiber</span>.new(component, parent)
-<span class="no">200</span>        log <span class="y">:o_insert</span>, name
-<span class="no">201</span>        <span class="k">self</span>
-<span class="no">202</span>      <span class="k">end</span>
-<span class="no">203</span>
-<span class="no">204</span>      <span class="c"># O-Retire: unconditional on the fiber&#39;s state — a request; the</span>
-<span class="no">205</span>      <span class="c"># lifecycle rules carry it out.</span>
-<span class="no">206</span>      <span class="k">def</span> o_retire(name)
-<span class="no">207</span>        premise @fibers.key?(name), <span class="s">&quot;O-Retire: #{name} absent&quot;</span>
-<span class="no">208</span>        @fibers[name].retired = <span class="k">true</span>
-<span class="no">209</span>        log <span class="y">:o_retire</span>, name
-<span class="no">210</span>        <span class="k">self</span>
-<span class="no">211</span>      <span class="k">end</span>
-<span class="no">212</span>
-<span class="no">213</span>      <span class="c"># O-Remove: retired, Inactive, and childless — removing earlier would</span>
-<span class="no">214</span>      <span class="c"># discard the accumulator and leak.</span>
-<span class="no">215</span>      <span class="k">def</span> o_remove(name)
-<span class="no">216</span>        fiber = @fibers.fetch(name)
-<span class="no">217</span>        premise fiber.retired, <span class="s">&quot;O-Remove: not retired&quot;</span>
-<span class="no">218</span>        premise fiber.state == <span class="y">:inactive</span>, <span class="s">&quot;O-Remove: not Inactive&quot;</span>
-<span class="no">219</span>        premise @fibers.none? { |_, f| f.parent == name }, <span class="s">&quot;O-Remove: has children&quot;</span>
-<span class="no">220</span>        @fibers.delete(name)
-<span class="no">221</span>        log <span class="y">:o_remove</span>, name
-<span class="no">222</span>        <span class="k">self</span>
-<span class="no">223</span>      <span class="k">end</span>
-<span class="no">224</span>
-<span class="no">225</span>      <span class="c"># ======================= lifecycle rules (γ ⟶ δ) ========================</span>
-<span class="no">226</span>      <span class="c"># Each returns true if its premises held and it fired.</span>
-<span class="no">227</span>      <span class="c"># rubocop:disable Naming/PredicateMethod -- the names mirror the paper&#39;s rules</span>
-<span class="no">228</span>
-<span class="no">229</span>      <span class="c"># L-Begin: Inactive(⊥) with a target view — commit the view, start the</span>
-<span class="no">230</span>      <span class="c"># iterator with an empty accumulator.</span>
-<span class="no">231</span>      <span class="k">def</span> l_begin(name)
-<span class="no">232</span>        fiber = @fibers.fetch(name)
-<span class="no">233</span>        view = target(name)
-<span class="no">234</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:inactive</span> &amp;&amp; fiber.outcome.<span class="k">nil</span>? &amp;&amp; view
+<span class="no">142</span>      <span class="c"># --- Definition <a class="trace tr-u" href="#d46">46</a> / <a class="trace tr-u" href="#eq41">eq. 41</a>: the target view --------------------------</span>
+<span class="no">143</span>      <span class="c"># ⊥ when the fiber ought not to be running; otherwise each declared key</span>
+<span class="no">144</span>      <span class="c"># mapped to its provider.</span>
+<span class="no">145</span>      <span class="k">def</span> target(name)
+<span class="no">146</span>        fiber = @fibers.fetch(name)
+<span class="no">147</span>        <span class="k">return</span> <span class="k">nil</span> <span class="k">if</span> fiber.retired
+<span class="no">148</span>
+<span class="no">149</span>        view = {}
+<span class="no">150</span>        fiber.inject.each <span class="k">do</span> |key|
+<span class="no">151</span>          provider_name = provider(key)
+<span class="no">152</span>          <span class="k">return</span> <span class="k">nil</span> <span class="k">unless</span> provider_name
+<span class="no">153</span>
+<span class="no">154</span>          view[key] = provider_name
+<span class="no">155</span>        <span class="k">end</span>
+<span class="no">156</span>        view
+<span class="no">157</span>      <span class="k">end</span>
+<span class="no">158</span>
+<span class="no">159</span>      <span class="c"># --- <a class="trace tr-u" href="#eq45">eq. 45</a>: quiescence on the four-state space ------------------------</span>
+<span class="no">160</span>      <span class="k">def</span> quiet?
+<span class="no">161</span>        @fibers.all? <span class="k">do</span> |name, fiber|
+<span class="no">162</span>          <span class="k">case</span> fiber.state
+<span class="no">163</span>          <span class="k">when</span> <span class="y">:inactive</span> <span class="k">then</span> !fiber.outcome.<span class="k">nil</span>? || target(name).<span class="k">nil</span>?
+<span class="no">164</span>          <span class="k">when</span> <span class="y">:active</span> <span class="k">then</span> target(name) == fiber.committed
+<span class="no">165</span>          <span class="k">else</span> <span class="k">false</span>
+<span class="no">166</span>          <span class="k">end</span>
+<span class="no">167</span>        <span class="k">end</span>
+<span class="no">168</span>      <span class="k">end</span>
+<span class="no">169</span>
+<span class="no">170</span>      <span class="c"># --- Definition <a class="trace tr-u" href="#d50">50</a> / <a class="trace tr-u" href="#eq46">eq. 46</a>: relied upon --------------------------------</span>
+<span class="no">171</span>      <span class="c"># Some other installed fiber resolves a key to n through its committed view.</span>
+<span class="no">172</span>      <span class="k">def</span> relied?(name)
+<span class="no">173</span>        @fibers.any? <span class="k">do</span> |m, fiber|
+<span class="no">174</span>          m != name &amp;&amp; fiber.installed? &amp;&amp; fiber.committed&amp;.value?(name)
+<span class="no">175</span>        <span class="k">end</span>
+<span class="no">176</span>      <span class="k">end</span>
+<span class="no">177</span>
+<span class="no">178</span>      <span class="c"># --- Definition <a class="trace tr-u" href="#d58">58</a>: well-formedness (checked by Theorem <a class="trace tr-u" href="#t59">59</a>&#39;s client) ---</span>
+<span class="no">179</span>      <span class="k">def</span> well_formed?
+<span class="no">180</span>        @fibers.all? <span class="k">do</span> |name, fiber|
+<span class="no">181</span>          parent_ok = fiber.parent == <span class="y">:root</span> || @fibers.key?(fiber.parent)
+<span class="no">182</span>          disjoint = @fibers.none? { |m, other| m != name &amp;&amp; other.provide.intersect?(fiber.provide) }
+<span class="no">183</span>          parent_ok &amp;&amp; disjoint &amp;&amp; committed_view_well_formed?(fiber)
+<span class="no">184</span>        <span class="k">end</span>
+<span class="no">185</span>      <span class="k">end</span>
+<span class="no">186</span>
+<span class="no">187</span>      <span class="c"># Clauses (3) and (4) of Definition <a class="trace tr-u" href="#d58">58</a>: an installed fiber&#39;s committed</span>
+<span class="no">188</span>      <span class="c"># view is total on its specification, valued in the registry, and names</span>
+<span class="no">189</span>      <span class="c"># installed providers only.</span>
+<span class="no">190</span>      <span class="k">def</span> committed_view_well_formed?(fiber)
+<span class="no">191</span>        <span class="k">return</span> <span class="k">true</span> <span class="k">unless</span> fiber.installed?
+<span class="no">192</span>
+<span class="no">193</span>        fiber.inject.all? { |k| @fibers.key?(fiber.committed&amp;.[](k)) } &amp;&amp;
+<span class="no">194</span>          fiber.committed.values.all? { |m| @fibers[m].installed? }
+<span class="no">195</span>      <span class="k">end</span>
+<span class="no">196</span>
+<span class="no">197</span>      <span class="c"># ====================== orchestration rules (γ ⇒ δ) =====================</span>
+<span class="no">198</span>
+<span class="no">199</span>      <span class="c"># <a class="trace tr-u" href="#rule-o-insert">O-Insert</a>: freshness, parent present, provisions disjoint from every</span>
+<span class="no">200</span>      <span class="c"># fiber&#39;s (the single-source discipline).</span>
+<span class="no">201</span>      <span class="k">def</span> o_insert(name, component, parent: <span class="y">:root</span>)
+<span class="no">202</span>        premise !@fibers.key?(name), <span class="s">&quot;<a class="trace tr-u" href="#rule-o-insert">O-Insert</a>: #{name} not fresh&quot;</span>
+<span class="no">203</span>        premise parent == <span class="y">:root</span> || @fibers.key?(parent), <span class="s">&quot;<a class="trace tr-u" href="#rule-o-insert">O-Insert</a>: parent absent&quot;</span>
+<span class="no">204</span>        clash = @fibers.values.any? { |f| f.provide.intersect?(component.provide) }
+<span class="no">205</span>        premise !clash, <span class="s">&quot;<a class="trace tr-u" href="#rule-o-insert">O-Insert</a>: provisions not disjoint&quot;</span>
+<span class="no">206</span>        @fibers[name] = <span class="C">Fiber</span>.new(component, parent)
+<span class="no">207</span>        log <span class="y">:o_insert</span>, name
+<span class="no">208</span>        <span class="k">self</span>
+<span class="no">209</span>      <span class="k">end</span>
+<span class="no">210</span>
+<span class="no">211</span>      <span class="c"># <a class="trace tr-u" href="#rule-o-retire">O-Retire</a>: unconditional on the fiber&#39;s state — a request; the</span>
+<span class="no">212</span>      <span class="c"># lifecycle rules carry it out.</span>
+<span class="no">213</span>      <span class="k">def</span> o_retire(name)
+<span class="no">214</span>        premise @fibers.key?(name), <span class="s">&quot;<a class="trace tr-u" href="#rule-o-retire">O-Retire</a>: #{name} absent&quot;</span>
+<span class="no">215</span>        @fibers[name].retired = <span class="k">true</span>
+<span class="no">216</span>        log <span class="y">:o_retire</span>, name
+<span class="no">217</span>        <span class="k">self</span>
+<span class="no">218</span>      <span class="k">end</span>
+<span class="no">219</span>
+<span class="no">220</span>      <span class="c"># <a class="trace tr-u" href="#rule-o-remove">O-Remove</a>: retired, Inactive, and childless — removing earlier would</span>
+<span class="no">221</span>      <span class="c"># discard the accumulator and leak.</span>
+<span class="no">222</span>      <span class="k">def</span> o_remove(name)
+<span class="no">223</span>        fiber = @fibers.fetch(name)
+<span class="no">224</span>        premise fiber.retired, <span class="s">&quot;<a class="trace tr-u" href="#rule-o-remove">O-Remove</a>: not retired&quot;</span>
+<span class="no">225</span>        premise fiber.state == <span class="y">:inactive</span>, <span class="s">&quot;<a class="trace tr-u" href="#rule-o-remove">O-Remove</a>: not Inactive&quot;</span>
+<span class="no">226</span>        premise @fibers.none? { |_, f| f.parent == name }, <span class="s">&quot;<a class="trace tr-u" href="#rule-o-remove">O-Remove</a>: has children&quot;</span>
+<span class="no">227</span>        @fibers.delete(name)
+<span class="no">228</span>        log <span class="y">:o_remove</span>, name
+<span class="no">229</span>        <span class="k">self</span>
+<span class="no">230</span>      <span class="k">end</span>
+<span class="no">231</span>
+<span class="no">232</span>      <span class="c"># ======================= lifecycle rules (γ ⟶ δ) ========================</span>
+<span class="no">233</span>      <span class="c"># Each returns true if its premises held and it fired.</span>
+<span class="no">234</span>      <span class="c"># rubocop:disable Naming/PredicateMethod -- the names mirror the paper&#39;s rules</span>
 <span class="no">235</span>
-<span class="no">236</span>        fiber.state = <span class="y">:reloading</span>
-<span class="no">237</span>        fiber.remaining = fiber.component.steps.dup
-<span class="no">238</span>        fiber.accumulator = []
-<span class="no">239</span>        fiber.committed = view
-<span class="no">240</span>        log <span class="y">:l_begin</span>, name
-<span class="no">241</span>        <span class="k">true</span>
-<span class="no">242</span>      <span class="k">end</span>
-<span class="no">243</span>
-<span class="no">244</span>      <span class="c"># L-Iter / L-Finish: run one iteration while the committed view is still</span>
-<span class="no">245</span>      <span class="c"># the target view; the yielded inverse composes onto the accumulator</span>
-<span class="no">246</span>      <span class="c"># (LIFO); the final iteration lands in Active.</span>
-<span class="no">247</span>      <span class="k">def</span> l_step(name)
-<span class="no">248</span>        fiber = @fibers.fetch(name)
-<span class="no">249</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; target(name) == fiber.committed
-<span class="no">250</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">if</span> next_step_raises?(fiber)
-<span class="no">251</span>
-<span class="no">252</span>        <span class="k">if</span> fiber.remaining.empty?
-<span class="no">253</span>          fiber.state = <span class="y">:active</span>
-<span class="no">254</span>          fiber.remaining = <span class="k">nil</span>
-<span class="no">255</span>          log <span class="y">:l_finish</span>, name
-<span class="no">256</span>        <span class="k">else</span>
-<span class="no">257</span>          run_iteration(fiber, fiber.remaining.shift)
-<span class="no">258</span>          log <span class="y">:l_iter</span>, name
-<span class="no">259</span>        <span class="k">end</span>
-<span class="no">260</span>        <span class="k">true</span>
-<span class="no">261</span>      <span class="k">end</span>
-<span class="no">262</span>
-<span class="no">263</span>      <span class="c"># L-Divert: the target view turned during the transition — route through</span>
-<span class="no">264</span>      <span class="c"># Unloading with the accumulator built so far (the aborting alternative;</span>
-<span class="no">265</span>      <span class="c"># see the modeling note at the top).</span>
-<span class="no">266</span>      <span class="k">def</span> l_divert(name)
-<span class="no">267</span>        fiber = @fibers.fetch(name)
-<span class="no">268</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; target(name) != fiber.committed
+<span class="no">236</span>      <span class="c"># <a class="trace tr-u" href="#rule-l-begin">L-Begin</a>: Inactive(⊥) with a target view — commit the view, start the</span>
+<span class="no">237</span>      <span class="c"># iterator with an empty accumulator.</span>
+<span class="no">238</span>      <span class="k">def</span> l_begin(name)
+<span class="no">239</span>        fiber = @fibers.fetch(name)
+<span class="no">240</span>        view = target(name)
+<span class="no">241</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:inactive</span> &amp;&amp; fiber.outcome.<span class="k">nil</span>? &amp;&amp; view
+<span class="no">242</span>
+<span class="no">243</span>        fiber.state = <span class="y">:reloading</span>
+<span class="no">244</span>        fiber.remaining = fiber.component.steps.dup
+<span class="no">245</span>        fiber.accumulator = []
+<span class="no">246</span>        fiber.committed = view
+<span class="no">247</span>        log <span class="y">:l_begin</span>, name
+<span class="no">248</span>        <span class="k">true</span>
+<span class="no">249</span>      <span class="k">end</span>
+<span class="no">250</span>
+<span class="no">251</span>      <span class="c"># <a class="trace tr-u" href="#rule-l-iter">L-Iter</a> / <a class="trace tr-u" href="#rule-l-finish">L-Finish</a>: run one iteration while the committed view is still</span>
+<span class="no">252</span>      <span class="c"># the target view; the yielded inverse composes onto the accumulator</span>
+<span class="no">253</span>      <span class="c"># (LIFO); the final iteration lands in Active.</span>
+<span class="no">254</span>      <span class="k">def</span> l_step(name)
+<span class="no">255</span>        fiber = @fibers.fetch(name)
+<span class="no">256</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; target(name) == fiber.committed
+<span class="no">257</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">if</span> next_step_raises?(fiber)
+<span class="no">258</span>
+<span class="no">259</span>        <span class="k">if</span> fiber.remaining.empty?
+<span class="no">260</span>          fiber.state = <span class="y">:active</span>
+<span class="no">261</span>          fiber.remaining = <span class="k">nil</span>
+<span class="no">262</span>          log <span class="y">:l_finish</span>, name
+<span class="no">263</span>        <span class="k">else</span>
+<span class="no">264</span>          run_iteration(fiber, fiber.remaining.shift)
+<span class="no">265</span>          log <span class="y">:l_iter</span>, name
+<span class="no">266</span>        <span class="k">end</span>
+<span class="no">267</span>        <span class="k">true</span>
+<span class="no">268</span>      <span class="k">end</span>
 <span class="no">269</span>
-<span class="no">270</span>        fiber.state = <span class="y">:unloading</span>
-<span class="no">271</span>        fiber.remaining = <span class="k">nil</span>
-<span class="no">272</span>        fiber.outcome = <span class="k">nil</span>
-<span class="no">273</span>        log <span class="y">:l_divert</span>, name
-<span class="no">274</span>        <span class="k">true</span>
-<span class="no">275</span>      <span class="k">end</span>
+<span class="no">270</span>      <span class="c"># <a class="trace tr-u" href="#rule-l-divert">L-Divert</a>: the target view turned during the transition — route through</span>
+<span class="no">271</span>      <span class="c"># Unloading with the accumulator built so far (the aborting alternative;</span>
+<span class="no">272</span>      <span class="c"># see the modeling note at the top).</span>
+<span class="no">273</span>      <span class="k">def</span> l_divert(name)
+<span class="no">274</span>        fiber = @fibers.fetch(name)
+<span class="no">275</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; target(name) != fiber.committed
 <span class="no">276</span>
-<span class="no">277</span>      <span class="c"># L-Raise: an iteration raises in place of yielding (<a class="trace tr-u" href="#s4-3-4">§4.3.4</a>, <a class="trace tr-u" href="#eq49">eq. 49</a>);</span>
-<span class="no">278</span>      <span class="c"># not conditioned on the target view at all.</span>
-<span class="no">279</span>      <span class="k">def</span> l_raise(name)
-<span class="no">280</span>        fiber = @fibers.fetch(name)
-<span class="no">281</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; next_step_raises?(fiber)
-<span class="no">282</span>
-<span class="no">283</span>        error = fiber.remaining.first[<span class="n">1</span>]
-<span class="no">284</span>        fiber.state = <span class="y">:unloading</span>
-<span class="no">285</span>        fiber.remaining = <span class="k">nil</span>
-<span class="no">286</span>        fiber.outcome = error
-<span class="no">287</span>        log <span class="y">:l_raise</span>, name
-<span class="no">288</span>        <span class="k">true</span>
-<span class="no">289</span>      <span class="k">end</span>
-<span class="no">290</span>
-<span class="no">291</span>      <span class="c"># L-Leave: record the decision to deactivate without acting on it — the</span>
-<span class="no">292</span>      <span class="c"># fiber stops providing (σ_γ unions Active alone) while its committed</span>
-<span class="no">293</span>      <span class="c"># view, and everyone else&#39;s, stays intact.</span>
-<span class="no">294</span>      <span class="k">def</span> l_leave(name)
-<span class="no">295</span>        fiber = @fibers.fetch(name)
-<span class="no">296</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:active</span> &amp;&amp; target(name) != fiber.committed
+<span class="no">277</span>        fiber.state = <span class="y">:unloading</span>
+<span class="no">278</span>        fiber.remaining = <span class="k">nil</span>
+<span class="no">279</span>        fiber.outcome = <span class="k">nil</span>
+<span class="no">280</span>        log <span class="y">:l_divert</span>, name
+<span class="no">281</span>        <span class="k">true</span>
+<span class="no">282</span>      <span class="k">end</span>
+<span class="no">283</span>
+<span class="no">284</span>      <span class="c"># <a class="trace tr-u" href="#rule-l-raise">L-Raise</a>: an iteration raises in place of yielding (<a class="trace tr-u" href="#s4-3-4">§4.3.4</a>, <a class="trace tr-u" href="#eq49">eq. 49</a>);</span>
+<span class="no">285</span>      <span class="c"># not conditioned on the target view at all.</span>
+<span class="no">286</span>      <span class="k">def</span> l_raise(name)
+<span class="no">287</span>        fiber = @fibers.fetch(name)
+<span class="no">288</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; next_step_raises?(fiber)
+<span class="no">289</span>
+<span class="no">290</span>        error = fiber.remaining.first[<span class="n">1</span>]
+<span class="no">291</span>        fiber.state = <span class="y">:unloading</span>
+<span class="no">292</span>        fiber.remaining = <span class="k">nil</span>
+<span class="no">293</span>        fiber.outcome = error
+<span class="no">294</span>        log <span class="y">:l_raise</span>, name
+<span class="no">295</span>        <span class="k">true</span>
+<span class="no">296</span>      <span class="k">end</span>
 <span class="no">297</span>
-<span class="no">298</span>        fiber.state = <span class="y">:unloading</span>
-<span class="no">299</span>        log <span class="y">:l_leave</span>, name
-<span class="no">300</span>        <span class="k">true</span>
-<span class="no">301</span>      <span class="k">end</span>
-<span class="no">302</span>
-<span class="no">303</span>      <span class="c"># L-Unload: guarded by ¬relied_n(γ) — the withdrawal of a key takes</span>
-<span class="no">304</span>      <span class="c"># effect only after every consumer that resolved it here has gone</span>
-<span class="no">305</span>      <span class="c"># (Definition <a class="trace tr-u" href="#d50">50</a>). The one rule that applies an accumulator.</span>
-<span class="no">306</span>      <span class="k">def</span> l_unload(name)
-<span class="no">307</span>        fiber = @fibers.fetch(name)
-<span class="no">308</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:unloading</span> &amp;&amp; !relied?(name)
+<span class="no">298</span>      <span class="c"># <a class="trace tr-u" href="#rule-l-leave">L-Leave</a>: record the decision to deactivate without acting on it — the</span>
+<span class="no">299</span>      <span class="c"># fiber stops providing (σ_γ unions Active alone) while its committed</span>
+<span class="no">300</span>      <span class="c"># view, and everyone else&#39;s, stays intact.</span>
+<span class="no">301</span>      <span class="k">def</span> l_leave(name)
+<span class="no">302</span>        fiber = @fibers.fetch(name)
+<span class="no">303</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:active</span> &amp;&amp; target(name) != fiber.committed
+<span class="no">304</span>
+<span class="no">305</span>        fiber.state = <span class="y">:unloading</span>
+<span class="no">306</span>        log <span class="y">:l_leave</span>, name
+<span class="no">307</span>        <span class="k">true</span>
+<span class="no">308</span>      <span class="k">end</span>
 <span class="no">309</span>
-<span class="no">310</span>        fiber.accumulator.reverse_each(&amp;<span class="y">:call</span>) <span class="c"># LIFO recovery (Theorem <a class="trace tr-t" href="#t16">16</a>)</span>
-<span class="no">311</span>        fiber.accumulator = []
-<span class="no">312</span>        fiber.committed = <span class="k">nil</span>
-<span class="no">313</span>        fiber.state = <span class="y">:inactive</span>
-<span class="no">314</span>        log <span class="y">:l_unload</span>, name
-<span class="no">315</span>        <span class="k">true</span>
-<span class="no">316</span>      <span class="k">end</span>
-<span class="no">317</span>
-<span class="no">318</span>      <span class="c"># rubocop:enable Naming/PredicateMethod</span>
-<span class="no">319</span>
-<span class="no">320</span>      <span class="c"># ============================ the driver =================================</span>
-<span class="no">321</span>
-<span class="no">322</span>      <span class="C">LIFECYCLE_RULES</span> = %i[l_begin l_step l_divert l_raise l_leave l_unload].freeze
-<span class="no">323</span>
-<span class="no">324</span>      <span class="c"># One nondeterministic lifecycle step — an action that reports whether</span>
-<span class="no">325</span>      <span class="c"># any rule fired, so `step` keeps the paper&#39;s word for it. Collect every</span>
-<span class="no">326</span>      <span class="c"># (rule, fiber) whose premises hold and fire one at random: &quot;no rule</span>
-<span class="no">327</span>      <span class="c"># mentions a scheduler; a theorem proved over all sequences holds for</span>
-<span class="no">328</span>      <span class="c"># every scheduling policy&quot; (<a class="trace tr-u" href="#s4-2">§4.2</a>) — the seed picks the policy.</span>
-<span class="no">329</span>      <span class="c"># rubocop:disable Naming/PredicateMethod</span>
-<span class="no">330</span>      <span class="k">def</span> step
-<span class="no">331</span>        applicable = @fibers.keys.flat_map <span class="k">do</span> |name|
-<span class="no">332</span>          <span class="C">LIFECYCLE_RULES</span>.select { |rule| applicable?(rule, name) }.map { |rule| [rule, name] }
-<span class="no">333</span>        <span class="k">end</span>
-<span class="no">334</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">if</span> applicable.empty?
-<span class="no">335</span>
-<span class="no">336</span>        rule, name = applicable[@rng.rand(applicable.length)]
-<span class="no">337</span>        send(rule, name)
-<span class="no">338</span>        <span class="k">true</span>
-<span class="no">339</span>      <span class="k">end</span>
-<span class="no">340</span>      <span class="c"># rubocop:enable Naming/PredicateMethod</span>
-<span class="no">341</span>
-<span class="no">342</span>      <span class="c"># Run lifecycle steps to quiescence. Theorem <a class="trace tr-u" href="#t66">66</a> bounds every maximal</span>
-<span class="no">343</span>      <span class="c"># sequence, so the cap is a defect detector, not a terminator.</span>
-<span class="no">344</span>      <span class="k">def</span> run(max_steps: <span class="n">10_000</span>)
-<span class="no">345</span>        steps = <span class="n">0</span>
-<span class="no">346</span>        <span class="k">while</span> step
-<span class="no">347</span>          steps += <span class="n">1</span>
-<span class="no">348</span>          <span class="k">raise</span> <span class="s">&quot;progress violated: #{steps} steps without quiescence&quot;</span> <span class="k">if</span> steps &gt; max_steps
-<span class="no">349</span>        <span class="k">end</span>
-<span class="no">350</span>        <span class="k">raise</span> <span class="s">&quot;stuck: no rule applies but the state is not quiescent&quot;</span> <span class="k">unless</span> quiet?
-<span class="no">351</span>
-<span class="no">352</span>        <span class="k">self</span>
-<span class="no">353</span>      <span class="k">end</span>
-<span class="no">354</span>
-<span class="no">355</span>      <span class="c"># Snapshot for ≈-comparison (<a class="trace tr-u" href="#eq53">eq. 53</a> read at quiescence): every</span>
-<span class="no">356</span>      <span class="c"># non-vestigial fiber&#39;s identity and state; Lemma <a class="trace tr-u" href="#l57">57</a> is why vestigial</span>
-<span class="no">357</span>      <span class="c"># entries may be dropped.</span>
-<span class="no">358</span>      <span class="k">def</span> snapshot
-<span class="no">359</span>        @fibers.reject { |_, f| f.vestigial? }.to_h <span class="k">do</span> |name, fiber|
-<span class="no">360</span>          [name, [fiber.component.id, fiber.parent, fiber.retired, fiber.table,
-<span class="no">361</span>                  fiber.state, fiber.committed, fiber.outcome]]
-<span class="no">362</span>        <span class="k">end</span>
-<span class="no">363</span>      <span class="k">end</span>
-<span class="no">364</span>
-<span class="no">365</span>      <span class="k">private</span>
-<span class="no">366</span>
-<span class="no">367</span>      <span class="c"># rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity -- one case arm per rule</span>
-<span class="no">368</span>      <span class="k">def</span> applicable?(rule, name)
-<span class="no">369</span>        fiber = @fibers.fetch(name)
-<span class="no">370</span>        view = target(name)
-<span class="no">371</span>        <span class="k">case</span> rule
-<span class="no">372</span>        <span class="k">when</span> <span class="y">:l_begin</span> <span class="k">then</span> fiber.state == <span class="y">:inactive</span> &amp;&amp; fiber.outcome.<span class="k">nil</span>? &amp;&amp; !view.<span class="k">nil</span>?
-<span class="no">373</span>        <span class="k">when</span> <span class="y">:l_step</span> <span class="k">then</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; view == fiber.committed &amp;&amp; !next_step_raises?(fiber)
-<span class="no">374</span>        <span class="k">when</span> <span class="y">:l_divert</span> <span class="k">then</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; view != fiber.committed
-<span class="no">375</span>        <span class="k">when</span> <span class="y">:l_raise</span> <span class="k">then</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; next_step_raises?(fiber)
-<span class="no">376</span>        <span class="k">when</span> <span class="y">:l_leave</span> <span class="k">then</span> fiber.state == <span class="y">:active</span> &amp;&amp; view != fiber.committed
-<span class="no">377</span>        <span class="k">when</span> <span class="y">:l_unload</span> <span class="k">then</span> fiber.state == <span class="y">:unloading</span> &amp;&amp; !relied?(name)
-<span class="no">378</span>        <span class="k">end</span>
-<span class="no">379</span>      <span class="k">end</span>
-<span class="no">380</span>      <span class="c"># rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity</span>
-<span class="no">381</span>
-<span class="no">382</span>      <span class="k">def</span> next_step_raises?(fiber)
-<span class="no">383</span>        fiber.remaining&amp;.first&amp;.first == <span class="y">:fail</span>
-<span class="no">384</span>      <span class="k">end</span>
-<span class="no">385</span>
-<span class="no">386</span>      <span class="c"># One iteration of the effect iterator: perform the step, push its</span>
-<span class="no">387</span>      <span class="c"># inverse. Reads go through the committed view ω — the resolution the</span>
-<span class="no">388</span>      <span class="c"># transition committed to (Definition <a class="trace tr-u" href="#d46">46</a>), not the live store.</span>
-<span class="no">389</span>      <span class="k">def</span> run_iteration(fiber, step)
-<span class="no">390</span>        kind, a, b = step
-<span class="no">391</span>        <span class="k">case</span> kind
-<span class="no">392</span>        <span class="k">when</span> <span class="y">:set</span>
-<span class="no">393</span>          value = b.respond_to?(<span class="y">:call</span>) ? b.call(reads_of(fiber)) : b
-<span class="no">394</span>          fiber.table[a] = value
-<span class="no">395</span>          fiber.accumulator &lt;&lt; -&gt; { fiber.table.delete(a) }
-<span class="no">396</span>        <span class="k">when</span> <span class="y">:register</span>
-<span class="no">397</span>          child = register(fiber, a, b)
-<span class="no">398</span>          fiber.accumulator &lt;&lt; -&gt; { o_retire(child) } <span class="c"># the inverse retires, never removes (Definition <a class="trace tr-u" href="#d47">47</a>)</span>
-<span class="no">399</span>        <span class="k">end</span>
-<span class="no">400</span>      <span class="k">end</span>
-<span class="no">401</span>
-<span class="no">402</span>      <span class="k">def</span> reads_of(fiber)
-<span class="no">403</span>        fiber.committed.to_h { |key, provider_name| [key, @fibers.fetch(provider_name).table[key]] }
-<span class="no">404</span>      <span class="k">end</span>
-<span class="no">405</span>
-<span class="no">406</span>      <span class="c"># Definition <a class="trace tr-u" href="#d47">47</a> — registration: an O-Insert taken by an iteration, with</span>
-<span class="no">407</span>      <span class="c"># π = n; the name is drawn fresh and deterministically (see header note).</span>
-<span class="no">408</span>      <span class="k">def</span> register(fiber, component, _config)
-<span class="no">409</span>        parent_name = @fibers.key(fiber)
-<span class="no">410</span>        counter_key = [parent_name, component.id]
-<span class="no">411</span>        occurrence = @registration_counters[counter_key]
-<span class="no">412</span>        @registration_counters[counter_key] += <span class="n">1</span>
-<span class="no">413</span>        child_name = <span class="s">&quot;#{parent_name}/#{component.id}##{occurrence}&quot;</span>
-<span class="no">414</span>        o_insert(child_name, component, parent: parent_name)
-<span class="no">415</span>        child_name
-<span class="no">416</span>      <span class="k">end</span>
-<span class="no">417</span>
-<span class="no">418</span>      <span class="k">def</span> premise(condition, message)
-<span class="no">419</span>        <span class="k">raise</span> <span class="C">PreconditionViolation</span>, message <span class="k">unless</span> condition
-<span class="no">420</span>      <span class="k">end</span>
-<span class="no">421</span>
-<span class="no">422</span>      <span class="k">def</span> log(rule, name)
-<span class="no">423</span>        @trace &lt;&lt; [rule, name]
-<span class="no">424</span>      <span class="k">end</span>
-<span class="no">425</span>    <span class="k">end</span></code></pre></div>
+<span class="no">310</span>      <span class="c"># <a class="trace tr-u" href="#rule-l-unload">L-Unload</a>: guarded by ¬relied_n(γ) — the withdrawal of a key takes</span>
+<span class="no">311</span>      <span class="c"># effect only after every consumer that resolved it here has gone</span>
+<span class="no">312</span>      <span class="c"># (Definition <a class="trace tr-u" href="#d50">50</a>). The one rule that applies an accumulator.</span>
+<span class="no">313</span>      <span class="k">def</span> l_unload(name)
+<span class="no">314</span>        fiber = @fibers.fetch(name)
+<span class="no">315</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">unless</span> fiber.state == <span class="y">:unloading</span> &amp;&amp; !relied?(name)
+<span class="no">316</span>
+<span class="no">317</span>        fiber.accumulator.reverse_each(&amp;<span class="y">:call</span>) <span class="c"># LIFO recovery (Theorem <a class="trace tr-t" href="#t16">16</a>)</span>
+<span class="no">318</span>        fiber.accumulator = []
+<span class="no">319</span>        fiber.committed = <span class="k">nil</span>
+<span class="no">320</span>        fiber.state = <span class="y">:inactive</span>
+<span class="no">321</span>        log <span class="y">:l_unload</span>, name
+<span class="no">322</span>        <span class="k">true</span>
+<span class="no">323</span>      <span class="k">end</span>
+<span class="no">324</span>
+<span class="no">325</span>      <span class="c"># rubocop:enable Naming/PredicateMethod</span>
+<span class="no">326</span>
+<span class="no">327</span>      <span class="c"># ============================ the driver =================================</span>
+<span class="no">328</span>
+<span class="no">329</span>      <span class="C">LIFECYCLE_RULES</span> = %i[l_begin l_step l_divert l_raise l_leave l_unload].freeze
+<span class="no">330</span>
+<span class="no">331</span>      <span class="c"># One nondeterministic lifecycle step — an action that reports whether</span>
+<span class="no">332</span>      <span class="c"># any rule fired, so `step` keeps the paper&#39;s word for it. Collect every</span>
+<span class="no">333</span>      <span class="c"># (rule, fiber) whose premises hold and fire one at random: &quot;no rule</span>
+<span class="no">334</span>      <span class="c"># mentions a scheduler; a theorem proved over all sequences holds for</span>
+<span class="no">335</span>      <span class="c"># every scheduling policy&quot; (<a class="trace tr-u" href="#s4-2">§4.2</a>) — the seed picks the policy.</span>
+<span class="no">336</span>      <span class="c"># rubocop:disable Naming/PredicateMethod</span>
+<span class="no">337</span>      <span class="k">def</span> step
+<span class="no">338</span>        applicable = @fibers.keys.flat_map <span class="k">do</span> |name|
+<span class="no">339</span>          <span class="C">LIFECYCLE_RULES</span>.select { |rule| applicable?(rule, name) }.map { |rule| [rule, name] }
+<span class="no">340</span>        <span class="k">end</span>
+<span class="no">341</span>        <span class="k">return</span> <span class="k">false</span> <span class="k">if</span> applicable.empty?
+<span class="no">342</span>
+<span class="no">343</span>        rule, name = applicable[@rng.rand(applicable.length)]
+<span class="no">344</span>        send(rule, name)
+<span class="no">345</span>        <span class="k">true</span>
+<span class="no">346</span>      <span class="k">end</span>
+<span class="no">347</span>      <span class="c"># rubocop:enable Naming/PredicateMethod</span>
+<span class="no">348</span>
+<span class="no">349</span>      <span class="c"># Run lifecycle steps to quiescence. Theorem <a class="trace tr-u" href="#t66">66</a> bounds every maximal</span>
+<span class="no">350</span>      <span class="c"># sequence, so the cap is a defect detector, not a terminator.</span>
+<span class="no">351</span>      <span class="k">def</span> run(max_steps: <span class="n">10_000</span>)
+<span class="no">352</span>        steps = <span class="n">0</span>
+<span class="no">353</span>        <span class="k">while</span> step
+<span class="no">354</span>          steps += <span class="n">1</span>
+<span class="no">355</span>          <span class="k">raise</span> <span class="s">&quot;progress violated: #{steps} steps without quiescence&quot;</span> <span class="k">if</span> steps &gt; max_steps
+<span class="no">356</span>        <span class="k">end</span>
+<span class="no">357</span>        <span class="k">raise</span> <span class="s">&quot;stuck: no rule applies but the state is not quiescent&quot;</span> <span class="k">unless</span> quiet?
+<span class="no">358</span>
+<span class="no">359</span>        <span class="k">self</span>
+<span class="no">360</span>      <span class="k">end</span>
+<span class="no">361</span>
+<span class="no">362</span>      <span class="c"># Lemma <a class="trace tr-u" href="#l57">57</a> — a vestigial entry, all four clauses: retired, Inactive(⊥),</span>
+<span class="no">363</span>      <span class="c"># empty table, and no fiber names it as parent.</span>
+<span class="no">364</span>      <span class="k">def</span> vestigial?(name)
+<span class="no">365</span>        @fibers.fetch(name).locally_vestigial? &amp;&amp; @fibers.none? { |_, f| f.parent == name }
+<span class="no">366</span>      <span class="k">end</span>
+<span class="no">367</span>
+<span class="no">368</span>      <span class="c"># Snapshot for ≈-comparison (<a class="trace tr-u" href="#eq53">eq. 53</a> read at quiescence): every</span>
+<span class="no">369</span>      <span class="c"># non-vestigial fiber&#39;s identity and state; Lemma <a class="trace tr-u" href="#l57">57</a> is why vestigial</span>
+<span class="no">370</span>      <span class="c"># entries may be dropped, and only entries meeting all four of its</span>
+<span class="no">371</span>      <span class="c"># clauses are.</span>
+<span class="no">372</span>      <span class="k">def</span> snapshot
+<span class="no">373</span>        @fibers.reject { |name, _| vestigial?(name) }.to_h <span class="k">do</span> |name, fiber|
+<span class="no">374</span>          [name, [fiber.component.id, fiber.parent, fiber.retired, fiber.table,
+<span class="no">375</span>                  fiber.state, fiber.committed, fiber.outcome]]
+<span class="no">376</span>        <span class="k">end</span>
+<span class="no">377</span>      <span class="k">end</span>
+<span class="no">378</span>
+<span class="no">379</span>      <span class="k">private</span>
+<span class="no">380</span>
+<span class="no">381</span>      <span class="c"># rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity -- one case arm per rule</span>
+<span class="no">382</span>      <span class="k">def</span> applicable?(rule, name)
+<span class="no">383</span>        fiber = @fibers.fetch(name)
+<span class="no">384</span>        view = target(name)
+<span class="no">385</span>        <span class="k">case</span> rule
+<span class="no">386</span>        <span class="k">when</span> <span class="y">:l_begin</span> <span class="k">then</span> fiber.state == <span class="y">:inactive</span> &amp;&amp; fiber.outcome.<span class="k">nil</span>? &amp;&amp; !view.<span class="k">nil</span>?
+<span class="no">387</span>        <span class="k">when</span> <span class="y">:l_step</span> <span class="k">then</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; view == fiber.committed &amp;&amp; !next_step_raises?(fiber)
+<span class="no">388</span>        <span class="k">when</span> <span class="y">:l_divert</span> <span class="k">then</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; view != fiber.committed
+<span class="no">389</span>        <span class="k">when</span> <span class="y">:l_raise</span> <span class="k">then</span> fiber.state == <span class="y">:reloading</span> &amp;&amp; next_step_raises?(fiber)
+<span class="no">390</span>        <span class="k">when</span> <span class="y">:l_leave</span> <span class="k">then</span> fiber.state == <span class="y">:active</span> &amp;&amp; view != fiber.committed
+<span class="no">391</span>        <span class="k">when</span> <span class="y">:l_unload</span> <span class="k">then</span> fiber.state == <span class="y">:unloading</span> &amp;&amp; !relied?(name)
+<span class="no">392</span>        <span class="k">end</span>
+<span class="no">393</span>      <span class="k">end</span>
+<span class="no">394</span>      <span class="c"># rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity</span>
+<span class="no">395</span>
+<span class="no">396</span>      <span class="k">def</span> next_step_raises?(fiber)
+<span class="no">397</span>        fiber.remaining&amp;.first&amp;.first == <span class="y">:fail</span>
+<span class="no">398</span>      <span class="k">end</span>
+<span class="no">399</span>
+<span class="no">400</span>      <span class="c"># One iteration of the effect iterator: perform the step, push its</span>
+<span class="no">401</span>      <span class="c"># inverse. Reads go through the committed view ω — the resolution the</span>
+<span class="no">402</span>      <span class="c"># transition committed to (Definition <a class="trace tr-u" href="#d46">46</a>), not the live store.</span>
+<span class="no">403</span>      <span class="k">def</span> run_iteration(fiber, step)
+<span class="no">404</span>        kind, a, b = step
+<span class="no">405</span>        <span class="k">case</span> kind
+<span class="no">406</span>        <span class="k">when</span> <span class="y">:set</span>
+<span class="no">407</span>          value = b.respond_to?(<span class="y">:call</span>) ? b.call(reads_of(fiber)) : b
+<span class="no">408</span>          fiber.table[a] = value
+<span class="no">409</span>          fiber.accumulator &lt;&lt; -&gt; { fiber.table.delete(a) }
+<span class="no">410</span>        <span class="k">when</span> <span class="y">:register</span>
+<span class="no">411</span>          child = register(fiber, a, b)
+<span class="no">412</span>          fiber.accumulator &lt;&lt; -&gt; { o_retire(child) } <span class="c"># the inverse retires, never removes (Definition <a class="trace tr-u" href="#d47">47</a>)</span>
+<span class="no">413</span>        <span class="k">end</span>
+<span class="no">414</span>      <span class="k">end</span>
+<span class="no">415</span>
+<span class="no">416</span>      <span class="k">def</span> reads_of(fiber)
+<span class="no">417</span>        fiber.committed.to_h { |key, provider_name| [key, @fibers.fetch(provider_name).table[key]] }
+<span class="no">418</span>      <span class="k">end</span>
+<span class="no">419</span>
+<span class="no">420</span>      <span class="c"># Definition <a class="trace tr-u" href="#d47">47</a> — registration: an <a class="trace tr-u" href="#rule-o-insert">O-Insert</a> taken by an iteration, with</span>
+<span class="no">421</span>      <span class="c"># π = n; the name is drawn fresh and deterministically (see header note).</span>
+<span class="no">422</span>      <span class="k">def</span> register(fiber, component, _config)
+<span class="no">423</span>        parent_name = @fibers.key(fiber)
+<span class="no">424</span>        counter_key = [parent_name, component.id]
+<span class="no">425</span>        occurrence = @registration_counters[counter_key]
+<span class="no">426</span>        @registration_counters[counter_key] += <span class="n">1</span>
+<span class="no">427</span>        child_name = <span class="s">&quot;#{parent_name}/#{component.id}##{occurrence}&quot;</span>
+<span class="no">428</span>        o_insert(child_name, component, parent: parent_name)
+<span class="no">429</span>        child_name
+<span class="no">430</span>      <span class="k">end</span>
+<span class="no">431</span>
+<span class="no">432</span>      <span class="k">def</span> premise(condition, message)
+<span class="no">433</span>        <span class="k">raise</span> <span class="C">PreconditionViolation</span>, message <span class="k">unless</span> condition
+<span class="no">434</span>      <span class="k">end</span>
+<span class="no">435</span>
+<span class="no">436</span>      <span class="k">def</span> log(rule, name)
+<span class="no">437</span>        @trace &lt;&lt; [rule, name]
+<span class="no">438</span>      <span class="k">end</span>
+<span class="no">439</span>    <span class="k">end</span></code></pre></div>
 
   </div>
 
@@ -5945,151 +5959,157 @@ emission (write, send): crosses the boundary — withhold, or
     </p>
 
     <h4 id="rb-loader-core">Entry · Reconciler</h4>
-    <p class="code-meta">cordis_loader.rb · lines 18–24</p>
+    <p class="code-meta">cordis_loader.rb · lines 18–26</p>
 <div class="codewrap"><pre class="code"><code><span class="no">18</span>    <span class="c"># Definition <a class="trace tr-u" href="#d74">74</a> — an entry declares a single fiber: a stable id (the</span>
 <span class="no">19</span>    <span class="c"># reconciliation key), the component to instantiate (here a builder</span>
 <span class="no">20</span>    <span class="c"># applied to config, standing in for the url&#39;s module), the config bound</span>
-<span class="no">21</span>    <span class="c"># into the effect function, and the administrative disabled flag.</span>
-<span class="no">22</span>    <span class="C">Entry</span> = <span class="C">Struct</span>.new(<span class="y">:id</span>, <span class="y">:builder</span>, <span class="y">:config</span>, <span class="y">:disabled</span>, keyword_init: <span class="k">true</span>) <span class="k">do</span>
-<span class="no">23</span>      <span class="k">def</span> component = builder.call(config)
-<span class="no">24</span>    <span class="k">end</span></code></pre></div>
+<span class="no">21</span>    <span class="c"># into the effect function, and the administrative disabled flag The</span>
+<span class="no">22</span>    <span class="c"># isolate and intercept fields are omitted with the calculus&#39;s no-realms</span>
+<span class="no">23</span>    <span class="c"># choice (Definition <a class="trace tr-u" href="#d43">43</a>; see the modeling notes in cordis_calculus.rb).</span>
+<span class="no">24</span>    <span class="C">Entry</span> = <span class="C">Struct</span>.new(<span class="y">:id</span>, <span class="y">:builder</span>, <span class="y">:config</span>, <span class="y">:disabled</span>, keyword_init: <span class="k">true</span>) <span class="k">do</span>
+<span class="no">25</span>      <span class="k">def</span> component = builder.call(config)
+<span class="no">26</span>    <span class="k">end</span></code></pre></div>
 
-    <p class="code-meta">cordis_loader.rb · lines 26–89</p>
-<div class="codewrap"><pre class="code"><code><span class="no">26</span>    <span class="c"># The loader keeps the configuration tree authoritative: reconcile diffs</span>
-<span class="no">27</span>    <span class="c"># the new entries against what is loaded, dispatches per field, and runs</span>
-<span class="no">28</span>    <span class="c"># the machine to quiescence.</span>
-<span class="no">29</span>    <span class="k">class</span> <span class="C">Reconciler</span>
-<span class="no">30</span>      <span class="k">attr_reader</span> <span class="y">:machine</span>
-<span class="no">31</span>
-<span class="no">32</span>      <span class="k">def</span> initialize(machine = <span class="C">Calculus</span>::<span class="C">Machine</span>.new)
-<span class="no">33</span>        @machine = machine
-<span class="no">34</span>        @loaded = {} <span class="c"># id =&gt; Entry</span>
-<span class="no">35</span>      <span class="k">end</span>
-<span class="no">36</span>
-<span class="no">37</span>      <span class="k">def</span> reconcile(entries)
-<span class="no">38</span>        desired = entries.to_h { |e| [e.id, e] }
-<span class="no">39</span>        (@loaded.keys - desired.keys).each { |id| remove(id) }
-<span class="no">40</span>        desired.each { |id, entry| reconcile_entry(id, entry) }
-<span class="no">41</span>        @machine.run
-<span class="no">42</span>        <span class="k">self</span>
-<span class="no">43</span>      <span class="k">end</span>
-<span class="no">44</span>
-<span class="no">45</span>      <span class="k">private</span>
+    <p class="code-meta">cordis_loader.rb · lines 28–95</p>
+<div class="codewrap"><pre class="code"><code><span class="no">28</span>    <span class="c"># The loader keeps the configuration tree authoritative: reconcile diffs</span>
+<span class="no">29</span>    <span class="c"># the new entries against what is loaded, dispatches per field, and runs</span>
+<span class="no">30</span>    <span class="c"># the machine to quiescence.</span>
+<span class="no">31</span>    <span class="k">class</span> <span class="C">Reconciler</span>
+<span class="no">32</span>      <span class="k">attr_reader</span> <span class="y">:machine</span>
+<span class="no">33</span>
+<span class="no">34</span>      <span class="k">def</span> initialize(machine = <span class="C">Calculus</span>::<span class="C">Machine</span>.new)
+<span class="no">35</span>        @machine = machine
+<span class="no">36</span>        @loaded = {} <span class="c"># id =&gt; Entry</span>
+<span class="no">37</span>      <span class="k">end</span>
+<span class="no">38</span>
+<span class="no">39</span>      <span class="k">def</span> reconcile(entries)
+<span class="no">40</span>        desired = entries.to_h { |e| [e.id, e] }
+<span class="no">41</span>        (@loaded.keys - desired.keys).each { |id| remove(id) }
+<span class="no">42</span>        desired.each { |id, entry| reconcile_entry(id, entry) }
+<span class="no">43</span>        @machine.run
+<span class="no">44</span>        <span class="k">self</span>
+<span class="no">45</span>      <span class="k">end</span>
 <span class="no">46</span>
-<span class="no">47</span>      <span class="c"># Per-field dispatch (<a class="trace tr-u" href="#s5-2-1">§5.2.1</a>): a changed config or component rebuilds</span>
-<span class="no">48</span>      <span class="c"># the entry — the least disruptive operation that realizes the new</span>
-<span class="no">49</span>      <span class="c"># record; disabled unloads the fiber when set and reloads it when</span>
-<span class="no">50</span>      <span class="c"># cleared; an unchanged entry is left exactly as it stands.</span>
-<span class="no">51</span>      <span class="k">def</span> reconcile_entry(id, entry)
-<span class="no">52</span>        previous = @loaded[id]
-<span class="no">53</span>        <span class="k">if</span> previous.<span class="k">nil</span>?
-<span class="no">54</span>          insert(entry) <span class="k">unless</span> entry.disabled
-<span class="no">55</span>        <span class="k">elsif</span> material_change?(previous, entry)
-<span class="no">56</span>          remove(id)
-<span class="no">57</span>          insert(entry) <span class="k">unless</span> entry.disabled
-<span class="no">58</span>        <span class="k">end</span>
-<span class="no">59</span>        @loaded[id] = entry
-<span class="no">60</span>      <span class="k">end</span>
-<span class="no">61</span>
-<span class="no">62</span>      <span class="k">def</span> material_change?(previous, entry)
-<span class="no">63</span>        previous.config != entry.config || previous.builder != entry.builder ||
-<span class="no">64</span>          previous.disabled != entry.disabled
-<span class="no">65</span>      <span class="k">end</span>
-<span class="no">66</span>
-<span class="no">67</span>      <span class="k">def</span> insert(entry)
-<span class="no">68</span>        @machine.o_insert(entry.id, entry.component)
-<span class="no">69</span>      <span class="k">end</span>
-<span class="no">70</span>
-<span class="no">71</span>      <span class="c"># A rebuild withdraws what the fiber installed and leaves the fibers</span>
-<span class="no">72</span>      <span class="c"># around it as they were (Corollary <a class="trace tr-u" href="#c62">62</a>): retire, drive to Inactive,</span>
-<span class="no">73</span>      <span class="c"># remove — O-Remove&#39;s premises are what make the order safe.</span>
-<span class="no">74</span>      <span class="k">def</span> remove(id)
-<span class="no">75</span>        <span class="k">return</span> <span class="k">unless</span> @machine.fibers.key?(id)
+<span class="no">47</span>      <span class="k">private</span>
+<span class="no">48</span>
+<span class="no">49</span>      <span class="c"># Per-field dispatch (<a class="trace tr-u" href="#s5-2-1">§5.2.1</a>), coarsened to what the modeled calculus</span>
+<span class="no">50</span>      <span class="c"># can express: retirement is monotone (Lemma <a class="trace tr-u" href="#l54">54</a>(5)), so both a config</span>
+<span class="no">51</span>      <span class="c"># change (which <a class="trace tr-u" href="#s5-2-1">§5.2.1</a> hands to the component to diff) and a disabled</span>
+<span class="no">52</span>      <span class="c"># toggle (which <a class="trace tr-u" href="#s5-2-1">§5.2.1</a> reads as unload/reload of the same fiber) are</span>
+<span class="no">53</span>      <span class="c"># realized here as a rebuild — retire, remove, reinsert. Theorem <a class="trace tr-u" href="#t73">73</a> is</span>
+<span class="no">54</span>      <span class="c"># what makes the coarsening safe: the quiescent state is a function of</span>
+<span class="no">55</span>      <span class="c"># the final configuration alone. An unchanged entry is left as it</span>
+<span class="no">56</span>      <span class="c"># stands.</span>
+<span class="no">57</span>      <span class="k">def</span> reconcile_entry(id, entry)
+<span class="no">58</span>        previous = @loaded[id]
+<span class="no">59</span>        <span class="k">if</span> previous.<span class="k">nil</span>?
+<span class="no">60</span>          insert(entry) <span class="k">unless</span> entry.disabled
+<span class="no">61</span>        <span class="k">elsif</span> material_change?(previous, entry)
+<span class="no">62</span>          remove(id)
+<span class="no">63</span>          insert(entry) <span class="k">unless</span> entry.disabled
+<span class="no">64</span>        <span class="k">end</span>
+<span class="no">65</span>        @loaded[id] = entry
+<span class="no">66</span>      <span class="k">end</span>
+<span class="no">67</span>
+<span class="no">68</span>      <span class="k">def</span> material_change?(previous, entry)
+<span class="no">69</span>        previous.config != entry.config || previous.builder != entry.builder ||
+<span class="no">70</span>          previous.disabled != entry.disabled
+<span class="no">71</span>      <span class="k">end</span>
+<span class="no">72</span>
+<span class="no">73</span>      <span class="k">def</span> insert(entry)
+<span class="no">74</span>        @machine.o_insert(entry.id, entry.component)
+<span class="no">75</span>      <span class="k">end</span>
 <span class="no">76</span>
-<span class="no">77</span>        @machine.o_retire(id)
-<span class="no">78</span>        @machine.run
-<span class="no">79</span>        @machine.fibers.keys.select { |n| n == id || n.start_with?(<span class="s">&quot;#{id}/&quot;</span>) }.reverse_each <span class="k">do</span> |name|
-<span class="no">80</span>          @machine.o_remove(name) <span class="k">if</span> removable?(name)
-<span class="no">81</span>        <span class="k">end</span>
-<span class="no">82</span>        @loaded.delete(id)
-<span class="no">83</span>      <span class="k">end</span>
-<span class="no">84</span>
-<span class="no">85</span>      <span class="k">def</span> removable?(name)
-<span class="no">86</span>        fiber = @machine.fibers[name]
-<span class="no">87</span>        fiber&amp;.retired &amp;&amp; fiber.state == <span class="y">:inactive</span> &amp;&amp; @machine.fibers.none? { |_, f| f.parent == name }
-<span class="no">88</span>      <span class="k">end</span>
-<span class="no">89</span>    <span class="k">end</span></code></pre></div>
+<span class="no">77</span>      <span class="c"># A rebuild withdraws what the fiber installed and leaves the fibers</span>
+<span class="no">78</span>      <span class="c"># around it as they were (Corollary <a class="trace tr-u" href="#c62">62</a>): retire, drive to Inactive,</span>
+<span class="no">79</span>      <span class="c"># remove — <a class="trace tr-u" href="#rule-o-remove">O-Remove</a>&#39;s premises are what make the order safe.</span>
+<span class="no">80</span>      <span class="k">def</span> remove(id)
+<span class="no">81</span>        <span class="k">return</span> <span class="k">unless</span> @machine.fibers.key?(id)
+<span class="no">82</span>
+<span class="no">83</span>        @machine.o_retire(id)
+<span class="no">84</span>        @machine.run
+<span class="no">85</span>        @machine.fibers.keys.select { |n| n == id || n.start_with?(<span class="s">&quot;#{id}/&quot;</span>) }.reverse_each <span class="k">do</span> |name|
+<span class="no">86</span>          @machine.o_remove(name) <span class="k">if</span> removable?(name)
+<span class="no">87</span>        <span class="k">end</span>
+<span class="no">88</span>        @loaded.delete(id)
+<span class="no">89</span>      <span class="k">end</span>
+<span class="no">90</span>
+<span class="no">91</span>      <span class="k">def</span> removable?(name)
+<span class="no">92</span>        fiber = @machine.fibers[name]
+<span class="no">93</span>        fiber&amp;.retired &amp;&amp; fiber.state == <span class="y">:inactive</span> &amp;&amp; @machine.fibers.none? { |_, f| f.parent == name }
+<span class="no">94</span>      <span class="k">end</span>
+<span class="no">95</span>    <span class="k">end</span></code></pre></div>
 
 
     <h4 id="rb-hmr">HMR — classification and stale-entry detection</h4>
-    <p class="code-meta">cordis_loader.rb · lines 91–157</p>
-<div class="codewrap"><pre class="code"><code><span class="no">91</span>    <span class="c"># ---------------------------------------------------------------------</span>
-<span class="no">92</span>    <span class="c"># Hot module replacement (<a class="trace tr-u" href="#s5-2-2">§5.2.2</a>) — the pure phases.</span>
-<span class="no">93</span>    <span class="c"># imports: url → the modules that url directly imports.</span>
-<span class="no">94</span>    <span class="c"># ---------------------------------------------------------------------</span>
-<span class="no">95</span>    <span class="k">module</span> <span class="C">HMR</span>
-<span class="no">96</span>      <span class="k">module_function</span>
-<span class="no">97</span>
-<span class="no">98</span>      <span class="c"># Algorithm 8 — module classification. Seeded with the imports of the</span>
-<span class="no">99</span>      <span class="c"># stashed files, the fixed point accepts a module once one of its</span>
-<span class="no">100</span>      <span class="c"># imports is accepted and declines one once all of its imports are</span>
-<span class="no">101</span>      <span class="c"># declined; anything left undecided (an import cycle) defaults to</span>
-<span class="no">102</span>      <span class="c"># declined.</span>
-<span class="no">103</span>      <span class="k">def</span> classify(stashed, externals, imports)
-<span class="no">104</span>        accepted = stashed.dup
-<span class="no">105</span>        declined = externals.dup
-<span class="no">106</span>        pending = []
-<span class="no">107</span>        stashed.each { |url| pending |= imports.fetch(url, []) - (accepted | declined) }
-<span class="no">108</span>        loop <span class="k">do</span>
-<span class="no">109</span>          progress = <span class="k">false</span>
-<span class="no">110</span>          pending.dup.each <span class="k">do</span> |url|
-<span class="no">111</span>            deps = imports.fetch(url, [])
-<span class="no">112</span>            <span class="k">if</span> deps.intersect?(accepted)
-<span class="no">113</span>              accepted |= [url]
-<span class="no">114</span>              pending -= [url]
-<span class="no">115</span>              progress = <span class="k">true</span>
-<span class="no">116</span>            <span class="k">elsif</span> (deps - declined).empty?
-<span class="no">117</span>              declined |= [url]
-<span class="no">118</span>              pending -= [url]
-<span class="no">119</span>              progress = <span class="k">true</span>
-<span class="no">120</span>            <span class="k">else</span>
-<span class="no">121</span>              pending |= deps - (accepted | declined)
-<span class="no">122</span>            <span class="k">end</span>
-<span class="no">123</span>          <span class="k">end</span>
-<span class="no">124</span>          <span class="k">break</span> <span class="k">unless</span> progress
-<span class="no">125</span>        <span class="k">end</span>
-<span class="no">126</span>        [accepted, declined | pending]
-<span class="no">127</span>      <span class="k">end</span>
-<span class="no">128</span>
-<span class="no">129</span>      <span class="c"># Algorithm 9 — stale-entry detection: the transitive imports of an</span>
-<span class="no">130</span>      <span class="c"># entry&#39;s module, respecting declined as a boundary; an entry is stale</span>
-<span class="no">131</span>      <span class="c"># exactly when its tree intersects accepted, and that tree is then</span>
-<span class="no">132</span>      <span class="c"># folded into accepted.</span>
-<span class="no">133</span>      <span class="k">def</span> dependencies(root, declined, imports)
-<span class="no">134</span>        deps = []
-<span class="no">135</span>        traverse = lambda <span class="k">do</span> |url|
-<span class="no">136</span>          <span class="k">return</span> <span class="k">if</span> deps.<span class="k">include</span>?(url) || declined.<span class="k">include</span>?(url)
-<span class="no">137</span>
-<span class="no">138</span>          deps &lt;&lt; url
-<span class="no">139</span>          imports.fetch(url, []).each { |child| traverse.call(child) }
-<span class="no">140</span>        <span class="k">end</span>
-<span class="no">141</span>        traverse.call(root)
-<span class="no">142</span>        deps
-<span class="no">143</span>      <span class="k">end</span>
-<span class="no">144</span>
-<span class="no">145</span>      <span class="k">def</span> detect(entry_urls, accepted, declined, imports)
-<span class="no">146</span>        accepted = accepted.dup
-<span class="no">147</span>        stale = []
-<span class="no">148</span>        entry_urls.each <span class="k">do</span> |url|
-<span class="no">149</span>          tree = dependencies(url, declined, imports)
-<span class="no">150</span>          <span class="k">next</span> <span class="k">unless</span> tree.intersect?(accepted)
-<span class="no">151</span>
-<span class="no">152</span>          accepted |= tree
-<span class="no">153</span>          stale &lt;&lt; url
-<span class="no">154</span>        <span class="k">end</span>
-<span class="no">155</span>        [stale, accepted]
-<span class="no">156</span>      <span class="k">end</span>
-<span class="no">157</span>    <span class="k">end</span></code></pre></div>
+    <p class="code-meta">cordis_loader.rb · lines 97–163</p>
+<div class="codewrap"><pre class="code"><code><span class="no">97</span>    <span class="c"># ---------------------------------------------------------------------</span>
+<span class="no">98</span>    <span class="c"># Hot module replacement (<a class="trace tr-u" href="#s5-2-2">§5.2.2</a>) — the pure phases.</span>
+<span class="no">99</span>    <span class="c"># imports: url → the modules that url directly imports.</span>
+<span class="no">100</span>    <span class="c"># ---------------------------------------------------------------------</span>
+<span class="no">101</span>    <span class="k">module</span> <span class="C">HMR</span>
+<span class="no">102</span>      <span class="k">module_function</span>
+<span class="no">103</span>
+<span class="no">104</span>      <span class="c"># Algorithm <a class="trace tr-u" href="#alg8">8</a> — module classification. Seeded with the imports of the</span>
+<span class="no">105</span>      <span class="c"># stashed files, the fixed point accepts a module once one of its</span>
+<span class="no">106</span>      <span class="c"># imports is accepted and declines one once all of its imports are</span>
+<span class="no">107</span>      <span class="c"># declined; anything left undecided (an import cycle) defaults to</span>
+<span class="no">108</span>      <span class="c"># declined.</span>
+<span class="no">109</span>      <span class="k">def</span> classify(stashed, externals, imports)
+<span class="no">110</span>        accepted = stashed.dup
+<span class="no">111</span>        declined = externals.dup
+<span class="no">112</span>        pending = []
+<span class="no">113</span>        stashed.each { |url| pending |= imports.fetch(url, []) - (accepted | declined) }
+<span class="no">114</span>        loop <span class="k">do</span>
+<span class="no">115</span>          progress = <span class="k">false</span>
+<span class="no">116</span>          pending.dup.each <span class="k">do</span> |url|
+<span class="no">117</span>            deps = imports.fetch(url, [])
+<span class="no">118</span>            <span class="k">if</span> deps.intersect?(accepted)
+<span class="no">119</span>              accepted |= [url]
+<span class="no">120</span>              pending -= [url]
+<span class="no">121</span>              progress = <span class="k">true</span>
+<span class="no">122</span>            <span class="k">elsif</span> (deps - declined).empty?
+<span class="no">123</span>              declined |= [url]
+<span class="no">124</span>              pending -= [url]
+<span class="no">125</span>              progress = <span class="k">true</span>
+<span class="no">126</span>            <span class="k">else</span>
+<span class="no">127</span>              pending |= deps - (accepted | declined)
+<span class="no">128</span>            <span class="k">end</span>
+<span class="no">129</span>          <span class="k">end</span>
+<span class="no">130</span>          <span class="k">break</span> <span class="k">unless</span> progress
+<span class="no">131</span>        <span class="k">end</span>
+<span class="no">132</span>        [accepted, declined | pending]
+<span class="no">133</span>      <span class="k">end</span>
+<span class="no">134</span>
+<span class="no">135</span>      <span class="c"># Algorithm <a class="trace tr-u" href="#alg9">9</a> — stale-entry detection: the transitive imports of an</span>
+<span class="no">136</span>      <span class="c"># entry&#39;s module, respecting declined as a boundary; an entry is stale</span>
+<span class="no">137</span>      <span class="c"># exactly when its tree intersects accepted, and that tree is then</span>
+<span class="no">138</span>      <span class="c"># folded into accepted.</span>
+<span class="no">139</span>      <span class="k">def</span> dependencies(root, declined, imports)
+<span class="no">140</span>        deps = []
+<span class="no">141</span>        traverse = lambda <span class="k">do</span> |url|
+<span class="no">142</span>          <span class="k">return</span> <span class="k">if</span> deps.<span class="k">include</span>?(url) || declined.<span class="k">include</span>?(url)
+<span class="no">143</span>
+<span class="no">144</span>          deps &lt;&lt; url
+<span class="no">145</span>          imports.fetch(url, []).each { |child| traverse.call(child) }
+<span class="no">146</span>        <span class="k">end</span>
+<span class="no">147</span>        traverse.call(root)
+<span class="no">148</span>        deps
+<span class="no">149</span>      <span class="k">end</span>
+<span class="no">150</span>
+<span class="no">151</span>      <span class="k">def</span> detect(entry_urls, accepted, declined, imports)
+<span class="no">152</span>        accepted = accepted.dup
+<span class="no">153</span>        stale = []
+<span class="no">154</span>        entry_urls.each <span class="k">do</span> |url|
+<span class="no">155</span>          tree = dependencies(url, declined, imports)
+<span class="no">156</span>          <span class="k">next</span> <span class="k">unless</span> tree.intersect?(accepted)
+<span class="no">157</span>
+<span class="no">158</span>          accepted |= tree
+<span class="no">159</span>          stale &lt;&lt; url
+<span class="no">160</span>        <span class="k">end</span>
+<span class="no">161</span>        [stale, accepted]
+<span class="no">162</span>      <span class="k">end</span>
+<span class="no">163</span>    <span class="k">end</span></code></pre></div>
 
   </div>
 
@@ -6247,16 +6267,16 @@ The reactive runtime — failure and precondition discipline (<a class="trace tr
 <a class="trace tr-u" href="#s4-2">§4.2</a> — The base lifecycle, driven reactively
 <span class="pass">  ✓ Insertion order is irrelevant: every schedule activates the whole tree (Definition <a class="trace tr-u" href="#d46">46</a>)</span>
 <span class="pass">  ✓ Theorem <a class="trace tr-u" href="#t59">59</a> (Preservation): well-formedness holds at every step of every schedule</span>
-<a class="trace tr-u" href="#s4-3-1">§4.3.1</a> — Withdrawal: the guard on L-Unload
+<a class="trace tr-u" href="#s4-3-1">§4.3.1</a> — Withdrawal: the guard on <a class="trace tr-u" href="#rule-l-unload">L-Unload</a>
 <span class="pass">  ✓ Theorem <a class="trace tr-u" href="#t63">63</a> (Ordering): a provider unloads only after every dependent that resolved to it</span>
-<span class="pass">  ✓ L-Leave stops provision one step early: an Unloading fiber is outside σ_γ (<a class="trace tr-u" href="#eq40">eq. 40</a>)</span>
+<span class="pass">  ✓ <a class="trace tr-u" href="#rule-l-leave">L-Leave</a> stops provision one step early: an Unloading fiber is outside σ_γ (<a class="trace tr-u" href="#eq40">eq. 40</a>)</span>
 <a class="trace tr-u" href="#s4-4-4">§4.4.4</a> — Progress
 <span class="pass">  ✓ Theorem <a class="trace tr-u" href="#t66">66</a>: every maximal sequence of lifecycle steps ends in a quiescent state</span>
 <a class="trace tr-u" href="#s4-4-2">§4.4.2</a> — Recovery
 <span class="pass">  ✓ Corollary <a class="trace tr-u" href="#c62">62</a> (Terminal recovery): a departing fiber&#39;s contribution is nothing</span>
 <a class="trace tr-u" href="#s4-3-2">§4.3.2</a>/<a class="trace tr-u" href="#s4-3-4">§4.3.4</a> — Registration, iteration, failure
 <span class="pass">  ✓ Definition <a class="trace tr-u" href="#d47">47</a>: unloading a parent retires what its iterations registered, one level at a time</span>
-<span class="pass">  ✓ L-Raise (<a class="trace tr-u" href="#s4-3-4">§4.3.4</a>): a failing transition recovers, records the error, and obstructs nothing</span>
+<span class="pass">  ✓ <a class="trace tr-u" href="#rule-l-raise">L-Raise</a> (<a class="trace tr-u" href="#s4-3-4">§4.3.4</a>): a failing transition recovers, records the error, and obstructs nothing</span>
 <a class="trace tr-u" href="#s4-4-5">§4.4.5</a> — Confluence
 <span class="pass">  ✓ Theorem <a class="trace tr-u" href="#t73">73</a>: every schedule of the same orchestration steps reaches the same quiescent state</span>
 <span class="pass">  ✓ Theorem <a class="trace tr-u" href="#t73">73</a> (dynamic history leaves no trace): load–unload–reload ≈ statically assembled</span>
@@ -6264,8 +6284,8 @@ The reactive runtime — failure and precondition discipline (<a class="trace tr
 <span class="pass">  ✓ Reconciliation lands where a from-scratch load of the final configuration would (Theorem <a class="trace tr-u" href="#t73">73</a>)</span>
 <span class="pass">  ✓ Clearing disabled reloads the entry (Definition <a class="trace tr-u" href="#d74">74</a> per-field dispatch)</span>
 <a class="trace tr-u" href="#s5-2-2">§5.2.2</a> — Hot module replacement, the pure phases
-<span class="pass">  ✓ Algorithm 8: accepts spread along imports; cycles default to declined</span>
-<span class="pass">  ✓ Algorithm 9: an entry is stale exactly when its dependency tree reaches a changed module</span>
+<span class="pass">  ✓ Algorithm <a class="trace tr-u" href="#alg8">8</a>: accepts spread along imports; cycles default to declined</span>
+<span class="pass">  ✓ Algorithm <a class="trace tr-u" href="#alg9">9</a>: an entry is stale exactly when its dependency tree reaches a changed module</span>
 
 <span class="pass">All checks passed.</span></pre></div>
 
@@ -6553,59 +6573,59 @@ Transition trace (every line is a classified transition or lifecycle event):
   registry empty, derived context empty
 
 Rule trace of the v1→v2 reconciliation window (each line is one rule application):
-  o_insert  config
-  o_insert  logger
-  o_insert  metrics
-  o_insert  dash
-  l_begin   config
-  l_iter    config
-  l_finish  config
-  l_begin   logger
-  l_iter    logger
-  l_finish  logger
-  l_begin   metrics
-  l_iter    metrics
-  l_finish  metrics
-  l_begin   dash
-  l_iter    dash
-  l_finish  dash
-  o_retire  logger
-  l_leave   logger
-  l_leave   metrics
-  l_leave   dash
-  l_unload  dash
-  l_unload  metrics
-  l_unload  logger
-  o_remove  logger
-  o_insert  logger
-  o_retire  dash
-  l_begin   logger
-  l_iter    logger
-  l_finish  logger
-  l_begin   metrics
-  l_iter    metrics
-  l_finish  metrics
-  o_remove  dash
-  o_insert  dash
-  l_begin   dash
-  l_iter    dash
-  l_finish  dash
-  o_retire  config
-  l_leave   config
-  l_leave   logger
-  l_leave   dash
-  l_leave   metrics
-  l_unload  dash
-  l_unload  metrics
-  l_unload  logger
-  l_unload  config
-  o_remove  config
-  o_retire  metrics
-  o_remove  metrics
-  o_retire  logger
-  o_remove  logger
-  o_retire  dash
-  o_remove  dash</pre></div>
+  <a class="trace tr-u" href="#rule-o-insert">o_insert</a>  config
+  <a class="trace tr-u" href="#rule-o-insert">o_insert</a>  logger
+  <a class="trace tr-u" href="#rule-o-insert">o_insert</a>  metrics
+  <a class="trace tr-u" href="#rule-o-insert">o_insert</a>  dash
+  <a class="trace tr-u" href="#rule-l-begin">l_begin</a>   config
+  <a class="trace tr-u" href="#rule-l-iter">l_iter</a>    config
+  <a class="trace tr-u" href="#rule-l-finish">l_finish</a>  config
+  <a class="trace tr-u" href="#rule-l-begin">l_begin</a>   logger
+  <a class="trace tr-u" href="#rule-l-iter">l_iter</a>    logger
+  <a class="trace tr-u" href="#rule-l-finish">l_finish</a>  logger
+  <a class="trace tr-u" href="#rule-l-begin">l_begin</a>   metrics
+  <a class="trace tr-u" href="#rule-l-iter">l_iter</a>    metrics
+  <a class="trace tr-u" href="#rule-l-finish">l_finish</a>  metrics
+  <a class="trace tr-u" href="#rule-l-begin">l_begin</a>   dash
+  <a class="trace tr-u" href="#rule-l-iter">l_iter</a>    dash
+  <a class="trace tr-u" href="#rule-l-finish">l_finish</a>  dash
+  <a class="trace tr-u" href="#rule-o-retire">o_retire</a>  logger
+  <a class="trace tr-u" href="#rule-l-leave">l_leave</a>   logger
+  <a class="trace tr-u" href="#rule-l-leave">l_leave</a>   metrics
+  <a class="trace tr-u" href="#rule-l-leave">l_leave</a>   dash
+  <a class="trace tr-u" href="#rule-l-unload">l_unload</a>  dash
+  <a class="trace tr-u" href="#rule-l-unload">l_unload</a>  metrics
+  <a class="trace tr-u" href="#rule-l-unload">l_unload</a>  logger
+  <a class="trace tr-u" href="#rule-o-remove">o_remove</a>  logger
+  <a class="trace tr-u" href="#rule-o-insert">o_insert</a>  logger
+  <a class="trace tr-u" href="#rule-o-retire">o_retire</a>  dash
+  <a class="trace tr-u" href="#rule-l-begin">l_begin</a>   logger
+  <a class="trace tr-u" href="#rule-l-iter">l_iter</a>    logger
+  <a class="trace tr-u" href="#rule-l-finish">l_finish</a>  logger
+  <a class="trace tr-u" href="#rule-l-begin">l_begin</a>   metrics
+  <a class="trace tr-u" href="#rule-l-iter">l_iter</a>    metrics
+  <a class="trace tr-u" href="#rule-l-finish">l_finish</a>  metrics
+  <a class="trace tr-u" href="#rule-o-remove">o_remove</a>  dash
+  <a class="trace tr-u" href="#rule-o-insert">o_insert</a>  dash
+  <a class="trace tr-u" href="#rule-l-begin">l_begin</a>   dash
+  <a class="trace tr-u" href="#rule-l-iter">l_iter</a>    dash
+  <a class="trace tr-u" href="#rule-l-finish">l_finish</a>  dash
+  <a class="trace tr-u" href="#rule-o-retire">o_retire</a>  config
+  <a class="trace tr-u" href="#rule-l-leave">l_leave</a>   config
+  <a class="trace tr-u" href="#rule-l-leave">l_leave</a>   logger
+  <a class="trace tr-u" href="#rule-l-leave">l_leave</a>   dash
+  <a class="trace tr-u" href="#rule-l-leave">l_leave</a>   metrics
+  <a class="trace tr-u" href="#rule-l-unload">l_unload</a>  dash
+  <a class="trace tr-u" href="#rule-l-unload">l_unload</a>  metrics
+  <a class="trace tr-u" href="#rule-l-unload">l_unload</a>  logger
+  <a class="trace tr-u" href="#rule-l-unload">l_unload</a>  config
+  <a class="trace tr-u" href="#rule-o-remove">o_remove</a>  config
+  <a class="trace tr-u" href="#rule-o-retire">o_retire</a>  metrics
+  <a class="trace tr-u" href="#rule-o-remove">o_remove</a>  metrics
+  <a class="trace tr-u" href="#rule-o-retire">o_retire</a>  logger
+  <a class="trace tr-u" href="#rule-o-remove">o_remove</a>  logger
+  <a class="trace tr-u" href="#rule-o-retire">o_retire</a>  dash
+  <a class="trace tr-u" href="#rule-o-remove">o_remove</a>  dash</pre></div>
 
   </div>
 </section>

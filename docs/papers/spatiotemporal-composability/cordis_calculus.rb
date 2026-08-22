@@ -24,6 +24,11 @@
 #   names deterministically per (parent, component, occurrence) so that two
 #   schedules of the same orchestration steps are comparable without the
 #   renaming of Lemma 56.
+# - Following Definition 43, this calculus carries no realms and no
+#   interception: every key reads at one shared realm, which is what makes
+#   provision disjointness the right condition (§4.1). The loader built on
+#   top inherits that choice — its entries omit Definition 74's isolate and
+#   intercept fields, and Algorithm 7's realm reassignment with them.
 
 require_relative "cordis"
 
@@ -103,8 +108,10 @@ module Cordis
 
       def failed? = state == :inactive && !outcome.nil?
 
-      # Lemma 57 — a vestigial entry: retired, Inactive(⊥), empty table.
-      def vestigial? = retired && state == :inactive && outcome.nil? && table.empty?
+      # The three local clauses of Lemma 57's vestigial entry: retired,
+      # Inactive(⊥), empty table. The fourth clause — no fiber names this one
+      # as parent — needs the registry, so Machine#vestigial? supplies it.
+      def locally_vestigial? = retired && state == :inactive && outcome.nil? && table.empty?
     end
 
     # The state γ: the registry F_γ (Definition 45) plus the rule engine.
@@ -352,11 +359,18 @@ module Cordis
         self
       end
 
+      # Lemma 57 — a vestigial entry, all four clauses: retired, Inactive(⊥),
+      # empty table, and no fiber names it as parent.
+      def vestigial?(name)
+        @fibers.fetch(name).locally_vestigial? && @fibers.none? { |_, f| f.parent == name }
+      end
+
       # Snapshot for ≈-comparison (eq. 53 read at quiescence): every
       # non-vestigial fiber's identity and state; Lemma 57 is why vestigial
-      # entries may be dropped.
+      # entries may be dropped, and only entries meeting all four of its
+      # clauses are.
       def snapshot
-        @fibers.reject { |_, f| f.vestigial? }.to_h do |name, fiber|
+        @fibers.reject { |name, _| vestigial?(name) }.to_h do |name, fiber|
           [name, [fiber.component.id, fiber.parent, fiber.retired, fiber.table,
                   fiber.state, fiber.committed, fiber.outcome]]
         end
