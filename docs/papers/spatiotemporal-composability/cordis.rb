@@ -437,6 +437,79 @@ module Cordis
   end
 
   # ---------------------------------------------------------------------------
+  # Definitions 30 & 31 — the coeffect context with interception:
+  # Σ^inter := ((k : K) → M_k) × ((k : K) ⇀ (M_k → V_k)), a pair (ι, σ) of
+  # context-carried metadata and provider functions, each key equipped with a
+  # metadata monoid (M_k, ⊕_k, ε_k).
+  #
+  # get(k, μ)(ι, σ) = σ(k)(μ ⊕_k ι(k)): the component-declared metadata μ is
+  # merged with the context-carried ι(k) and the provider function is applied
+  # to the result. The merge is right-biased, so ι(k) takes priority — an
+  # enclosing context can constrain how a component uses a coeffect without
+  # modifying that component (§6.3). intercept(k, ν) derives a fresh context
+  # merging ν onto the inherited metadata, the provider table untouched —
+  # like isolate, a derived realization (Definition 27) with nothing to track.
+  # ---------------------------------------------------------------------------
+  class InterceptedContext
+    include Satisfaction
+
+    EMPTY = {}.freeze
+    MERGE = ->(left, right) { left.merge(right) } # ⊕_k for hash metadata; right-biased
+
+    attr_reader :metadata, :providers # ι, σ
+
+    def initialize(metadata = {}, providers = {}, merge: MERGE, empty: EMPTY)
+      @metadata = metadata.freeze
+      @providers = providers.freeze
+      @merge = merge
+      @empty = empty
+      freeze
+    end
+
+    # get(k, μ)(ι, σ) = σ(k)(μ ⊕_k ι(k)) — Definition 31, eq. 30.
+    def fetch(key, declared = @empty)
+      raise PreconditionViolation, "get(#{key.inspect}): k ∉ dom(σ)" unless key?(key)
+
+      @providers[key].call(@merge.call(declared, @metadata.fetch(key, @empty)))
+    end
+
+    def key?(key)
+      @providers.key?(key)
+    end
+
+    # set(k, ψ) — an effect on the provider table under the Definition 23
+    # precondition, its inverse the restriction λσ′. σ′ \ k (eq. 30).
+    def bind(key, provider)
+      raise PreconditionViolation, "set(#{key.inspect}): already provided" if key?(key)
+
+      self.class.new(@metadata, @providers.merge(key => provider), merge: @merge, empty: @empty)
+    end
+
+    def unbind(key)
+      raise PreconditionViolation, "revoke(#{key.inspect}): k ∉ dom(σ)" unless key?(key)
+
+      remaining = @providers.dup
+      remaining.delete(key)
+      self.class.new(@metadata, remaining, merge: @merge, empty: @empty)
+    end
+
+    # intercept(k, ν)(ι, σ) = (ι[k ↦ ι(k) ⊕_k ν], σ) — derived, no inverse.
+    def intercept(key, extra)
+      merged = @merge.call(@metadata.fetch(key, @empty), extra)
+      self.class.new(@metadata.merge(key => merged), @providers, merge: @merge, empty: @empty)
+    end
+
+    def ==(other)
+      other.is_a?(self.class) && metadata == other.metadata && providers == other.providers
+    end
+    alias eql? ==
+
+    def hash
+      [self.class, metadata, providers].hash
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # A component — the unit of dynamic composition (§1.3, contribution 4).
   #
   # It declares the coeffects it requires as a specification (Definition 25)

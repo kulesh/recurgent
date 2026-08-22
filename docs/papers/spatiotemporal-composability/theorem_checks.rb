@@ -324,6 +324,49 @@ check "Definition 27: isolate is a derived realization — no inverse to track, 
   assert_equal :db, base.resolve(:db) # a key outside dom(ρ) resolves to its own realm
 end
 
+puts "§3.2.3 — Interception"
+
+check "Definitions 30/31: metadata merges right-biased — the context constrains the component" do
+  fs = Cordis::InterceptedContext.new.bind(:fs, ->(meta) { "fs(mode=#{meta[:mode] || "rw"})" })
+  assert_equal "fs(mode=rw)", fs.fetch(:fs) # ε_k — empty metadata by default
+  sandboxed = fs.intercept(:fs, { mode: "ro" })
+  assert_equal "fs(mode=ro)", sandboxed.fetch(:fs, { mode: "rw" }) # ι(k) overrides the declaration μ
+  assert_equal "fs(mode=rw)", fs.fetch(:fs, { mode: "rw" })        # derived: the original is untouched
+  assert_raises(Cordis::PreconditionViolation) { fs.bind(:fs, ->(_) {}) }
+end
+
+puts "§3.3.2 — Observational equivalence and commutative keys"
+
+check "Definition 33: states relate when they bind the same keys to ≈_k-related values" do
+  related = lambda do |a, b, equivalences|
+    a.domain.sort == b.domain.sort &&
+      a.domain.all? { |k| equivalences.fetch(k, :==).to_proc.call(a.fetch(k), b.fetch(k)) }
+  end
+  routes_as_set = ->(x, y) { x.keys.sort == y.keys.sort }
+  one = Cordis::CoeffectContext.new.bind(:routes, { "a" => true, "b" => true })
+  two = Cordis::CoeffectContext.new.bind(:routes, { "b" => true, "a" => true })
+  assert related.call(one, two, { routes: routes_as_set })
+end
+
+check "Definition 39 / Theorem 40 flavor: a table-valued key is commutative; an ordered chain is not" do
+  routes = Cordis::Coeffect.new(:routes)
+  routes.operation(:add) { |name, table| [table.merge(name => true), ->(w) { w.reject { |k, _| k == name } }, name] }
+  chain = Cordis::Coeffect.new(:chain)
+  chain.operation(:push) { |name, list| [list + [name], ->(w) { w[0...-1] }, name] }
+
+  states = [Cordis::CoeffectContext.new.bind(:routes, {}).bind(:chain, []),
+            Cordis::CoeffectContext.new.bind(:routes, { "c" => true }).bind(:chain, ["c"])]
+
+  # Two registrations in either order leave a table that answers every test
+  # alike — operations of a commutative key are independent of each other…
+  assert Cordis::Independence.independent?(routes.lift(:add, "a"), routes.lift(:add, "b"), states: states)
+  # …whereas a middleware inserted before another sees a different request,
+  # and neither order can be withdrawn without disturbing the other.
+  assert !Cordis::Independence.independent?(chain.lift(:push, "a"), chain.lift(:push, "b"), states: states)
+  # Theorem 40: operations at distinct keys are independent outright.
+  assert Cordis::Independence.independent?(routes.lift(:add, "a"), chain.lift(:push, "b"), states: states)
+end
+
 puts "The reactive runtime — failure and precondition discipline (§3.2.1, §3.2.2)"
 
 check "A failed activation produces no transition: effect rolled back, component inactive" do

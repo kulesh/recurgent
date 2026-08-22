@@ -22,6 +22,8 @@
     --tok-k: #4A3F73;   /* keywords */
     --tok-C: #2F5D7C;   /* constants */
     --tok-n: #7A5218;   /* numbers */
+    --unified: #574A8C;
+    --unified-soft: rgba(87, 74, 140, 0.09);
     --flash: rgba(142, 48, 56, 0.16);
     --serif: "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -49,6 +51,8 @@
       --tok-k: #B0A6DC;
       --tok-C: #8AB2CF;
       --tok-n: #D0A96A;
+      --unified: #B0A6DC;
+      --unified-soft: rgba(176, 166, 220, 0.13);
       --flash: rgba(217, 147, 155, 0.20);
     }
   }
@@ -73,6 +77,8 @@
     --tok-k: #B0A6DC;
     --tok-C: #8AB2CF;
     --tok-n: #D0A96A;
+    --unified: #B0A6DC;
+    --unified-soft: rgba(176, 166, 220, 0.13);
     --flash: rgba(217, 147, 155, 0.20);
   }
 
@@ -231,10 +237,12 @@
     margin: 1.2rem 0;
     background: color-mix(in srgb, var(--bg-raised) 92%, var(--bg-sunken));
   }
-  #s3-2 .blk, #s3-2-1 .blk, #s3-2-2 .blk, #s3-2-3 .blk { border-left-color: var(--spatial); }
+  #s3-2 .blk, #s3-2-1 .blk, #s3-2-2 .blk, #s3-2-3 .blk, #d30, #d31 { border-left-color: var(--spatial); }
+  #s3-3 .blk, #s4 .blk, #s4-4 .blk, #s5 .blk, #s3-3 .rule, #s4 .rule, #s4-4 .rule { border-left-color: var(--unified); }
   .blk-head { margin: 0 0 0.5rem; }
   .blk-tag { font-family: var(--sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--temporal); }
-  #s3-2 .blk-tag, #s3-2-1 .blk-tag, #s3-2-2 .blk-tag, #s3-2-3 .blk-tag { color: var(--spatial); }
+  #s3-2 .blk-tag, #s3-2-1 .blk-tag, #s3-2-2 .blk-tag, #s3-2-3 .blk-tag, #d30 .blk-tag, #d31 .blk-tag { color: var(--spatial); }
+  #s3-3 .blk-tag, #s4 .blk-tag, #s4-4 .blk-tag, #s5 .blk-tag { color: var(--unified); }
 
   .eq { display: flex; align-items: center; gap: 1rem; margin: 1rem 0.25rem 1rem 0; overflow-x: auto; padding: 0.2rem 0; }
   .eq-body { flex: 1; text-align: center; white-space: nowrap; }
@@ -249,6 +257,29 @@
   details.proof .eq { margin: 0.6rem 0; }
 
   .diagram-note { font-size: 0.85rem; color: var(--muted); font-style: italic; text-align: center; }
+  .rule { margin: 1.2rem auto; max-width: 46rem; text-align: center; position: relative; padding: 0.4rem 5.5rem 0.4rem 0.5rem; overflow-x: auto; }
+  .rule-premises { padding: 0 0 0.35rem; white-space: nowrap; }
+  .rule-line { border-top: 1.2px solid var(--ink); }
+  .rule-conclusion { padding: 0.35rem 0 0; white-space: nowrap; }
+  .rule-name { position: absolute; right: 0; top: 50%; transform: translateY(-50%); margin: 0; font-family: var(--sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; color: var(--unified); }
+  .ctor { font-style: normal; }
+  .algo { border: 1px solid var(--rule); border-radius: 4px; margin: 1.4rem 0; background: color-mix(in srgb, var(--bg-raised) 92%, var(--bg-sunken)); overflow-x: auto; }
+  .algo-title { font-family: var(--sans); font-size: 0.78rem; font-weight: 700; margin: 0; padding: 0.55rem 1rem; border-bottom: 1px solid var(--rule); color: var(--unified); }
+  ol.algo-lines { margin: 0; padding: 0.7rem 1rem 0.8rem 3rem; font-family: var(--mono); font-size: 0.78rem; line-height: 1.65; }
+  ol.algo-lines li { margin: 0; white-space: nowrap; }
+  ol.algo-lines li::marker { color: var(--faint); font-size: 0.7rem; }
+  ol.algo-lines .in1 { padding-left: 1.4em; } ol.algo-lines .in2 { padding-left: 2.8em; }
+  ol.algo-lines .in3 { padding-left: 4.2em; } ol.algo-lines .in4 { padding-left: 5.6em; }
+  ol.algo-lines .kw { font-weight: 700; }
+  .algo-note, ol.algo-lines .algo-note { color: var(--tok-c); font-style: italic; }
+  .tblwrap { overflow-x: auto; }
+  table.ptable { border-collapse: collapse; margin: 1.4rem auto; font-size: 0.88rem; }
+  table.ptable caption { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); padding: 0.5rem 0; caption-side: bottom; }
+  table.ptable th { border-bottom: 1.4px solid var(--ink); text-align: left; padding: 0.3rem 0.9rem; font-family: var(--sans); font-size: 0.78rem; }
+  table.ptable td { border-bottom: 1px solid var(--rule); padding: 0.3rem 0.9rem; vertical-align: top; }
+  table.ptable code { font-size: 0.78rem; }
+  ol.refs { font-size: 0.85rem; color: var(--muted); padding-left: 2.2rem; overflow-wrap: anywhere; }
+  ol.refs li { margin: 0 0 0.45rem; }
   figure.pfig { margin: 1.6rem 0; }
   figure.pfig figcaption { font-family: var(--sans); }
 
@@ -298,6 +329,8 @@
   a.tr-s { color: var(--spatial); }
   a.tr-s:hover { background: var(--spatial-soft); }
   a.tr-n { color: var(--muted); }
+  a.tr-u { color: var(--unified); }
+  a.tr-u:hover { background: var(--unified-soft); }
 
   pre.term {
     background: var(--bg-sunken);
@@ -357,6 +390,13 @@
         <li><a href="#s2">2 · Preliminaries</a></li>
         <li><a href="#s3-1">3.1 · Revertible effects</a></li>
         <li><a href="#s3-2">3.2 · Reactive coeffects</a></li>
+        <li><a href="#s3-3">3.3 · The context paradigm</a></li>
+        <li><a href="#s4">4 · The calculus</a></li>
+        <li><a href="#s4-4">4.4 · Metatheory</a></li>
+        <li><a href="#s5">5 · Implementation</a></li>
+        <li><a href="#s6">6 · Discussion</a></li>
+        <li><a href="#s7">7 · Related work</a></li>
+        <li><a href="#s8">8 · Conclusion</a></li>
       </ol>
     </li>
     <li><a href="#ruby">The Ruby</a>
@@ -364,11 +404,13 @@
         <li><a href="#rb-temporal">Temporal machinery</a></li>
         <li><a href="#rb-spatial">Spatial machinery</a></li>
         <li><a href="#rb-runtime">The reactive runtime</a></li>
+        <li><a href="#rb-calculus">The fiber calculus</a></li>
+        <li><a href="#rb-loader">Loader &amp; HMR</a></li>
         <li><a href="#rb-checks">Theorem checks</a></li>
         <li><a href="#rb-demo">Hot-swap demo</a></li>
+        <li><a href="#rb-demo2">Reconcile demo</a></li>
       </ol>
     </li>
-    <li><a href="#beyond">Beyond the excerpt</a></li>
     <li><a href="#provenance">Provenance</a></li>
   </ol>
 </nav>
@@ -382,17 +424,18 @@
     Shi, Zhang &amp; Cui's <em>A Programming Paradigm for Spatiotemporal Composability</em> asks what it takes
     to add and remove software components <strong>while the system runs</strong> — and answers with two runtime
     mechanisms: effects that carry their own inverses, and dependencies that react to context change.
-    This page distills the paper into language-agnostic patterns, implements them in
-    <strong>~650 lines of dependency-free Ruby</strong>, and proves the implementation against the paper's own
-    theorems. Every construct links back to the definition it implements — click any
-    <a class="trace tr-t" href="#d8">Definition 8</a>-style reference to jump to the paper, then use the return
-    button to come back.
+    This page distills the paper into language-agnostic patterns and implements them as
+    <strong>dependency-free Ruby</strong>: the revertible-effect and reactive-coeffect machinery of §3, the
+    fiber calculus of §4 as an executable operational semantics whose metatheory is checked over randomized
+    schedules, and the declarative loader of §5. Every construct links back to the definition it
+    implements — click any <a class="trace tr-t" href="#d8">Definition 8</a>-style reference to jump to the
+    paper, then use the return button to come back.
   </p>
   <div class="split-rule" aria-hidden="true"><span></span><span></span></div>
   <div class="meta-row">
-    <span><b>21-page</b> excerpt reproduced (§1–§3.2.3)</span>
-    <span><b>11</b> patterns</span>
-    <span><b>25/25</b> theorem checks pass</span>
+    <span><b>88-page</b> paper reproduced (§1–§8)</span>
+    <span><b>19</b> patterns</span>
+    <span><b>42/42</b> executable checks pass</span>
     <span><b>0</b> gems beyond stdlib</span>
   </div>
 </header>
@@ -426,6 +469,17 @@
     and component lifecycle stops being something you call and becomes something that <em>happens</em> to a
     component when the context around it changes. In the paper's words: <em>"coeffect operations are effects,
     and effects are revertible"</em> (<a class="xref" href="#s3-2-1">§3.2.1</a>).
+  </p>
+  <p>
+    From there the paper scales the guarantee from one component to a whole system:
+    <strong style="color:var(--unified)">the context paradigm and its calculus</strong>. An observational
+    equivalence on the coeffects supplies the independence that out-of-order withdrawal needs
+    (<a class="xref" href="#s3-3">§3.3</a>); components become <em>fibers</em> with a reactive lifecycle
+    driven by comparing a target view against a committed view, a guard that orders withdrawals behind their
+    dependents, and failure routed through recovery (<a class="xref" href="#s4">§4</a>). The metatheory ends
+    at confluence: whatever loads, unloads, and swaps a running system has been through, it quiesces exactly
+    where a from-scratch assembly of the final configuration would (<a class="xref" href="#t73">Theorem 73</a>) —
+    the licence for declarative configuration and hot module replacement (<a class="xref" href="#s5-2">§5.2</a>).
   </p>
 
   <figure>
@@ -482,11 +536,12 @@
 <!-- ============================================================ PATTERNS -->
 <section class="band" id="patterns">
   <p class="band-eyebrow">Distillation</p>
-  <h2>Eleven patterns, language-agnostic</h2>
+  <h2>Nineteen patterns, language-agnostic</h2>
   <p class="lede">
     The paper's machinery decomposes into patterns any runtime can adopt — an object heap, a plugin host, an
     agent harness. Pseudocode here is deliberately generic; the next section is the paper itself; the one
-    after that is the Ruby. Chips under each card link both ways.
+    after that is the Ruby. Chips under each card link both ways. The first three groups carry §3's local
+    guarantees; the last three scale them to whole systems.
   </p>
 
   <div class="pat-group">
@@ -705,6 +760,159 @@ on every transition (σ → σ′):
         <a class="chip chip-code" href="#rb-runtime">Component · System</a>
       </div>
     </article>
+
+    <article class="pat" id="p12">
+      <h3><span class="pat-no">P12</span>Undo Up To Observation</h3>
+      <p class="intent">Recovery cannot restore the physical state as it stood — compare states by what observers can distinguish, not by representation.</p>
+      <pre>free() does not restore the heap layout malloc() saw;
+a regenerated name is not the one that was discarded
+⇒ read every recovery equality up to ≃, assembled per key:
+   σ ≃ σ′  ⇔  same keys, values indistinguishable by k's own operations</pre>
+      <p class="mech">Each key carries its own equivalence — the coarsest relation its operations respect. States a test can't tell apart are recovered states. This is what makes "the context is recovered exactly" honest for allocators, handles, and generative names.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip" style="color:var(--unified)" href="#d33">Def 33</a>
+        <a class="chip" style="color:var(--unified)" href="#d34">Def 34</a>
+        <a class="chip" style="color:var(--unified)" href="#l38">Lemma 38</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-checks">theorem_checks.rb</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p13">
+      <h3><span class="pat-no">P13</span>Commutative Keys Buy System-Wide Independence</h3>
+      <p class="intent">Publish interfaces whose operations commute — registration tables, not ordered chains — and whole-system independence follows for free.</p>
+      <pre>routes.add(a); routes.add(b)   ≃  either order   # commutative key
+chain.push(a); chain.push(b)   ≠  either order   # order-sensitive key
+distinct keys: independent outright
+⇒ a component's effects commute with every other component's</pre>
+      <p class="mech">Commutativity is the <em>provider's</em> obligation: it is a property of the interface a key publishes. Meet it and the assumption independence left open in §3.1.3 is discharged — Corollary 21's any-order withdrawal holds for a whole system of interleaved components.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip" style="color:var(--unified)" href="#d39">Def 39</a>
+        <a class="chip" style="color:var(--unified)" href="#t40">Thm 40</a>
+        <a class="chip" style="color:var(--unified)" href="#t42">Thm 42</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-checks">theorem_checks.rb</a>
+      </div>
+    </article>
+  </div>
+
+  <div class="pat-group">
+    <p class="pat-group-title"><span class="dot" style="background:var(--unified)"></span>The calculus — lifecycle as operational semantics</p>
+
+    <article class="pat" id="p14">
+      <h3><span class="pat-no">P14</span>Fibers, and a Context That Is Derived</h3>
+      <p class="intent">Separate the program (component) from its instantiation (fiber); never store the shared context — derive it from whoever is Active.</p>
+      <pre>component = (requires d, provides p, effect e)   # a program
+fiber     = ⟨d, p, e, parent, own-table σ, retired, lifecycle⟩
+σ_γ = ⋃ { σ_m | m is Active }     # the context nobody owns
+provider(k) is unique: provisions are disjoint</pre>
+      <p class="mech">Each fiber writes only its own table; the shared context is a view, not a store. A fiber that stops being Active stops providing <em>by definition</em> — no unregistration code exists to forget.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip" style="color:var(--unified)" href="#d43">Def 43</a>
+        <a class="chip" style="color:var(--unified)" href="#d44">Def 44</a>
+        <a class="chip" style="color:var(--unified)" href="#eq40">eq. 40</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-calculus">Fiber · Machine#sigma</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p15">
+      <h3><span class="pat-no">P15</span>Target View vs Committed View</h3>
+      <p class="intent">Drive every lifecycle transition by comparing two resolutions: what a fiber <em>should</em> run against, and what it <em>committed</em> to.</p>
+      <pre>target(n)  = ⊥ if retired or deps unsatisfied,
+             else { each declared key ↦ its provider }
+committed  = the resolution the last activation recorded
+target ≠ committed  ⇒  a transition is due — in either direction</pre>
+      <p class="mech">Record provider <em>identity</em>, not values: a replaced provider can never be mistaken for the one it replaced, even when both provide equal values. One comparison subsumes retirement, dependency loss, and provider replacement — and no transition ever installs effects against a resolution that shifted under it.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip" style="color:var(--unified)" href="#d46">Def 46</a>
+        <a class="chip" style="color:var(--unified)" href="#t64">Thm 64</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-calculus">Machine#target</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p16">
+      <h3><span class="pat-no">P16</span>The Withdrawal Guard</h3>
+      <p class="intent">Stop providing first; tear down while your bindings stay readable; remove them only when no dependent still resolves to you.</p>
+      <pre>L-Leave : mark Unloading — instantly out of σ_γ, so dependents
+          recompute an unsatisfied target and begin their teardown
+guard   : withdrawal blocked while ∃ dependent whose committed
+          view names you
+L-Unload: guard clear → run accumulator, discard committed view</pre>
+      <p class="mech">A dependent closing a connection pool needs the very coeffect being withdrawn. The two-phase exit delivers it: visibility through the committed view, ordering through the guard — and the guard cannot deadlock, because a Leaving provider is already invisible to fresh resolutions.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip" style="color:var(--unified)" href="#d50">Def 50</a>
+        <a class="chip" style="color:var(--unified)" href="#t63">Thm 63</a>
+        <a class="chip" style="color:var(--unified)" href="#t66">Thm 66</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-calculus">Machine#l_unload</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p17">
+      <h3><span class="pat-no">P17</span>Iterate, Divert, Raise — Every Exit Recovers</h3>
+      <p class="intent">Run an activation as an iterator of effects; between iterations the world may move, and every early exit routes through the same recovery.</p>
+      <pre>each iteration yields (state′, inverse, continuation?)
+target turned mid-transition → divert: unwind what ran so far
+iteration raised             → raise:  unwind, record the error
+a fiber in flight must land first     # inertia — then deactivate</pre>
+      <p class="mech">The iterator is a reified delimited continuation — <code>yield</code>, in mainstream clothes. Failure is not propagated but recorded per fiber after recovery, so a component that refuses to start leaves its siblings running and the invariant intact.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip" style="color:var(--unified)" href="#d51">Def 51</a>
+        <a class="chip" style="color:var(--unified)" href="#rule-l-raise">L-Raise</a>
+        <a class="chip" style="color:var(--unified)" href="#s4-3-3">§4.3.3</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-calculus">Machine#l_raise</a>
+      </div>
+    </article>
+  </div>
+
+  <div class="pat-group">
+    <p class="pat-group-title"><span class="dot dot-u"></span>Systems</p>
+
+    <article class="pat" id="p18">
+      <h3><span class="pat-no">P18</span>Confluence Is the Reconciliation Licence</h3>
+      <p class="intent">Prove (or test) that dynamic history leaves no trace — then reconcile configuration incrementally and trust the result.</p>
+      <pre>whatever was loaded, swapped, unloaded along the way:
+  quiescent state == from-scratch load of the final config
+⇒ an orchestrator edits a declarative record of entries;
+  the loader applies the least disruptive per-field operation;
+  nothing else needs re-verifying</pre>
+      <p class="mech">This is the dynamic-composition analogue of incremental computation's consistency with from-scratch evaluation. Without it, every reconciliation strategy needs its own proof; with it, they are all the same state.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip" style="color:var(--unified)" href="#t73">Thm 73</a>
+        <a class="chip" style="color:var(--unified)" href="#d74">Def 74</a>
+        <a class="chip" style="color:var(--unified)" href="#s5-2-1">§5.2.1</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-loader">Reconciler</a>
+      </div>
+    </article>
+
+    <article class="pat" id="p19">
+      <h3><span class="pat-no">P19</span>The System Boundary</h3>
+      <p class="intent">An inverse reaches only what the system exclusively controls — draw that boundary per location, and treat emissions differently from acquisitions.</p>
+      <pre>inside  : exclusively modifiable + restorable → tracked, recovered
+outside : acts as identity on Γ — neither tracked nor recovered
+acquisition (open, malloc, fork): a record inside — revertible
+emission (write, send): crosses the boundary — withhold, or
+                        compensate up to a coarser equivalence</pre>
+      <p class="mech">A coeffect moves the boundary: reifying an external location confines access to operations that supply inverses. What cannot be inverted is withheld until it is safe, or compensated — the same LIFO composition, a coarser equivalence.</p>
+      <div class="chip-row">
+        <span class="lbl">Paper</span>
+        <a class="chip" href="#s6-1">§6.1</a>
+        <a class="chip" style="color:var(--unified)" href="#d33">Def 33</a>
+        <span class="lbl">Ruby</span>
+        <a class="chip chip-code" href="#rb-calculus">Machine (boundary = own tables)</a>
+      </div>
+    </article>
   </div>
 </section>
 
@@ -713,11 +921,11 @@ on every transition (σ → σ′):
   <p class="band-eyebrow">Source</p>
   <h2>The paper, reproduced</h2>
   <p class="lede">
-    The uploaded excerpt — title through §3.2.3, pages 1–21 — reproduced below with the paper's own
-    numbering, so every definition, theorem, and equation is a stable anchor. Statements are verbatim;
-    proofs are folded but intact. Commutative diagrams are redrawn. Dashed-underline references inside the
-    Ruby sections land here; the <em>In the Ruby</em> rows under each block link back to the code that
-    implements it.
+    All eight sections and the references — 88 pages — reproduced below with the paper's own numbering, so
+    every definition, theorem, lemma, equation, rule, algorithm, table, and figure is a stable anchor.
+    Statements are verbatim; proofs are folded but intact; diagrams and figures are redrawn. Dashed-underline
+    references inside the Ruby sections land here; the <em>In the Ruby</em> rows under each block link back
+    to the code that implements it.
   </p>
 
   <div class="paper-shell">
@@ -727,13 +935,6 @@ on every transition (σ → σ′):
     <p class="paffil">Peking University · DeepSeek-AI</p>
 
     <!--@@PAPER@@-->
-
-    <div class="excerpt-note" id="excerpt-end">
-      <strong>The excerpt ends here.</strong> The full paper continues with coeffect interception, the unified
-      context type and observational equivalence (§3.3), the calculus of dynamic composition and its
-      metatheory (§4), the Cordis implementation and Koishi case study (§5), discussion (§6), and related
-      work (§7) — see <a href="#beyond">Beyond the excerpt</a>.
-    </div>
   </div>
   </div>
 </section>
@@ -794,6 +995,10 @@ on every transition (σ → σ′):
     <p class="expl">The per-key triple (V_k, ≈_k, A_k): operations act on the value alone and lift to the whole context, inverses confined to their key.</p>
     @@CODE:Coeffect@@
 
+    <h4 id="rb-interception">Cordis::InterceptedContext</h4>
+    <p class="expl">The two-layer (ι, σ) context: providers are functions of metadata, the component's declaration merges with what the context carries — right-biased, so an enclosing context can constrain a component without touching it.</p>
+    @@CODE:InterceptedContext@@
+
     <h4 id="rb-isolated">Cordis::IsolatedContext</h4>
     <p class="expl">The two-layer context (ρ, σ): keys resolve through realms before touching the table. <code>isolate</code> derives instead of mutating — nothing to track, recovery is discard.</p>
     @@CODE:IsolatedContext@@
@@ -816,12 +1021,48 @@ on every transition (σ → σ′):
     @@CODE:System@@
   </div>
 
+  <div class="code-section" id="rb-calculus">
+    <h3>The fiber calculus — §4 as a state machine you can run</h3>
+    <p class="expl">
+      <code>cordis_calculus.rb</code> implements the operational semantics directly: fibers with the
+      four-state lifecycle, the derived context σ<sub>γ</sub>, target and committed views, and the ten rules
+      as methods that fire when their premises hold. The driver picks applicable rules at random — the
+      calculus names no scheduler, so the seed is the scheduling policy — and the metatheory is then a set
+      of assertions over sampled schedules.
+    </p>
+
+    <h4 id="rb-calculus-objects">Component · Fiber</h4>
+    @@CODE:CalcPrelude@@
+    @@CODE:CalcComponent@@
+    @@CODE:CalcFiber@@
+
+    <h4 id="rb-calculus-machine">Machine — the registry and the ten rules</h4>
+    @@CODE:CalcMachine@@
+  </div>
+
+  <div class="code-section" id="rb-loader">
+    <h3>The loader — declarative configuration, reconciliation, HMR</h3>
+    <p class="expl">
+      <code>cordis_loader.rb</code>: entries are the authoritative record (Definition 74); reconcile diffs
+      them by id and dispatches the least disruptive operation per changed field. The hot-module-replacement
+      phases (Algorithms 8–9) are pure functions over the module-import graph.
+    </p>
+
+    <h4 id="rb-loader-core">Entry · Reconciler</h4>
+    @@CODE:LoaderEntry@@
+    @@CODE:LoaderReconciler@@
+
+    <h4 id="rb-hmr">HMR — classification and stale-entry detection</h4>
+    @@CODE:LoaderHMR@@
+  </div>
+
   <div class="code-section" id="rb-checks">
     <h3>The theorems, executed</h3>
     <p class="expl">
-      <code>theorem_checks.rb</code> verifies the paper's results on concrete contexts — extensional equality
-      over probe states, exactly as far as running code can witness a proof — and closes with regression
-      checks on the runtime's failure discipline. Two excerpts, then the full run.
+      Two suites. <code>theorem_checks.rb</code> verifies §3's results on concrete contexts — extensional
+      equality over probe states, exactly as far as running code can witness a proof — plus regression checks
+      on the runtime's failure discipline. <code>calculus_checks.rb</code> runs §4's metatheory and §5.2's
+      loader guarantees over randomized schedules. Excerpts, then both runs.
     </p>
 
     <h4>The canonical witnessed effect</h4>
@@ -831,8 +1072,13 @@ on every transition (σ → σ′):
     <h4>Any-order withdrawal, all six permutations</h4>
     @@EXCERPT:cor21@@
 
-    <h4>The run</h4>
+    <h4>Ordering and confluence, sampled over schedules</h4>
+    @@EXCERPT:t63@@
+    @@EXCERPT:confluence@@
+
+    <h4>The runs</h4>
     @@OUT:checks@@
+    @@OUT:calculus@@
   </div>
 
   <div class="code-section" id="rb-demo">
@@ -903,30 +1149,20 @@ on every transition (σ → σ′):
     <h4>The run</h4>
     @@OUT:demo@@
   </div>
-</section>
+  <div class="code-section" id="rb-demo2">
+    <h3>Reconciliation, declaratively</h3>
+    <p class="expl">
+      The same dependency tree, run through the loader instead of by hand: the orchestrator edits a record
+      of entries; the calculus discovers activation order, rebuilds what changed, and — Theorem 73's
+      licence — lands exactly where a from-scratch load of the final record would.
+    </p>
 
-<!-- ============================================================ BEYOND -->
-<section class="band" id="beyond">
-  <p class="band-eyebrow">Boundary</p>
-  <h2>Beyond the excerpt</h2>
-  <p class="lede">
-    The uploaded PDF carries the paper's first 21 pages; its table of contents shows the full work running to
-    ~80. References on this page that point past §3.2.3 land here. What the remainder contains, per the
-    table of contents:
-  </p>
-  <p>
-    <strong>§3.3 The Context Paradigm</strong> — the unified context type carrying both effects and
-    coeffects, the observational equivalence on coeffects that supplies effects with independence, and the
-    paradigm's situation among its neighbors. <strong>§4 A Calculus of Dynamic Composition</strong> —
-    components and fibers, an operational semantics for load/unload/withdraw/iterate/async/failure, and the
-    metatheory (preservation, temporal and spatial composability at system scope, progress, confluence);
-    §4.3.1 in particular supplies the formal ordering of withdrawals that the runtime here implements
-    operationally. <strong>§5 Implementation</strong> — the authors' Cordis core library (effect tracking,
-    coeffect operations, component lifecycle) and declarative component loader (configuration
-    reconciliation, hot module replacement), with the Koishi chatbot-framework case study. <strong>§6–§8</strong> —
-    discussion of system boundaries, multiplexing, sandboxing, language independence, dependency typing, and
-    related work across effect systems, paradigms, and composability.
-  </p>
+    <h4>demo_reconcile.rb</h4>
+    @@CODE:demo2@@
+
+    <h4>The run</h4>
+    @@OUT:reconcile@@
+  </div>
 </section>
 
 <!-- ============================================================ PROVENANCE -->
@@ -935,20 +1171,26 @@ on every transition (σ → σ′):
   <h2>Provenance &amp; running the code</h2>
   <p class="prov">
     <b>Paper:</b> Yifan Shi, Wei Zhang, Tianyi Cui, <em>A Programming Paradigm for Spatiotemporal
-    Composability</em> (Peking University / DeepSeek-AI). Reproduced here from the uploaded 21-page excerpt
-    (title–§3.2.3) for study alongside its implementation; all definitions, theorems, and equation numbers
-    are the paper's own. <b>Ruby:</b> written for this guide, stdlib only, in
+    Composability</em> (Peking University / DeepSeek-AI). Reproduced here in full — all eight sections,
+    88 pages — for study alongside its implementation; all definitions, theorems, equation, rule, algorithm,
+    and figure numbers are the paper's own. (An earlier revision of this guide covered only pages 1–21,
+    mistaking the file for an excerpt; this revision reads and reproduces the whole paper.)
+    <b>Ruby:</b> written for this guide, stdlib only, in
     <code>docs/papers/spatiotemporal-composability/</code> of the recurgent repository. The code sections
     above are generated from the committed sources by <code>build.rb</code>, which also verifies that every
     trace link on this page resolves.
   </p>
   <dl class="runmap">
     <dt>ruby theorem_checks.rb</dt>
-    <dd>runs the 25 executable checks shown above</dd>
+    <dd>the 28 checks of §3's theorems and the runtime's failure discipline</dd>
+    <dt>ruby calculus_checks.rb</dt>
+    <dd>the 14 checks of §4's metatheory and §5.2's loader, over randomized schedules</dd>
     <dt>ruby demo_hot_swap.rb</dt>
-    <dd>runs the reactive hot-swap scenario and prints the transition trace</dd>
+    <dd>reactive hot module replacement on the §3 runtime, with the transition trace</dd>
+    <dt>ruby demo_reconcile.rb</dt>
+    <dd>declarative reconciliation on the §4 calculus, with the rule trace</dd>
     <dt>ruby build.rb</dt>
-    <dd>regenerates index.html from guide.template.html + sources + fresh runs</dd>
+    <dd>regenerates index.html from guide.template.html + paper/*.html + sources + fresh runs</dd>
   </dl>
   <p class="prov">
     <b>Why it's in this repository:</b> recurgent's Agent objects are the paper's motivating example made

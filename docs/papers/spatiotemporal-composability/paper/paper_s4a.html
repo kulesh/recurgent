@@ -1,0 +1,361 @@
+<section class="psec" id="s4">
+  <h3 class="ph ph-top"><span class="pno">4</span> A Calculus of Dynamic Composition</h3>
+
+  <p><a class="xref" href="#s3">Section 3</a> establishes spatial and temporal composability in their local form alone. Carrying them to a whole system takes a decomposition of the system into <em>components</em>, each pairing a coeffect specification with a witnessed effect function, so that every interaction with the shared environment is attributable to one of them. The sections below give that decomposition an operational semantics, and establishes spatial and temporal composability in their global form.</p>
+
+  <p><a class="xref" href="#s4-1">Section 4.1</a> and <a class="xref" href="#s4-2">Section 4.2</a> present the smallest calculus in which the lifecycle can be given rules, one that takes each transition to be atomic, immediate, and infallible; <a class="xref" href="#s4-3">Section 4.3</a> drops the three assumptions, atomicity once for each direction a transition may run in, admitting the forms of control flow a runtime interposes between the start of a transition and its end, and arrives at the calculus a real runtime implements; and <a class="xref" href="#s4-4">Section 4.4</a> establishes the metatheory of that calculus, namely preservation, global temporal and spatial composability, progress, and confluence.</p>
+
+  <section class="psec" id="s4-1">
+    <h4 class="ph"><span class="pno">4.1</span> Components and Fibers</h4>
+
+    <p>This section fixes the objects the rules act on: the <em>component</em>; the <em>fiber</em>, an instantiation of a component carrying a lifecycle state of its own; and the <em>registry</em>, which holds the fibers a state carries and from which the coeffect context is read off.</p>
+
+    <p><strong>Components.</strong> A component is given as a triple, its coeffect side split into what it reads from the environment and what it provides to it.</p>
+
+    <div class="blk blk-def" id="d43">
+      <p class="blk-head"><span class="blk-tag">Definition 43</span></p>
+      <p>A <em>component</em> over a context <i>Γ</i> carrying both effects and coeffects (<a class="xref" href="#d32">Definition 32</a>) is defined as:</p>
+      <div class="eq" id="eq37"><div class="eq-body">ℭ<sub>Γ</sub> := 𝔇<sub>Γ</sub> × 𝔓<sub>Γ</sub> × 𝔈<sup>∗</sup><sub>Γ</sub></div><span class="eq-no">(37)</span></div>
+      <p>representing a triple (<i>d</i>, <i>p</i>, <i>e</i>), where:</p>
+      <ul>
+        <li><i>d</i> : 𝔇<sub>Γ</sub> is the coeffect specification of <a class="xref" href="#d25">Definition 25</a>, declaring the dependencies required from the environment;</li>
+        <li><i>p</i> : 𝔓<sub>Γ</sub> := <span class="ctor">Set</span>(<i>K</i>) is the <em>provision</em>, declaring the coeffect keys the component may provide, and no key outside <i>p</i> is one its effect function writes;</li>
+        <li><i>e</i> : 𝔈<sup>∗</sup><sub>Γ</sub> is the witnessed effect function of <a class="xref" href="#d8">Definition 8</a>, defining the effects contributed when the component is active together with the inverse that withdraws them.</li>
+      </ul>
+      <!--BL:d43-->
+    </div>
+
+    <p>The two declarations are the two directions of one interface, <i>d</i> what the component reads from the environment and <i>p</i> what the component writes to the environment, and <a class="xref" href="#s4-2">Section 4.2</a> admits no two fibers of one registry whose provisions meet. Subscripts are taken on <i>Γ</i> throughout, the coeffect context being one of its projections (<a class="xref" href="#d32">Definition 32</a>), so the 𝔇<sub>Σ</sub> of <a class="xref" href="#d25">Definition 25</a> is written 𝔇<sub>Γ</sub> here.</p>
+
+    <p>Disjointness of provisions is where this chapter parts company with <a class="xref" href="#s3-2-3">Section 3.2.3</a>. The isolation of <a class="xref" href="#d28">Definition 28</a> lets one key resolve through a realm table, so that two fibers may provide the same key in different realms; a calculus carrying realms would relax disjointness to disjointness within a realm and would resolve a declared key against the realm of the fiber declaring it. We do not introduce realms here, and read every key at one shared realm instead, which is what makes the disjointness above the right condition and each key&#8217;s provider unique (<a class="xref" href="#d45">Definition 45</a>). What it restricts is how often a component may be instantiated: one with a non-empty provision has one fiber at a time, so the many instantiations below are of components providing nothing, which is the common case of a component that only consumes, or that registers others.</p>
+
+    <p>A component instantiated in a running system is activated and deactivated over time, so it carries a <em>lifecycle state</em>, and a <em>transition</em> is what moves it from one lifecycle state to another: an <em>activation</em> executes <i>e</i>, accumulating side effects on the context, and a <em>deactivation</em> applies the accumulator to recover the context. In its simplest form the lifecycle is the two-state model of <a class="xref" href="#fig1">Figure 1</a>, which <a class="xref" href="#s4-2">Section 4.2</a> gives rules for; <a class="xref" href="#s4-3">Section 4.3</a> refines it as each control-flow feature is admitted.</p>
+
+    <p class="diagram-note" id="fig1">[Figure 1: Base component lifecycle — the two states Inactive and Active, with L-Reload carrying Inactive to Active and L-Unload carrying Active back to Inactive.]</p>
+
+    <p><strong>Fibers.</strong> One component may be instantiated many times over, each instantiation carrying a lifecycle state of its own. We name such an instantiation a <em>fiber</em>. A fiber records the component that produced it, the fiber it was instantiated under, the coeffects it provides, and where in its lifecycle it stands.</p>
+
+    <div class="blk blk-def" id="d44">
+      <p class="blk-head"><span class="blk-tag">Definition 44</span></p>
+      <p>Fix a set 𝔑 of fiber names. A <em>fiber</em> instantiating the component (<i>d</i>, <i>p</i>, <i>e</i>) ∈ ℭ<sub>Γ</sub> is a tuple ⟨<i>d</i>, <i>p</i>, <i>e</i>, <i>π</i>, <i>σ</i>, <i>τ</i>, <i>θ</i>⟩, where</p>
+      <ul>
+        <li><i>d</i> : 𝔇<sub>Γ</sub>, <i>p</i> : 𝔓<sub>Γ</sub>, and <i>e</i> : 𝔈<sup>∗</sup><sub>Γ</sub> are the coeffect specification, provision, and effect function of <a class="xref" href="#d43">Definition 43</a>;</li>
+        <li><i>π</i> : 𝔑 ∪ {<span class="ctor">root</span>} is the <em>parent</em>, the fiber this one was instantiated under, or the root marker <span class="ctor">root</span>;</li>
+        <li><i>σ</i> : <i>Σ</i> is the fiber&#8217;s own coeffect table (<a class="xref" href="#d22">Definition 22</a>), empty until it activates and written by its effects as they run;</li>
+        <li><i>τ</i> : {⊥, ⊤} is the <em>retirement</em> flag, ⊥ in a fresh fiber and ⊤ once the orchestrator has retired the fiber;</li>
+        <li><i>θ</i> : <i>Θ</i><sub>Γ</sub> is the <em>lifecycle state</em>, which in the two-state model of <a class="xref" href="#s4-2">Section 4.2</a> is
+          <div class="eq" id="eq38"><div class="eq-body"><i>Θ</i><sub>Γ</sub> := <span class="ctor">Inactive</span> | <span class="ctor">Active</span>(<i>g</i>, <i>ω</i>)</div><span class="eq-no">(38)</span></div>
+          where <i>g</i> : <i>Γ</i> → <i>Γ</i> is the accumulator and <i>ω</i> : <i>d</i> → 𝔑 the <em>committed view</em>.</li>
+      </ul>
+      <!--BL:d44-->
+    </div>
+
+    <p>The committed view <i>ω</i> sends each key the fiber declares to the name of the fiber that provided it when the transition committed. <a class="xref" href="#s4-3">Section 4.3</a> replaces <i>Θ</i><sub>Γ</sub> by the extension that transitions in progress require; the rest of <a class="xref" href="#d44">Definition 44</a> is given once for both, save that <i>e</i> is read at the richer effect type each layer of <a class="xref" href="#s4-3">Section 4.3</a> introduces.</p>
+
+    <p><strong>Registry.</strong> A state holds its fibers under their names, and both the identity of a fiber and the coeffect context of <a class="xref" href="#s3-2">Section 3.2</a> are read off that arrangement.</p>
+
+    <div class="blk blk-def" id="d45">
+      <p class="blk-head"><span class="blk-tag">Definition 45</span></p>
+      <p>Write 𝔉<sub>Γ</sub> for the set of fibers over <i>Γ</i>. A state <i>γ</i> ∈ <i>Γ</i> carries a <em>registry</em></p>
+      <div class="eq" id="eq39"><div class="eq-body"><i>F</i><sub>γ</sub> : 𝔑 ⇀ 𝔉<sub>Γ</sub></div><span class="eq-no">(39)</span></div>
+      <p>a finite partial function whose parent pointers form a tree rooted at <span class="ctor">root</span>, together with whatever else in <i>Γ</i> no fiber&#8217;s <i>σ</i> names. We write <i>γ</i>(<i>n</i>) for <i>F</i><sub>γ</sub>(<i>n</i>), and abbreviate a field of <i>γ</i>(<i>n</i>) by subscripting it with <i>n</i> where the state is clear, so that <i>d</i><sub>n</sub>, <i>p</i><sub>n</sub>, <i>e</i><sub>n</sub>, <i>π</i><sub>n</sub>, <i>σ</i><sub>n</sub>, <i>τ</i><sub>n</sub>, <i>θ</i><sub>n</sub> are the fields of <a class="xref" href="#d44">Definition 44</a> and <i>g</i><sub>n</sub>, <i>ω</i><sub>n</sub> the accumulator and committed view that <i>θ</i><sub>n</sub> carries; <i>γ</i>[<i>θ</i><sub>n</sub> ↦ <i>θ</i>′], <i>γ</i>[<i>n</i> ↦ ⟨⋯⟩], and <i>γ</i> \ <i>n</i> are the states differing from <i>γ</i> in one field, one fiber, and the presence of one fiber respectively.</p>
+      <!--BL:d45-->
+    </div>
+
+    <p>A fiber&#8217;s name is what gives it an identity that survives its own mutation: every rule below rewrites the lifecycle state of one fiber and leaves the others alone, so the rule has to say which one, and two fields refer to fibers rather than describe them, the parent <i>π</i> and the committed view <i>ω</i>. Names are atoms: no rule computes one, inspects its structure, or relates two of them by anything but equality, and introducing a fiber simply draws one not already in use. This is the discipline of dynamically created local names [39], used here for fiber identity.</p>
+
+    <p>Each fiber owning a table means the coeffect context is derived rather than stored: it is what the active fibers jointly provide.</p>
+
+    <div class="eq" id="eq40"><div class="eq-body"><i>σ</i><sub>γ</sub> := ⋃{<i>σ</i><sub>m</sub> | <i>m</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>), <i>θ</i><sub>m</sub> = <span class="ctor">Active</span>(−, −)}</div><span class="eq-no">(40)</span></div>
+
+    <p>The union is well defined because a fiber writes only the keys it declares, <span class="op">dom</span>(<i>σ</i><sub>n</sub>) ⊆ <i>p</i><sub>n</sub>, and the provisions of distinct fibers are disjoint (<a class="xref" href="#d43">Definition 43</a>), so each <i>k</i> ∈ <span class="op">dom</span>(<i>σ</i><sub>γ</sub>) lies in the table of exactly one <span class="ctor">Active</span> fiber, whose name we write provider<sub>k</sub>(<i>γ</i>) ∈ 𝔑 and call the <em>provider</em> of <i>k</i>. Each key therefore has one possible provider, fixed by the provisions and not by the state. No rule writes <i>σ</i><sub>n</sub> directly: a fiber&#8217;s provisions are the <span class="op">set</span> operations its own effect function performs, which land in <i>σ</i><sub>n</sub> and so are already part of the state <i>e</i><sub>n</sub> returns, and they leave again with the accumulator. Only the coeffect part of an effect is recorded this way, because only the coeffect part is what other fibers declare against; effects that mutate state elsewhere in <i>γ</i> are tracked by <i>g</i> like any other, but no fiber can name them in a specification, so they contribute no ordering constraint.</p>
+
+    <p>The satisfaction relation of <a class="xref" href="#s3-2-2">Section 3.2.2</a> then applies unchanged, with <i>γ</i> ⊨ <i>d</i> abbreviating <i>σ</i><sub>γ</sub> ⊨ <i>d</i>. A key lies in <span class="op">dom</span>(<i>σ</i><sub>γ</sub>) exactly when some <span class="ctor">Active</span> fiber has installed it, its provision being the keys it may install rather than the ones it has, so <i>γ</i> ⊨ <i>d</i> already requires that every declared key have an <span class="ctor">Active</span> provider. Taking the union over <span class="ctor">Active</span> fibers alone is what lets a fiber cease to provide before it has withdrawn anything, which <a class="xref" href="#s4-3-1">Section 4.3.1</a> turns into the ordering discipline.</p>
+  </section>
+
+  <section class="psec" id="s4-2">
+    <h4 class="ph"><span class="pno">4.2</span> The Base Calculus</h4>
+
+    <p>This section gives the calculus of the two-state lifecycle of <a class="xref" href="#fig1">Figure 1</a> and nothing more: the target each fiber is compared against, and the five rules that move it.</p>
+
+    <p><strong>Target views.</strong> The rules compare each fiber against a <em>target</em>, namely whether it ought to be running and against which resolution of its dependencies. The target is not a property of the fiber alone, since the keys a fiber declares are resolved against the whole state, so it is a predicate on that state.</p>
+
+    <div class="blk blk-def" id="d46">
+      <p class="blk-head"><span class="blk-tag">Definition 46</span></p>
+      <p>The <em>target view</em> of <i>n</i> at <i>γ</i> maps each declared key to its provider, so it is a total map <i>d</i><sub>n</sub> → 𝔑, and is ⊥ when <i>n</i> ought not to be running at all:</p>
+      <div class="eq" id="eq41"><div class="eq-body">target<sub>n</sub>(<i>γ</i>) :=
+        <table class="cases">
+          <tr><td>⊥</td><td>if <i>τ</i><sub>n</sub> ∨ ¬(<i>γ</i> ⊨ <i>d</i><sub>n</sub>)</td></tr>
+          <tr><td>(<i>k</i> ∈ <i>d</i><sub>n</sub>) ↦ provider<sub>k</sub>(<i>γ</i>)</td><td>otherwise</td></tr>
+        </table></div><span class="eq-no">(41)</span></div>
+      <p>A state is <em>quiescent</em> when every fiber has reached its target view:</p>
+      <div class="eq" id="eq42"><div class="eq-body">quiet(<i>γ</i>) := ∀<i>n</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>).
+        <table class="cases">
+          <tr><td>target<sub>n</sub>(<i>γ</i>) = ⊥</td><td>if <i>θ</i><sub>n</sub> = <span class="ctor">Inactive</span></td></tr>
+          <tr><td>target<sub>n</sub>(<i>γ</i>) = <i>ω</i><sub>n</sub></td><td>if <i>θ</i><sub>n</sub> = <span class="ctor">Active</span>(−, <i>ω</i><sub>n</sub>)</td></tr>
+        </table></div><span class="eq-no">(42)</span></div>
+      <!--BL:d46-->
+    </div>
+
+    <p>The target answers to two things and to nothing else: retirement, through <i>τ</i><sub>n</sub>, and coeffect resolution, through <i>γ</i> ⊨ <i>d</i><sub>n</sub> and provider<sub>k</sub>, each declared key being read off <i>σ</i><sub>γ</sub> at the one shared realm of <a class="xref" href="#d43">Definition 43</a>.</p>
+
+    <p>The committed view of <a class="xref" href="#d44">Definition 44</a> has the same type as the target view, and the lifecycle is driven by comparing them: <i>ω</i><sub>n</sub> is the resolution <i>n</i> activated against, target<sub>n</sub>(<i>γ</i>) the one it should be running against, and every rule below fires on their agreeing or differing. Recording a provider rather than a value is what makes the comparison usable, since a different fiber providing an equal value would otherwise compare equal. The value a component reads is reached through the view, since the provider&#8217;s table holds that value, and the implementation holds the map in <code>fiber.committed</code> and a hash of it in <code>fiber.target</code> (<a class="xref" href="#s5-1-3">Section 5.1.3</a>).</p>
+
+    <p><strong>Rules.</strong> The base calculus takes each transition to be atomic, immediate, and infallible: an activation applies its effect function in one step, a deactivation applies the accumulator in one step, and both succeed in doing so. <a class="xref" href="#s4-3">Section 4.3</a> drops all three.</p>
+
+    <p>Five rules generate two relations. An <em>orchestration</em> rule, prefixed O- and written <i>γ</i> ⇒ <i>δ</i>, is an action the orchestrator may perform; its premises say when the action is legal, not when it occurs. A <em>lifecycle</em> rule, prefixed L- and written <i>γ</i> ⟶ <i>δ</i>, is a step the system takes unprompted whenever its premises hold. A sequence of steps interleaves the two, and ⟶<sup>∗</sup> below means lifecycle steps alone.</p>
+
+    <div class="rule" id="rule-o-insert">
+      <div class="rule-premises"><i>n</i> ∉ <span class="op">dom</span>(<i>F</i><sub>γ</sub>) &emsp; <i>π</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>) ∪ {<span class="ctor">root</span>} &emsp; (<i>d</i>, <i>p</i>, <i>e</i>) ∈ ℭ<sub>Γ</sub> &emsp; ∀<i>m</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>). <i>p</i> ∩ <i>p</i><sub>m</sub> = ∅</div>
+      <div class="rule-line"></div>
+      <div class="rule-conclusion"><i>γ</i> ⇒ <i>γ</i>[<i>n</i> ↦ ⟨<i>d</i>, <i>p</i>, <i>e</i>, <i>π</i>, ∅, ⊥, <span class="ctor">Inactive</span>⟩]</div>
+      <p class="rule-name">O-Insert</p>
+    </div>
+
+    <div class="rule" id="rule-o-retire">
+      <div class="rule-premises"><i>n</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>)</div>
+      <div class="rule-line"></div>
+      <div class="rule-conclusion"><i>γ</i> ⇒ <i>γ</i>[<i>τ</i><sub>n</sub> ↦ ⊤]</div>
+      <p class="rule-name">O-Retire</p>
+    </div>
+
+    <div class="rule" id="rule-o-remove">
+      <div class="rule-premises"><i>τ</i><sub>n</sub> = ⊤ &emsp; <i>θ</i><sub>n</sub> = <span class="ctor">Inactive</span> &emsp; ∀<i>m</i>. <i>π</i><sub>m</sub> ≠ <i>n</i></div>
+      <div class="rule-line"></div>
+      <div class="rule-conclusion"><i>γ</i> ⇒ <i>γ</i> \ <i>n</i></div>
+      <p class="rule-name">O-Remove</p>
+    </div>
+
+    <p>Insertion and retirement are the only external inputs: the orchestrator asks for a fiber to exist or to stop existing, and never sets its lifecycle state directly. <a class="xref" href="#rule-o-retire">O-Retire</a> is unconditional on the fiber&#8217;s state because retiring is a request, and the lifecycle rules are what carry it out. Retirement is separated from removal for the same reason: a retired fiber that is still <span class="ctor">Active</span> must first be deactivated, and removing it earlier would discard the accumulator and leak. The premise ∀<i>m</i>. <i>π</i><sub>m</sub> ≠ <i>n</i> keeps the tree well-formed by removing children before their parent. The last premise of <a class="xref" href="#rule-o-insert">O-Insert</a> is where the single-source discipline is imposed: a key has one possible provider because the orchestrator may not admit a second component declaring it.</p>
+
+    <div class="rule" id="rule-l-reload">
+      <div class="rule-premises"><i>θ</i><sub>n</sub> = <span class="ctor">Inactive</span> &emsp; <i>ω</i> = target<sub>n</sub>(<i>γ</i>) ≠ ⊥ &emsp; <i>e</i><sub>n</sub>(<i>γ</i>) = (<i>δ</i>, <i>g</i>)</div>
+      <div class="rule-line"></div>
+      <div class="rule-conclusion"><i>γ</i> ⟶ <i>δ</i>[<i>θ</i><sub>n</sub> ↦ <span class="ctor">Active</span>(<i>g</i>, <i>ω</i>)]</div>
+      <p class="rule-name">L-Reload</p>
+    </div>
+
+    <div class="rule" id="rule-l-unload-base">
+      <div class="rule-premises"><i>θ</i><sub>n</sub> = <span class="ctor">Active</span>(<i>g</i>, <i>ω</i>) &emsp; target<sub>n</sub>(<i>γ</i>) ≠ <i>ω</i> &emsp; <i>g</i>(<i>γ</i>) = <i>δ</i></div>
+      <div class="rule-line"></div>
+      <div class="rule-conclusion"><i>γ</i> ⟶ <i>δ</i>[<i>θ</i><sub>n</sub> ↦ <span class="ctor">Inactive</span>]</div>
+      <p class="rule-name">L-Unload</p>
+    </div>
+
+    <p><a class="xref" href="#rule-l-reload">L-Reload</a> installs the committed view alongside the inverse; <a class="xref" href="#rule-l-unload-base">L-Unload</a> applies the inverse and discards the committed view. Both are driven by the same comparison: <a class="xref" href="#rule-l-reload">L-Reload</a> fires when a fiber holds no committed view and its target view is not ⊥, <a class="xref" href="#rule-l-unload-base">L-Unload</a> when the committed view it holds is not its target view. This is the reactive discipline of <a class="xref" href="#s3-2">Section 3.2</a>, read off a target that answers to retirement as well as to the coeffects: a transition is initiated whenever the target view changes, regardless of which of the two moved it.</p>
+
+    <p><strong>Instantiation.</strong> A component may instantiate another while installing its effects, which is what a plugin host does when a plugin loads plugins of its own. The rules so far leave the registry to the orchestration rules alone, so such an instantiation has nowhere to happen. One primitive gives it somewhere.</p>
+
+    <div class="blk blk-def" id="d47">
+      <p class="blk-head"><span class="blk-tag">Definition 47</span></p>
+      <p>An application of <i>e</i><sub>n</sub>, or one of its iterations where <a class="xref" href="#s4-3-2">Section 4.3.2</a> applies, may <em>register</em> a component (<i>d</i>, <i>p</i>, <i>e</i>) ∈ ℭ<sub>Γ</sub>. In place of a state map it takes the <a class="xref" href="#rule-o-insert">O-Insert</a> of that component with <i>π</i> = <i>n</i>, and it yields as its inverse the <a class="xref" href="#rule-o-retire">O-Retire</a> of the fiber so registered. The rule draws the name, subject to the freshness premise of <a class="xref" href="#rule-o-insert">O-Insert</a>, and hands it to the effect function.</p>
+      <!--BL:d47-->
+    </div>
+
+    <p>The inverse retires rather than removes, and the reason is that an inverse has to apply wherever it is reached. <a class="xref" href="#rule-o-remove">O-Remove</a> carries premises, so an inverse built from it can fail to: a parent whose child is still <span class="ctor">Active</span> could not run its accumulator, and no rule would move the child, since <a class="xref" href="#d46">Definition 46</a> does not read the fiber tree. <a class="xref" href="#rule-o-retire">O-Retire</a> has <i>n</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>) as its only premise. The entry it leaves behind at the state the registration was taken is retired, <span class="ctor">Inactive</span>(⊥), and holds an empty table, which is the vestigial entry of <a class="xref" href="#l57">Lemma 57</a>: it differs from the absence of the fiber in control fields alone, and no rule tells the two apart.</p>
+
+    <p>Retiring a child sets <i>τ</i> and so takes its target view to ⊥, after which the ordinary rules carry it back to <span class="ctor">Inactive</span>. The parent is not made to wait, <a class="xref" href="#rule-o-retire">O-Retire</a> being unconditional, so <a class="xref" href="#rule-l-unload-base">L-Unload</a> applies to the parent whether or not the child has left. A grandchild is reached one level at a time, the child&#8217;s own accumulator retiring what the child registered. <a class="xref" href="#t66">Theorem 66</a> covers this cascade and the one <a class="xref" href="#s4-3-1">Section 4.3.1</a> imposes along coeffects together.</p>
+
+    <p><strong>Confinement.</strong> With the one exception in hand, the discipline an effect function is held to can be given. It bounds what an application writes, so that the rule applying it accounts for every other change, and what an application reads, so that a fiber sees the coeffects it declared and no more of the registry. Bounding the writes is what lets <a class="xref" href="#s4-4">Section 4.4</a> read <a class="xref" href="#tbl1">Table 1</a> as a complete inventory.</p>
+
+    <div class="blk blk-def" id="d48">
+      <p class="blk-head"><span class="blk-tag">Definition 48</span></p>
+      <p>A map <i>f</i> : <i>Γ</i> → <i>Γ</i> is <em>confined to</em> <i>n</i> when for every <i>γ</i> ∈ <i>Γ</i> with <i>n</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>), writing <i>δ</i> = <i>f</i>(<i>γ</i>),</p>
+      <ol>
+        <li>(<em>Writes.</em>) <span class="op">dom</span>(<i>F</i><sub>δ</sub>) = <span class="op">dom</span>(<i>F</i><sub>γ</sub>), <i>δ</i>(<i>m</i>) = <i>γ</i>(<i>m</i>) for every <i>m</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>) with <i>m</i> ≠ <i>n</i>, and <i>δ</i>(<i>n</i>) and <i>γ</i>(<i>n</i>) differ in <i>σ</i> alone;</li>
+        <li>(<em>Reads.</em>) two states agreeing on <i>σ</i><sub>n</sub>, on the restrictions <i>σ</i><sub>m</sub>|<sub>d<sub>n</sub></sub> for every <i>m</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>), and on the part of the state that no fiber&#8217;s table names are carried by <i>f</i> to states agreeing on the same three.</li>
+      </ol>
+      <p>An effect function <i>e</i> is <em>confined to</em> <i>n</i> when every application of it, and of each of its iterations where <a class="xref" href="#s4-3-2">Section 4.3.2</a> applies, either registers a component (<a class="xref" href="#d47">Definition 47</a>) or has both its state map pr<sub>1</sub> ∘ <i>e</i> and the inverse it yields confined to <i>n</i>. Every fiber&#8217;s effect function is required to be confined to that fiber.</p>
+      <!--BL:d48-->
+    </div>
+
+    <p>A registration writes the entry <a class="xref" href="#rule-o-insert">O-Insert</a> writes, at the one name it draws, and nothing else; the <a class="xref" href="#rule-o-retire">O-Retire</a> it yields as its inverse writes the <i>τ</i> of that name and nothing else. An application of either kind therefore writes no control field of a fiber already present, save that one <i>τ</i>, and reads none at all.</p>
+
+    <p>Clause (2) is why a component may read the values it declared: those lie in the tables of its providers, so an effect function that reads no table but <i>σ</i><sub>n</sub> would be unable to use its own coeffects. What it may not read is a table outside <i>d</i><sub>n</sub>, or any control field, which is what keeps a component from branching on the lifecycle state of a fiber it did not declare.</p>
+
+    <p>The rules are nondeterministic: several fibers may hold a committed view differing from their target view, and the relation commits to no order among them. They are also <em>reactive only</em>, in that no rule mentions a scheduler; the steps are any sequence of rule applications, so a theorem proved over all such sequences holds for every scheduling policy a runtime might adopt.</p>
+  </section>
+
+  <section class="psec" id="s4-3">
+    <h4 class="ph"><span class="pno">4.3</span> Transitions in Progress</h4>
+
+    <p>This section extends the base calculus in four settings. The first supplies something <a class="xref" href="#s3-2">Section 3.2</a> requires and <a class="xref" href="#s4-2">Section 4.2</a> cannot express, a deactivation spread over an interval its dependents may occupy; the other three drop the idealization that a transition is atomic, immediate, and infallible, none of which a transition in a real runtime is. What is dropped is that a whole transition is one step, not that a step is one application of one rule, and the four share one structural consequence, taken here once: a transition that is not a step needs a state to occupy while it is under way, one for each direction it may run in.</p>
+
+    <div class="blk blk-def" id="d49">
+      <p class="blk-head"><span class="blk-tag">Definition 49</span></p>
+      <p>The lifecycle states of this section replace <i>Θ</i><sub>Γ</sub> by</p>
+      <div class="eq" id="eq43"><div class="eq-body"><i>Θ</i><sub>Γ</sub> := <span class="ctor">Inactive</span>(<i>ζ</i>) | <span class="ctor">Reloading</span>(<i>i</i>, <i>g</i>, <i>ω</i>) | <span class="ctor">Active</span>(<i>g</i>, <i>ω</i>) | <span class="ctor">Unloading</span>(<i>g</i>, <i>ω</i>, <i>ζ</i>)</div><span class="eq-no">(43)</span></div>
+      <p>where <i>i</i> : 𝔈<sup>iter∗</sup><sub>Γ</sub> is the remaining effect iterator (<a class="xref" href="#d51">Definition 51</a> below), <i>g</i> : <i>Γ</i> → <i>Γ</i> the accumulator built so far, <i>ω</i> : <i>d</i> → 𝔑 the committed view, and <i>ζ</i> : {⊥} ∪ <i>Ξ</i> the <em>outcome</em>, carried by <span class="ctor">Unloading</span> as the one its deactivation is headed for and by <span class="ctor">Inactive</span> as the one it reached, either ⊥ or an error drawn from the set <i>Ξ</i> of errors that <a class="xref" href="#s4-3-4">Section 4.3.4</a> supplies.</p>
+      <p>A fiber is <em>installed</em> when it is in one of the three states carrying an accumulator and a committed view, and <em>failed</em> when it carries an error outcome:</p>
+      <div class="eq" id="eq44"><div class="eq-body">installed<sub>n</sub>(<i>γ</i>) := <i>θ</i><sub>n</sub> ≠ <span class="ctor">Inactive</span>(−),&emsp;failed<sub>n</sub>(<i>γ</i>) := ∃<i>ξ</i> ∈ <i>Ξ</i>. <i>θ</i><sub>n</sub> = <span class="ctor">Inactive</span>(<i>ξ</i>)</div><span class="eq-no">(44)</span></div>
+      <p>An installed fiber <i>n</i> <em>resolves</em> <i>k</i> <em>to</em> <i>m</i> when <i>ω</i><sub>n</sub>(<i>k</i>) = <i>m</i>. The quiescence of <a class="xref" href="#d46">Definition 46</a> is read on the wider state space as</p>
+      <div class="eq" id="eq45"><div class="eq-body">quiet(<i>γ</i>) := ∀<i>n</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>).
+        <table class="cases">
+          <tr><td><i>ζ</i> ≠ ⊥ ∨ target<sub>n</sub>(<i>γ</i>) = ⊥</td><td>if <i>θ</i><sub>n</sub> = <span class="ctor">Inactive</span>(<i>ζ</i>)</td></tr>
+          <tr><td>target<sub>n</sub>(<i>γ</i>) = <i>ω</i><sub>n</sub></td><td>if <i>θ</i><sub>n</sub> = <span class="ctor">Active</span>(−, <i>ω</i><sub>n</sub>)</td></tr>
+          <tr><td>⊥</td><td>otherwise</td></tr>
+        </table></div><span class="eq-no">(45)</span></div>
+      <!--BL:d49-->
+    </div>
+
+    <p>The definitions of <a class="xref" href="#s4-1">Section 4.1</a> carry over to this state space, with two readings to fix. First, the <span class="ctor">Inactive</span> of <a class="xref" href="#s4-2">Section 4.2</a> is read as <span class="ctor">Inactive</span>(⊥) in the conclusion of <a class="xref" href="#rule-o-insert">O-Insert</a> and as <span class="ctor">Inactive</span>(−) in the premise of <a class="xref" href="#rule-o-remove">O-Remove</a>. Second, <i>σ</i><sub>γ</sub> still unions the tables of <span class="ctor">Active</span> fibers alone, so a fiber whose transition is under way in either direction reads its coeffects through the <i>ω</i> it holds and provides none of its own; a key that its transition has already written is therefore not yet one a dependent may activate against. In the two-state calculus the distinction is empty, every installed fiber being <span class="ctor">Active</span> there.</p>
+
+    <p><a class="xref" href="#fig2">Figure 2</a> draws the lifecycle these states form, and the four subsections below supply the rules on its edges.</p>
+
+    <p class="diagram-note" id="fig2">[Figure 2: Lifecycle with transitions in progress; the two transition states Reloading and Unloading are outlined — L-Begin takes Inactive to Reloading, L-Iter loops on Reloading, L-Finish takes Reloading to Active, L-Divert and L-Raise take Reloading down to Unloading, L-Leave takes Active to Unloading, and L-Unload takes Unloading back to Inactive.]</p>
+
+    <section class="psec" id="s4-3-1">
+      <h5 class="ph"><span class="pno">4.3.1</span> Withdrawal</h5>
+
+      <p><a class="xref" href="#s3-2">Section 3.2</a> requires that dependents activate after their dependencies and that dependencies withdraw their provisions only after their dependents have deactivated. The first half holds in the base calculus already: an activation requires <i>γ</i> ⊨ <i>d</i><sub>n</sub>, so a fiber declaring <i>k</i> cannot activate before some fiber is actively providing <i>k</i>. The second half is the substantive one, and it must deliver more than an ordering of state changes. A component being torn down because its provider is going away is running its own teardown code, which may need the very coeffect that is being withdrawn; closing a connection pool typically means handing the connections back to whatever provided them. What the second half must deliver is that a consumer can still read <i>k</i> throughout its own deactivation, and that the provider&#8217;s withdrawal of <i>k</i> takes effect only afterwards. The base calculus cannot deliver it at all: its <a class="xref" href="#rule-l-unload-base">L-Unload</a> removes the provisions and runs the inverse together, leaving no interval between them for a consumer&#8217;s teardown to occupy.</p>
+
+      <p>This layer splits that step in two, and guards the second half by the following condition.</p>
+
+      <div class="blk blk-def" id="d50">
+        <p class="blk-head"><span class="blk-tag">Definition 50</span></p>
+        <p>The fiber <i>n</i> is <em>relied upon</em> at <i>γ</i> when some other installed fiber resolves a key to it:</p>
+        <div class="eq" id="eq46"><div class="eq-body">relied<sub>n</sub>(<i>γ</i>) := ∃<i>m</i> ∈ <span class="op">dom</span>(<i>F</i><sub>γ</sub>), <i>k</i> ∈ <i>d</i><sub>m</sub>. <i>m</i> ≠ <i>n</i> ∧ installed<sub>m</sub>(<i>γ</i>) ∧ <i>ω</i><sub>m</sub>(<i>k</i>) = <i>n</i></div><span class="eq-no">(46)</span></div>
+        <!--BL:d50-->
+      </div>
+
+      <div class="rule" id="rule-l-leave">
+        <div class="rule-premises"><i>θ</i><sub>n</sub> = <span class="ctor">Active</span>(<i>g</i>, <i>ω</i>) &emsp; target<sub>n</sub>(<i>γ</i>) ≠ <i>ω</i></div>
+        <div class="rule-line"></div>
+        <div class="rule-conclusion"><i>γ</i> ⟶ <i>γ</i>[<i>θ</i><sub>n</sub> ↦ <span class="ctor">Unloading</span>(<i>g</i>, <i>ω</i>, ⊥)]</div>
+        <p class="rule-name">L-Leave</p>
+      </div>
+
+      <div class="rule" id="rule-l-unload">
+        <div class="rule-premises"><i>θ</i><sub>n</sub> = <span class="ctor">Unloading</span>(<i>g</i>, <i>ω</i>, <i>ζ</i>) &emsp; ¬relied<sub>n</sub>(<i>γ</i>) &emsp; <i>g</i>(<i>γ</i>) = <i>δ</i></div>
+        <div class="rule-line"></div>
+        <div class="rule-conclusion"><i>γ</i> ⟶ <i>δ</i>[<i>θ</i><sub>n</sub> ↦ <span class="ctor">Inactive</span>(<i>ζ</i>)]</div>
+        <p class="rule-name">L-Unload</p>
+      </div>
+
+      <p><a class="xref" href="#rule-l-leave">L-Leave</a> records the decision to deactivate without acting on it, which stops the fiber providing its coeffects while leaving its own committed view and everyone else&#8217;s intact. <a class="xref" href="#rule-l-unload">L-Unload</a> applies the accumulator, discards the committed view, and leaves the fiber <span class="ctor">Inactive</span> on the outcome it carries; the outcome is ⊥ until <a class="xref" href="#s4-3-4">Section 4.3.4</a> supplies the other case. It is the only rule in the calculus that applies an accumulator.</p>
+
+      <p>The two halves of the ordering are then carried by different parts of the form: the visibility half by the committed view, which <a class="xref" href="#rule-l-unload">L-Unload</a> discards as its last act, and the ordering half by the premise ¬relied<sub>n</sub>(<i>γ</i>), which we call the <em>guard</em> and which holds the withdrawal of <i>k</i> back until every consumer that resolves it to <i>n</i> has gone. <a class="xref" href="#t63">Theorem 63</a> establishes both.</p>
+
+      <p>The guard is imposed per binding rather than per fiber: relied<sub>n</sub>(<i>γ</i>) tests whether some committed view names <i>n</i>, so a fiber that declares none of <i>n</i>&#8217;s keys is no obstacle, and neither is one that resolved a key of <i>n</i>&#8217;s in another realm (<a class="xref" href="#s3-2-3">Section 3.2.3</a>). Under the single-source discipline of <a class="xref" href="#s4-2">Section 4.2</a> the per-binding reading coincides with the coarser test ∃<i>m</i> ≠ <i>n</i>, <i>k</i> ∈ <i>d</i><sub>m</sub>. installed<sub>m</sub>(<i>γ</i>) ∧ <i>k</i> ∈ <i>p</i><sub>n</sub>, a key having one possible provider there.</p>
+
+      <p>A guard of this kind ordinarily deadlocks. What keeps it from doing so is <span class="ctor">Unloading</span> together with <i>σ</i><sub>γ</sub> being the union over <span class="ctor">Active</span> fibers alone: once <a class="xref" href="#rule-l-leave">L-Leave</a> has marked <i>n</i>, its table leaves <i>σ</i><sub>γ</sub>, so no target view can name <i>n</i> any longer, and every consumer that committed to <i>n</i> is itself on its way out. <a class="xref" href="#t66">Theorem 66</a> turns that into the claim that the guard always releases.</p>
+
+      <p>The guard orders deactivations along coeffects and not along the fiber tree: a parent may run its inverse while a child of it is still <span class="ctor">Unloading</span>, since relied speaks only of committed views. Parent and child are accordingly ordered more weakly than <a class="xref" href="#t63">Theorem 63</a> orders a provider and its consumer, and a parent and a child whose effects meet in the ambient state are governed by the independence hypothesis of <a class="xref" href="#d60">Definition 60</a> instead.</p>
+    </section>
+
+    <section class="psec" id="s4-3-2">
+      <h5 class="ph"><span class="pno">4.3.2</span> Iteration</h5>
+
+      <p>An activation may execute multiple effects in sequence, and the deactivation must recover them. We model such an activation with an <em>effect iterator</em>, each of whose iterations yields the modified context, an inverse, and a continuation:</p>
+
+      <div class="blk blk-def" id="d51">
+        <p class="blk-head"><span class="blk-tag">Definition 51</span></p>
+        <p>Define the effect iterator 𝔈<sup>iter</sup><sub>Γ</sub> and witnessed effect iterator 𝔈<sup>iter∗</sup><sub>Γ</sub> as the following recursive types:</p>
+        <div class="eq" id="eq47"><div class="eq-body">𝔈<sup>iter</sup><sub>Γ</sub> := <i>μ</i>𝔍. <i>Γ</i> → <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>) × <span class="ctor">Maybe</span>(𝔍)<br>
+          𝔈<sup>iter∗</sup><sub>Γ</sub> := <i>μ</i>𝔍. (<i>e</i> : <i>Γ</i> → <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>) × <span class="ctor">Maybe</span>(𝔍))<br>
+          &emsp;&emsp;× ((<i>γ</i> : <i>Γ</i>) → (<span class="kw">let</span> (<i>δ</i>, <i>g</i>, <i>o</i>) = <i>e</i>(<i>γ</i>) <span class="kw">in</span> <i>g</i>(<i>δ</i>) ≃ <i>γ</i>))</div><span class="eq-no">(47)</span></div>
+        <p>where <i>e</i>(<i>γ</i>) yields a triple (<i>δ</i>, <i>g</i>, <i>o</i>) representing:</p>
+        <ul>
+          <li><i>δ</i> is the new context;</li>
+          <li><i>g</i> is the inverse function of the current effect;</li>
+          <li><i>o</i> indicates the continuation:
+            <ul>
+              <li><span class="ctor">Nothing</span> signals iteration termination;</li>
+              <li><span class="ctor">Just</span>(<i>i</i>) provides the next iteration.</li>
+            </ul>
+          </li>
+        </ul>
+        <p>The witness is read at the ≃ of <a class="xref" href="#d33">Definition 33</a>, as <a class="xref" href="#d37">Definition 37</a> reads that of 𝔈<sup>∗</sup><sub>Γ</sub>: an <i>i</i> ∈ 𝔈<sup>iter</sup><sub>Γ</sub> lies in 𝔈<sup>iter∗</sup><sub>Γ</sub> when <i>i</i> respects ≃ and each <i>g</i> it yields respects ≃ and satisfies the clause above. A triple is compared componentwise, <span class="ctor">Nothing</span> with <span class="ctor">Nothing</span> alone and <span class="ctor">Just</span>(<i>i</i>) with <span class="ctor">Just</span>(<i>i</i>′) when <i>i</i> ≃ <i>i</i>′, and ≃ on iterators is the greatest relation meeting those clauses. Taking ≃ to be equality on <i>Γ</i> recovers the reading on the nose.</p>
+        <!--BL:d51-->
+      </div>
+
+      <p>The effect iterator transformation <span class="op">effect</span><sup>iter</sup><sub>Γ</sub> extends <span class="op">effect</span><sub>Γ</sub> to the iterator structure through recursive invocation:</p>
+
+      <div class="blk blk-def" id="d52">
+        <p class="blk-head"><span class="blk-tag">Definition 52</span></p>
+        <p>Define the effect iterator transformation <span class="op">effect</span><sup>iter</sup><sub>Γ</sub> as:</p>
+        <div class="eq" id="eq48"><div class="eq-body"><span class="op">effect</span><sup>iter</sup><sub>Γ</sub> : 𝔈<sup>iter</sup><sub>Γ</sub> → ∂<i>Γ</i> → ∂<sup>2</sup><i>Γ</i><br>
+          <span class="op">effect</span><sup>iter</sup><sub>Γ</sub> = <i>i</i> ↦ (<i>γ</i>, <i>φ</i>) ↦ <span class="kw">let</span> (<i>δ</i>, <i>g</i>, <i>o</i>) = <i>i</i>(<i>γ</i>) <span class="kw">in</span><br>
+          &emsp;&emsp;&emsp;&emsp;<span class="kw">let</span> <i>t</i> = <span class="op">track</span><sub>Γ</sub>(<i>g</i>, pr<sub>1</sub> ∘ <i>i</i>) <span class="kw">in</span><br>
+          &emsp;&emsp;&emsp;&emsp;<span class="kw">match</span> <i>o</i><br>
+          &emsp;&emsp;&emsp;&emsp;| <span class="ctor">Nothing</span> ⇒ ((<i>δ</i>, <i>φ</i> ∘ <i>g</i>), <i>t</i>)<br>
+          &emsp;&emsp;&emsp;&emsp;| <span class="ctor">Just</span>(<i>i</i>′) ⇒ <span class="kw">let</span> (<i>s</i>, <i>r</i>) = <span class="op">effect</span><sup>iter</sup><sub>Γ</sub>(<i>i</i>′)(<i>δ</i>, <i>φ</i> ∘ <i>g</i>) <span class="kw">in</span><br>
+          &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(<i>s</i>, <i>t</i> ∘ <i>r</i>)</div><span class="eq-no">(48)</span></div>
+        <!--BL:d52-->
+      </div>
+
+      <p>At each iteration, the inverse <i>g</i> is composed onto <i>φ</i> in application order, so the accumulator <i>φ</i> ∘ <i>g</i><sub>1</sub> ∘ ⋯ ∘ <i>g</i><sub>k</sub> naturally recovers effects in LIFO order when applied. Because <span class="op">effect</span><sup>iter</sup><sub>Γ</sub> lands in the same ∂<i>Γ</i> → ∂<sup>2</sup><i>Γ</i> as <span class="op">effect</span><sub>Γ</sub> does, an iterator is an effect in its own right and can be used wherever an effect can. A component&#8217;s whole activation is one such use, which is what the rest of this section formalizes, and the implementation admits an iterator at every mutation site (<a class="xref" href="#s5-1-1">Section 5.1.1</a>). The <span class="ctor">Maybe</span>(𝔈<sup>iter</sup>) continuation makes a boundary available between any two consecutive iterations, at which the context is whatever the iterations so far have made it and the accumulator recovers those and nothing more. In this sense the effect iterator is a reified delimited continuation, the structure that mainstream languages expose through the <code>yield</code> operator [43], so the model maps directly onto the generators they already provide.</p>
+
+      <p>In the calculus, the <i>e</i><sub>n</sub> of <a class="xref" href="#d44">Definition 44</a> is read at 𝔈<sup>iter∗</sup><sub>Γ</sub> from here on, and replacing the atomic effect function by an iterator splits the base <a class="xref" href="#rule-l-reload">L-Reload</a> into a begun state that the trace passes through, and gives the fiber a second way out of that state.</p>
+
+      <div class="rule" id="rule-l-begin">
+        <div class="rule-premises"><i>θ</i><sub>n</sub> = <span class="ctor">Inactive</span>(⊥) &emsp; <i>ω</i> = target<sub>n</sub>(<i>γ</i>) ≠ ⊥</div>
+        <div class="rule-line"></div>
+        <div class="rule-conclusion"><i>γ</i> ⟶ <i>γ</i>[<i>θ</i><sub>n</sub> ↦ <span class="ctor">Reloading</span>(<i>e</i><sub>n</sub>, id<sub>Γ</sub>, <i>ω</i>)]</div>
+        <p class="rule-name">L-Begin</p>
+      </div>
+
+      <div class="rule" id="rule-l-divert">
+        <div class="rule-premises"><i>θ</i><sub>n</sub> = <span class="ctor">Reloading</span>(<i>i</i>, <i>g</i>, <i>ω</i>) &emsp; target<sub>n</sub>(<i>γ</i>) ≠ <i>ω</i> &emsp; (<i>δ</i>, <i>h</i>) = (<i>γ</i>, id<sub>Γ</sub>) ∨ <i>i</i>(<i>γ</i>) = (<i>δ</i>, <i>h</i>, −)</div>
+        <div class="rule-line"></div>
+        <div class="rule-conclusion"><i>γ</i> ⟶ <i>δ</i>[<i>θ</i><sub>n</sub> ↦ <span class="ctor">Unloading</span>(<i>g</i> ∘ <i>h</i>, <i>ω</i>, ⊥)]</div>
+        <p class="rule-name">L-Divert</p>
+      </div>
+
+      <div class="rule" id="rule-l-iter">
+        <div class="rule-premises"><i>θ</i><sub>n</sub> = <span class="ctor">Reloading</span>(<i>i</i>, <i>g</i>, <i>ω</i>) &emsp; target<sub>n</sub>(<i>γ</i>) = <i>ω</i> &emsp; <i>i</i>(<i>γ</i>) = (<i>δ</i>, <i>h</i>, <span class="ctor">Just</span>(<i>i</i>′))</div>
+        <div class="rule-line"></div>
+        <div class="rule-conclusion"><i>γ</i> ⟶ <i>δ</i>[<i>θ</i><sub>n</sub> ↦ <span class="ctor">Reloading</span>(<i>i</i>′, <i>g</i> ∘ <i>h</i>, <i>ω</i>)]</div>
+        <p class="rule-name">L-Iter</p>
+      </div>
+
+      <div class="rule" id="rule-l-finish">
+        <div class="rule-premises"><i>θ</i><sub>n</sub> = <span class="ctor">Reloading</span>(<i>i</i>, <i>g</i>, <i>ω</i>) &emsp; target<sub>n</sub>(<i>γ</i>) = <i>ω</i> &emsp; <i>i</i>(<i>γ</i>) = (<i>δ</i>, <i>h</i>, <span class="ctor">Nothing</span>)</div>
+        <div class="rule-line"></div>
+        <div class="rule-conclusion"><i>γ</i> ⟶ <i>δ</i>[<i>θ</i><sub>n</sub> ↦ <span class="ctor">Active</span>(<i>g</i> ∘ <i>h</i>, <i>ω</i>)]</div>
+        <p class="rule-name">L-Finish</p>
+      </div>
+
+      <p>Each iteration composes the newly yielded inverse onto the accumulator as <i>g</i> ∘ <i>h</i>, following <a class="xref" href="#d52">Definition 52</a>, so that the accumulator applies the inverses in last-in-first-out order. Between any two consecutive iterations the system may <em>divert</em> the transition if its target view has changed, applying the inverse accumulated so far to recover the context. <a class="xref" href="#rule-l-divert">L-Divert</a> routes through <span class="ctor">Unloading</span> like every other deactivation rather than applying the accumulator where it stands, and the guard it meets there is vacuous, a fiber that has never been <span class="ctor">Active</span> providing nothing and appearing in no committed view. The first of its two alternatives <em>aborts</em> the iteration the fiber is holding, which only an iteration boundary makes possible, so the granularity at which a divert may fall is that of the iterator; the second lets that iteration land, and <a class="xref" href="#s4-3-3">Section 4.3.3</a> is where it is needed.</p>
+
+      <p>A plain effect function (𝔈<sub>Γ</sub>) is the degenerate case where the first iteration already yields <span class="ctor">Nothing</span>. Such a transition still passes through <span class="ctor">Reloading</span> and <a class="xref" href="#rule-l-divert">L-Divert</a> still applies there, but the accumulator is id<sub>Γ</sub> and no iteration has run, so nothing is restored and the transition installs either all of its effects or none of them.</p>
+    </section>
+
+    <section class="psec" id="s4-3-3">
+      <h5 class="ph"><span class="pno">4.3.3</span> Asynchrony</h5>
+
+      <p>The layers so far let the environment move between one iteration and the next, and assume that each iteration itself completes instantaneously, its launch and its landing being one step. We model non-immediacy abstractly: an iteration yields a value of type <span class="ctor">Future</span>(<i>A</i>), where <span class="ctor">Future</span> is an opaque type constructor whose defining property is that between submission and resolution, external state may change.</p>
+
+      <p>Under this model an iteration is launched at one state and lands at another, and the fiber is <span class="ctor">Reloading</span> while it is in flight. What the layer adds is <em>inertia</em>: once launched, an iteration lands, and its landing cannot be declined. A target view that turns during the flight therefore cannot be answered by aborting the iteration, and only the alternative of <a class="xref" href="#rule-l-divert">L-Divert</a> that lands one remains available: the iteration lands, and the fiber deactivates afterwards. This layer therefore adds no rule and no type that a rule matches on; at the granularity of <i>Γ</i> inertia is its whole content, and it takes the form of a restriction on which alternative of <a class="xref" href="#rule-l-divert">L-Divert</a> a host may take.</p>
+
+      <p>That alternative is what the base calculus could not express. There, a transition whose target view had turned was undone in the same step that discovered it; here the iteration in flight must land first, so the fiber needs somewhere to be while its inverse runs, and the only sound place is <span class="ctor">Unloading</span> holding the inverse the iteration produced. Routing through <span class="ctor">Active</span> instead would let the fiber provide its coeffects for the length of one step and oblige its dependents to activate against a component that is already leaving. This is the mutual chaining of <code>reload</code> and <code>unload</code> in the implementation.</p>
+
+      <p>A deactivation may also chain straight back into an activation, by a composite rather than a rule. <a class="xref" href="#rule-l-unload">L-Unload</a> carries no premise on the target view, so whatever the target view has become while the fiber was deactivating, the accumulator runs and the fiber becomes <span class="ctor">Inactive</span>, from which <a class="xref" href="#rule-l-begin">L-Begin</a> may immediately start a new transition.</p>
+    </section>
+
+    <section class="psec" id="s4-3-4">
+      <h5 class="ph"><span class="pno">4.3.4</span> Failure</h5>
+
+      <p>Every rule so far assumes the effect it runs succeeds, and a runtime cannot. The effects a component installs reach outside the context that tracks them, and what they reach may refuse: a port already bound, a file that is not there, a peer that does not answer. A failing transition must still leave the fiber&#8217;s effects recovered rather than stranded.</p>
+
+      <p>Let <i>Ξ</i> be a set of errors and refine the effect iterator of <a class="xref" href="#d51">Definition 51</a> so that an iteration may raise in place of yielding a triple:</p>
+
+      <div class="eq" id="eq49"><div class="eq-body">𝔈<sup>fail</sup><sub>Γ</sub> := <i>μ</i>𝔍. <i>Γ</i> → <span class="ctor">Either</span>(<i>Ξ</i>, <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>) × <span class="ctor">Maybe</span>(𝔍))<br>
+        𝔈<sup>fail∗</sup><sub>Γ</sub> := <i>μ</i>𝔍. (<i>e</i> : <i>Γ</i> → <span class="ctor">Either</span>(<i>Ξ</i>, <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>) × <span class="ctor">Maybe</span>(𝔍)))<br>
+        &emsp;&emsp;× ((<i>γ</i> : <i>Γ</i>) → (<span class="kw">let</span> <span class="ctor">Right</span>(<i>δ</i>, <i>g</i>, <i>o</i>) = <i>e</i>(<i>γ</i>) <span class="kw">in</span> <i>g</i>(<i>δ</i>) ≃ <i>γ</i>))</div><span class="eq-no">(49)</span></div>
+
+      <p>The witness constrains the <span class="ctor">Right</span> case alone, being vacuous where the pattern does not match, a raise having nothing to undo, and the <i>i</i> that <span class="ctor">Reloading</span> carries is read at 𝔈<sup>fail∗</sup><sub>Γ</sub> from here on. The lift of <a class="xref" href="#d52">Definition 52</a> carries over with a raise propagated in place of a triple, so a raising iterator is usable wherever an effect is, as an ordinary one is. The layer adds one rule and puts the second outcome of <a class="xref" href="#d49">Definition 49</a> to use, <a class="xref" href="#rule-o-remove">O-Remove</a> needing no widening to admit it. The premises of <a class="xref" href="#rule-l-iter">L-Iter</a>, <a class="xref" href="#rule-l-finish">L-Finish</a>, and <a class="xref" href="#rule-l-divert">L-Divert</a> are read with <span class="ctor">Right</span> around the triple they match. A raise is something an iteration does, so the rule is an exit from <span class="ctor">Reloading</span>.</p>
+
+      <div class="rule" id="rule-l-raise">
+        <div class="rule-premises"><i>θ</i><sub>n</sub> = <span class="ctor">Reloading</span>(<i>i</i>, <i>g</i>, <i>ω</i>) &emsp; <i>i</i>(<i>γ</i>) = <span class="ctor">Left</span>(<i>ξ</i>)</div>
+        <div class="rule-line"></div>
+        <div class="rule-conclusion"><i>γ</i> ⟶ <i>γ</i>[<i>θ</i><sub>n</sub> ↦ <span class="ctor">Unloading</span>(<i>g</i>, <i>ω</i>, <i>ξ</i>)]</div>
+        <p class="rule-name">L-Raise</p>
+      </div>
+
+      <p><a class="xref" href="#rule-l-raise">L-Raise</a> recovers before it records. The fiber routes into <span class="ctor">Unloading</span> carrying the error as its outcome, the accumulator built up to the failing iteration is applied there, and the fiber arrives at <span class="ctor">Inactive</span>(<i>ξ</i>) having installed nothing, at a state differing from the one an aborting <a class="xref" href="#rule-l-divert">L-Divert</a> would have produced only in the outcome the fiber carries. Routing a failure like every other deactivation is what makes every outcome reachable only through <a class="xref" href="#rule-l-unload">L-Unload</a>, which is the single fact <a class="xref" href="#t59">Theorem 59</a> turns on. <a class="xref" href="#rule-l-begin">L-Begin</a> has <span class="ctor">Inactive</span>(⊥) as a premise, so the lifecycle is not re-entered from an error outcome; this is the substance of the outcome, which withholds a fiber whose effect function has shown itself to be unsound in the state it ran against rather than retrying it against an unchanged environment. A failed fiber also obstructs nothing: it is <span class="ctor">Inactive</span>, so it carries no committed view and cannot make relied hold.</p>
+
+      <p>A failure is recorded on the fiber rather than propagated to its parent, so a component whose transition fails leaves its siblings running, which is the behavior a plugin host wants and the reason the outcome is per-fiber rather than a property of the whole state.</p>
+    </section>
+  </section>
+</section>

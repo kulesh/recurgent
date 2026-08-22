@@ -1,0 +1,454 @@
+<!-- PART 1: continues inside §3.2.3, after "…so we extend both the coeffect context and the coeffect specification:" -->
+<div class="blk blk-def" id="d30">
+  <p class="blk-head"><span class="blk-tag">Definition 30</span></p>
+  <p>Define the coeffect context and specification with interception as:</p>
+  <div class="eq" id="eq29">
+    <div class="eq-body">
+      <i>Σ</i><sup>inter</sup> := ((<i>k</i> : <i>K</i>) → ℳ<sub>k</sub>) × ((<i>k</i> : <i>K</i>) ⇀ (ℳ<sub>k</sub> → 𝒱<sub>k</sub>))<br>
+      𝔇<sup>inter</sup> := (<i>k</i> : <i>K</i>) ⇀ ℳ<sub>k</sub>
+    </div>
+    <span class="eq-no">(29)</span>
+  </div>
+  <!--BL:d30-->
+</div>
+<p>
+  The context <i>Σ</i><sup>inter</sup> is a pair (<i>ι</i>, <i>σ</i>): <i>ι</i> is the <em>context-carried</em>
+  metadata installed on the context itself, empty (<i>ε</i><sub>k</sub>) by default; and <i>σ</i> maps each key
+  <i>k</i> to a <em>provider function</em> from metadata ℳ<sub>k</sub> to value 𝒱<sub>k</sub>. A specification
+  <i>d</i> ∈ 𝔇<sup>inter</sup> carries the <em>component-declared</em> metadata, assigning each key its metadata
+  <i>d</i>(<i>k</i>), with <span class="op">dom</span>(<i>d</i>) serving as the dependency set. Each key equips its
+  metadata with a monoid (ℳ<sub>k</sub>, ⊕<sub>k</sub>, <i>ε</i><sub>k</sub>): the merge ⊕<sub>k</sub> is
+  associative with identity <i>ε</i><sub>k</sub> (the empty metadata).
+</p>
+<div class="blk blk-def" id="d31">
+  <p class="blk-head"><span class="blk-tag">Definition 31</span></p>
+  <p>The <span class="op">get</span>, <span class="op">set</span>, and <span class="op">intercept</span> operations on <i>Σ</i><sup>inter</sup> are:</p>
+  <div class="eq" id="eq30">
+    <div class="eq-body">
+      <span class="op">get</span> : (<i>k</i> : <i>K</i>) × ℳ<sub>k</sub> → <i>Σ</i><sup>inter</sup> ⇀ 𝒱<sub>k</sub><br>
+      <span class="op">get</span> = (<i>k</i>, <i>μ</i>) ↦ (<i>ι</i>, <i>σ</i>) ↦ <i>σ</i>(<i>k</i>)(<i>μ</i> ⊕<sub>k</sub> <i>ι</i>(<i>k</i>))<br>
+      <span class="op">set</span> : (<i>k</i> : <i>K</i>) × (ℳ<sub>k</sub> → 𝒱<sub>k</sub>) → <i>Σ</i><sup>inter</sup> ⇀ <i>Σ</i><sup>inter</sup> × (<i>Σ</i><sup>inter</sup> ⇀ <i>Σ</i><sup>inter</sup>)<br>
+      <span class="op">set</span> = (<i>k</i>, <i>ψ</i>) ↦ (<i>ι</i>, <i>σ</i>) ↦ ((<i>ι</i>, <i>σ</i>[<i>k</i> ↦ <i>ψ</i>]), <i>λ</i>(<i>ι</i>′, <i>σ</i>′).(<i>ι</i>′, <i>σ</i>′ \ <i>k</i>))<br>
+      <span class="op">intercept</span> : (<i>k</i> : <i>K</i>) × ℳ<sub>k</sub> → <i>Σ</i><sup>inter</sup> → <i>Σ</i><sup>inter</sup><br>
+      <span class="op">intercept</span> = (<i>k</i>, <i>ν</i>) ↦ (<i>ι</i>, <i>σ</i>) ↦ (<i>ι</i>[<i>k</i> ↦ <i>ι</i>(<i>k</i>) ⊕<sub>k</sub> <i>ν</i>], <i>σ</i>)
+    </div>
+    <span class="eq-no">(30)</span>
+  </div>
+  <p>
+    where <span class="op">get</span> and <span class="op">set</span> carry the preconditions of
+    <a class="xref" href="#d23">Definition 23</a> on the provider table, namely
+    <i>k</i> ∈ <span class="op">dom</span>(<i>σ</i>) and <i>k</i> ∉ <span class="op">dom</span>(<i>σ</i>).
+    The context that <span class="op">intercept</span>(<i>k</i>, <i>ν</i>) derives merges <i>ν</i> onto the
+    metadata inherited at <i>k</i> and inherits the provider table unchanged.
+  </p>
+  <!--BL:d31-->
+</div>
+<p>
+  When a component with specification <i>d</i> accesses key <i>k</i>, the system evaluates
+  <i>σ</i>(<i>k</i>)(<i>d</i>(<i>k</i>) ⊕<sub>k</sub> <i>ι</i>(<i>k</i>)): the component-declared metadata is merged
+  with the context-carried metadata <i>ι</i>, and the provider function is applied to the result. This merge follows
+  each key&#8217;s own semantics (e.g. scalar fields are overwritten, set-valued fields unioned) and is right-biased,
+  so <i>ι</i>(<i>k</i>) takes priority and can override the component&#8217;s declaration, letting an enclosing
+  context constrain how a component uses a coeffect without modifying that component
+  (e.g. <a class="xref" href="#s6-3">Section 6.3</a>).
+</p>
+
+<!-- PART 2: §3.3 -->
+<section class="psec" id="s3-3">
+  <h4 class="ph"><span class="pno">3.3</span> The Context Paradigm</h4>
+  <p>
+    <a class="xref" href="#s3-1">Section 3.1</a> and <a class="xref" href="#s3-2">Section 3.2</a> each act on a
+    context, the first as the carrier of effects and the second as the carrier of coeffects, leaving open what a
+    single context carrying both looks like. This section gives that unification a concrete construction, assembles
+    from the coeffects an observational equivalence that supplies the effect independence
+    <a class="xref" href="#s3-1-3">Section 3.1.3</a> leaves open, and argues that the resulting context type
+    constitutes a programming paradigm in its own right.
+  </p>
+
+  <section class="psec" id="s3-3-1">
+    <h5 class="ph"><span class="pno">3.3.1</span> Unified Context</h5>
+    <p>
+      For a context <i>Γ</i>, the effect context ∂<i>Γ</i> (<a class="xref" href="#s3-1">Section 3.1</a>) provides a
+      higher-level abstraction, carrying the previous-level context and that level&#8217;s accumulator
+      (<a class="xref" href="#d2">Definition 2</a>). Making this structure recursive and combining it with the
+      coeffect context <i>Σ</i> yields the following type:
+    </p>
+    <div class="blk blk-def" id="d32">
+      <p class="blk-head"><span class="blk-tag">Definition 32</span></p>
+      <p>The context type <i>Γ</i><sub>∞</sub> is defined as:</p>
+      <div class="eq" id="eq31">
+        <div class="eq-body"><i>Γ</i><sub>∞</sub> := <i>μΓ</i>. <i>Γ</i> × (<i>Γ</i> → <i>Γ</i>) × <i>Σ</i></div>
+        <span class="eq-no">(31)</span>
+      </div>
+      <p>where the three projections are:</p>
+      <ul>
+        <li><i>Γ</i>: the current context state (recursive);</li>
+        <li><i>Γ</i> → <i>Γ</i>: the accumulator, which recovers this level&#8217;s effects;</li>
+        <li><i>Σ</i>: the coeffect context carrying dependency information.</li>
+      </ul>
+      <!--BL:d32-->
+    </div>
+    <p>
+      Under this definition, <span class="op">effect</span> maps 𝔈<sub>Γ∞</sub> to itself, unifying the ∂-tower into
+      a single self-similar type. The coeffect context <i>Σ</i> is structurally integrated: dependency operations
+      (<span class="op">set</span>, <span class="op">get</span>) act on <i>Σ</i>, and the accumulator tracks their
+      reversal. Since the type family 𝒱 underlying <i>Σ</i> is unconstrained, any state the system needs to share
+      across components can be encoded as a dependency with an appropriate value type&#8212;<i>Σ</i> subsumes all
+      shared mutable states, not just inter-component dependencies. Every interaction between a component and its
+      environment passes through this single entity.
+    </p>
+    <p>
+      <strong>Hierarchical composition.</strong> The recursive structure of <i>Γ</i><sub>∞</sub> supports hierarchical
+      control: a parent context aggregates multiple child-level effects, forming a tree-shaped control structure that
+      maintains modularity while enabling unified cross-level management. The <span class="op">effect</span>
+      transformation realizes a literal &#8220;plug-in&#8221; metaphor:
+    </p>
+    <ul>
+      <li>Loading a component corresponds to executing its effects (plugging in);</li>
+      <li>Unloading a component corresponds to recovering its effects (unplugging, without affecting other running components);</li>
+      <li>Components at different levels of the hierarchy are independently loadable and unloadable; a parent context
+        aggregates and manages the effects of all its children, enabling arbitrarily nested composition.</li>
+    </ul>
+  </section>
+
+  <section class="psec" id="s3-3-2">
+    <h5 class="ph"><span class="pno">3.3.2</span> Observational Equivalence</h5>
+    <p>
+      The recovery guarantee of <a class="xref" href="#s3-1">Section 3.1</a> asserts an equality of states
+      (<a class="xref" href="#t7">Theorem 7</a>), which is an idealization, because the physical state cannot be
+      recovered as it stood. For example, <code>free</code> releases a block to the allocator without restoring the
+      layout the heap had before <code>malloc</code>; and a generative name is not restored by the inverse that
+      discards it, since the next creation draws a fresh one [39]. The equalities of
+      <a class="xref" href="#s3">Section 3</a> are therefore to be read up to an equivalence ≃, and we take ≃ to be an
+      <em>observational equivalence</em>: two states are related when no observer can distinguish them. Comparing
+      behaviour rather than representation is the established route to program equivalence [40], and the relation such
+      a comparison yields depends on what the observer is given to work with [41]. What an observer of a context is
+      given is the coeffects it carries, each of which arrives with an equivalence of its own
+      (<a class="xref" href="#d24">Definition 24</a>), so the relation on a context is assembled from theirs.
+      Assembling it is the business of this subsection, and quotienting by it is what buys the independence
+      <a class="xref" href="#s3-1-3">Section 3.1.3</a> asks for.
+    </p>
+    <div class="blk blk-def" id="d33">
+      <p class="blk-head"><span class="blk-tag">Definition 33</span></p>
+      <p>Two coeffect contexts are related when they bind the same keys to related values, and two states of a context
+        when their coeffect projections are:</p>
+      <div class="eq" id="eq32">
+        <div class="eq-body">
+          <i>σ</i> ≃ <i>σ</i>′ := <span class="op">dom</span>(<i>σ</i>) = <span class="op">dom</span>(<i>σ</i>′) ∧ ∀<i>k</i> ∈ <span class="op">dom</span>(<i>σ</i>). <i>σ</i>(<i>k</i>) ≈<sub>k</sub> <i>σ</i>′(<i>k</i>)<br>
+          <i>γ</i> ≃ <i>γ</i>′ := <i>σ</i><sub>γ</sub> ≃ <i>σ</i><sub>γ′</sub>
+        </div>
+        <span class="eq-no">(32)</span>
+      </div>
+      <p>writing <i>σ</i><sub>γ</sub> for the coeffect projection of <i>γ</i> (<a class="xref" href="#d32">Definition 32</a>).</p>
+      <!--BL:d33-->
+    </div>
+    <p>
+      The part of a state that no key binds is thereby forgotten, and forgetting it is what lets
+      <a class="xref" href="#t7">Theorem 7</a> be read up to ≃ at all: the heap layout and the generative name of the
+      examples above lie outside the relation unless some key binds them. What
+      <a class="xref" href="#s3-2-2">Section 3.2.2</a> needs of ≃ follows rather than being assumed. Related states
+      have the same domain, so they agree on the satisfaction predicate <i>σ</i> ⊨ <i>d</i> and on the classification
+      <span class="op">notify</span><sub>d</sub> of <a class="xref" href="#d26">Definition 26</a>, and reactivity is a
+      property of <i>Σ</i>/≃.
+    </p>
+    <p>
+      Calling the relation observational is a claim about each ≈<sub>k</sub>, namely that it separates no more than
+      the operations of <i>k</i> can tell apart. An observer of a value runs those operations and reads their outcomes.
+    </p>
+    <div class="blk blk-def" id="d34">
+      <p class="blk-head"><span class="blk-tag">Definition 34</span></p>
+      <p>
+        Let <i>V</i> carry a set 𝒜 of operations in the sense of <a class="xref" href="#d24">Definition 24</a>, and
+        write 𝔐(<i>a</i>) for the transformation monoid (<a class="xref" href="#d17">Definition 17</a>) of the effect
+        functions <i>a</i>(<i>x</i>) over every argument <i>x</i> : <i>X</i><sub>a</sub>. A <em>test</em> over 𝒜 is a
+        finite word over the generators of the monoids 𝔐(<i>a</i>), <i>a</i> ∈ 𝒜, each letter applied to the value
+        the letters before it left; its <em>outcomes</em> are those the letters that are forward maps of operations
+        yield along the way, and it is undefined where a precondition fails. Values <i>v</i>, <i>v</i>′ : <i>V</i> are
+        <em>indistinguishable</em>, written <i>v</i> ≈<sub>𝒜</sub> <i>v</i>′, when every test over 𝒜 is defined at
+        both or at neither and yields the same outcomes at both.
+      </p>
+      <!--BL:d34-->
+    </div>
+    <div class="blk blk-thm" id="l35">
+      <p class="blk-head"><span class="blk-tag">Lemma 35</span></p>
+      <p>Indistinguishability is the coarsest relation the operations respect. That is,</p>
+      <ol>
+        <li>every operation of 𝒜 respects ≈<sub>𝒜</sub> in the sense of <a class="xref" href="#d24">Definition 24</a>;</li>
+        <li>every equivalence that every operation of 𝒜 respects is contained in ≈<sub>𝒜</sub>.</li>
+      </ol>
+      <p>Every admissible choice of ≈<sub>k</sub> is therefore contained in ≈<sub>𝒜<sub>k</sub></sub>, and
+        ≈<sub>𝒜<sub>k</sub></sub> is itself admissible.</p>
+      <details class="proof">
+        <summary>Proof</summary>
+        <ol>
+          <li>Let <i>v</i> ≈<sub>𝒜</sub> <i>v</i>′ and let <i>a</i> ∈ 𝒜 be applied to an argument. Prefixing a test
+            by one letter is again a test, so the values the forward map reaches are indistinguishable, as are the
+            values any one yielded inverse reaches from indistinguishable arguments; the one-letter test gives
+            definedness at both or neither and equality of the outcome.</li>
+          <li>Let <i>R</i> be such an equivalence and <i>v</i> <i>R</i> <i>v</i>′. Each letter of a test is a forward
+            map or a yielded inverse of an operation, and respect carries <i>R</i> along either, keeping the values
+            reached related and the outcomes equal at every letter. Hence every test agrees at <i>v</i> and
+            <i>v</i>′. &#9633;</li>
+        </ol>
+      </details>
+      <!--BL:l35-->
+    </div>
+    <p>
+      Substituting ≃ for = throughout is not by itself enough, because an effect function returns an inverse as well
+      as a state, and two states that ≃ identifies have to yield inverses ≃ identifies as well.
+    </p>
+    <div class="blk blk-def" id="d36">
+      <p class="blk-head"><span class="blk-tag">Definition 36</span></p>
+      <p>A map <i>f</i> : <i>Γ</i> → <i>Γ</i> <em>respects</em> ≃ when</p>
+      <div class="eq" id="eq33">
+        <div class="eq-body">∀<i>γ</i>, <i>γ</i>′ ∈ <i>Γ</i>.&emsp;<i>γ</i> ≃ <i>γ</i>′ ⇒ <i>f</i>(<i>γ</i>) ≃ <i>f</i>(<i>γ</i>′)</div>
+        <span class="eq-no">(33)</span>
+      </div>
+      <p>Two maps are related when they agree at every state, and two pairs in ∂<i>Γ</i> when both components are:</p>
+      <div class="eq" id="eq34">
+        <div class="eq-body">
+          <i>f</i> ≃ <i>g</i> := ∀<i>γ</i> ∈ <i>Γ</i>. <i>f</i>(<i>γ</i>) ≃ <i>g</i>(<i>γ</i>)<br>
+          (<i>δ</i>, <i>g</i>) ≃ (<i>δ</i>′, <i>g</i>′) := <i>δ</i> ≃ <i>δ</i>′ ∧ <i>g</i> ≃ <i>g</i>′
+        </div>
+        <span class="eq-no">(34)</span>
+      </div>
+      <!--BL:d36-->
+    </div>
+    <p>
+      A map respecting ≃ is one that descends to <i>Γ</i>/≃, and two maps related by ≃ are two that descend to the
+      same map there. An effect function needs both: the first so that the state it computes is determined on the
+      quotient, the second so that the inverse it returns is.
+    </p>
+    <div class="blk blk-def" id="d37">
+      <p class="blk-head"><span class="blk-tag">Definition 37</span></p>
+      <p>
+        Read <a class="xref" href="#d8">Definition 8</a> up to ≃: an <i>e</i> ∈ 𝔈<sub>Γ</sub> lies in
+        𝔈<sup>∗</sup><sub>Γ</sub> when <i>e</i> respects ≃ as a map <i>Γ</i> → ∂<i>Γ</i> and, writing
+        (<i>δ</i>, <i>g</i>) = <i>e</i>(<i>γ</i>), for every <i>γ</i> ∈ <i>Γ</i>
+      </p>
+      <ol>
+        <li><i>g</i>(<i>δ</i>) ≃ <i>γ</i>;</li>
+        <li><i>g</i> respects ≃.</li>
+      </ol>
+      <p>Taking ≃ to be equality on <i>Γ</i> recovers <a class="xref" href="#d8">Definition 8</a>.</p>
+      <!--BL:d37-->
+    </div>
+    <div class="blk blk-thm" id="l38">
+      <p class="blk-head"><span class="blk-tag">Lemma 38</span></p>
+      <p>
+        With 𝔈<sup>∗</sup><sub>Γ</sub> read as in <a class="xref" href="#d37">Definition 37</a>, every equality of
+        states asserted in <a class="xref" href="#s3-1">Section 3.1</a> holds with = replaced by ≃, and the accumulator
+        of every state reachable from (<i>γ</i><sub>0</sub>, <span class="op">id</span><sub>Γ</sub>) respects ≃.
+      </p>
+      <details class="proof">
+        <summary>Proof</summary>
+        <p>
+          An accumulator is a composition of inverses, each respecting ≃ by
+          <a class="xref" href="#d37">Definition 37</a>(2), and a composition of maps respecting ≃ respects ≃, the
+          base case being <span class="op">id</span><sub>Γ</sub>. The proofs of
+          <a class="xref" href="#s3-1">Section 3.1</a> then go through unchanged, respect being what carries a
+          relation through an inverse: from <i>g</i><sub>2</sub>(<i>δ</i><sub>2</sub>) ≃ <i>δ</i><sub>1</sub> and
+          <i>g</i><sub>1</sub>(<i>δ</i><sub>1</sub>) ≃ <i>γ</i> respect gives
+          (<i>g</i><sub>1</sub> ∘ <i>g</i><sub>2</sub>)(<i>δ</i><sub>2</sub>) ≃ <i>γ</i>, which is the step each
+          composition of inverses takes, and the soundness invariant of <a class="xref" href="#t7">Theorem 7</a> reads
+          <i>φ</i>(<i>γ</i>) ≃ <i>γ</i><sub>0</sub> by that step. &#9633;
+        </p>
+      </details>
+      <!--BL:l38-->
+    </div>
+    <p>
+      The commutation <a class="xref" href="#d19">Definition 19</a> asks for is read up to ≃ by the same lemma, and
+      reading it that way is what makes it attainable at all: two operations may leave values that ≈<sub>k</sub>
+      identifies and still count as commuting. Of two operations it asks one thing more than of the effect functions
+      their lifts induce, an operation yielding an outcome as well.
+    </p>
+    <div class="blk blk-def" id="d39">
+      <p class="blk-head"><span class="blk-tag">Definition 39</span></p>
+      <p>
+        Operations <i>a</i> and <i>a</i>′ are <em>independent</em> when their lifts are independent as effect
+        functions (<a class="xref" href="#d19">Definition 19</a>) at every pair of arguments, and neither one&#8217;s
+        transformations disturb the outcome the other yields:
+      </p>
+      <div class="eq" id="eq35">
+        <div class="eq-body">
+          ∀<i>x</i> : <i>X</i><sub>a</sub>, <i>g</i> ∈ 𝔐(<i>a</i>′<sup>Σ</sup>), <i>σ</i> ∈ <i>Σ</i>.&emsp;pr<sub>3</sub>(<i>a</i><sup>Σ</sup>(<i>x</i>)(<i>g</i>(<i>σ</i>))) = pr<sub>3</sub>(<i>a</i><sup>Σ</sup>(<i>x</i>)(<i>σ</i>))
+        </div>
+        <span class="eq-no">(35)</span>
+      </div>
+      <p>
+        and the same with <i>a</i> and <i>a</i>′ exchanged, writing 𝔐(<i>a</i><sup>Σ</sup>) for the transformation
+        monoid of the lifts <i>a</i><sup>Σ</sup>(<i>x</i>) over every argument as
+        <a class="xref" href="#d34">Definition 34</a> writes 𝔐(<i>a</i>) for that of the operation itself. A key
+        <i>k</i> is <em>commutative</em> when any two operations of 𝒜<sub>k</sub> are independent, an operation being
+        held independent of itself as well.
+      </p>
+      <!--BL:d39-->
+    </div>
+    <p>Across distinct keys the condition holds outright.</p>
+    <div class="blk blk-thm" id="t40">
+      <p class="blk-head"><span class="blk-tag">Theorem 40</span></p>
+      <p>Operations at distinct keys are independent.</p>
+      <details class="proof">
+        <summary>Proof</summary>
+        <p>
+          Let <i>a</i> lie in 𝒜<sub>k</sub> and <i>a</i>′ in 𝒜<sub>k′</sub> with <i>k</i> ≠ <i>k</i>′. By
+          <a class="xref" href="#d24">Definition 24</a> every generator of 𝔐(<i>a</i><sup>Σ</sup>) is of the form
+          <i>σ</i> ↦ <i>σ</i>[<i>k</i> ↦ <i>u</i>(<i>σ</i>(<i>k</i>))] for a map <i>u</i> on 𝒱<sub>k</sub>, being
+          either the lift of a forward map or the lift of a yielded inverse, and likewise for <i>a</i>′ at <i>k</i>′.
+          Two such maps commute, each reading and writing one key alone and the two keys differing, and
+          <a class="xref" href="#l18">Lemma 18</a>(1) extends the commutation from the generators to the two monoids.
+          For the second condition, what <i>a</i><sup>Σ</sup> yields at <i>σ</i>, inverse and outcome alike, is
+          determined by <i>σ</i>(<i>k</i>), which every generator of 𝔐(<i>a</i>′<sup>Σ</sup>) leaves as it
+          stands. &#9633;
+        </p>
+      </details>
+      <!--BL:t40-->
+    </div>
+    <p>
+      A key whose value is a table of entries added and removed independently is commutative, registration of a route
+      or of an event listener being the representative case: two registrations in either order leave a table that
+      answers every test alike, and either registration can be withdrawn while the other stands. A key whose value is
+      an ordered chain is not, since a middleware inserted before another sees a different request, and neither order
+      can be withdrawn without disturbing the other. The allocator of the opening example divides by what its
+      interface publishes. Where the handles it hands out are compared by no operation of the key, ≈<sub>k</sub> may
+      relate two heaps up to a renaming of handles, which is how CompCert relates the memory states of a program and
+      of its translation [42], and allocation is commutative; where the addresses are outcomes compared by equality,
+      no admissible ≈<sub>k</sub> makes the two orders of allocation agree, and the key is not commutative.
+    </p>
+    <p>
+      What a component performs is a sequence of operations in which each may depend on what the ones before it
+      yielded, and effect functions of that shape are what the theorem below speaks of.
+    </p>
+    <div class="blk blk-def" id="d41">
+      <p class="blk-head"><span class="blk-tag">Definition 41</span></p>
+      <p>
+        The <em>coeffect-mediated</em> effect functions form the least set 𝔈<sup>𝒜</sup><sub>Σ</sub> ⊆
+        𝔈<sub>Σ</sub> that contains the unit <i>η</i><sub>Σ</sub> and is closed under the following: for a key
+        <i>k</i>, an operation <i>a</i> ∈ 𝒜<sub>k</sub>, an argument <i>x</i> : <i>X</i><sub>a</sub>, and a family
+        (<i>e</i><sub>b</sub>)<sub>b∈B<sub>a</sub></sub> of members,
+      </p>
+      <div class="eq" id="eq36">
+        <div class="eq-body">
+          <i>σ</i> ↦ <span class="kw">let</span> (<i>δ</i>, <i>s</i>, <i>b</i>) = <i>a</i><sup>Σ</sup>(<i>x</i>)(<i>σ</i>) <span class="kw">in</span> <span class="kw">let</span> (<i>ε</i>, <i>t</i>) = <i>e</i><sub>b</sub>(<i>δ</i>) <span class="kw">in</span> (<i>ε</i>, <i>s</i> ∘ <i>t</i>)
+        </div>
+        <span class="eq-no">(36)</span>
+      </div>
+      <p>
+        is again a member. Each stage performs one operation and chooses what follows it by the outcome, so an
+        argument may depend on the outcomes already obtained. The operations <em>occurring in</em> a member are the
+        ones its stages perform, over every choice of outcome.
+      </p>
+      <!--BL:d41-->
+    </div>
+    <div class="blk blk-thm" id="t42">
+      <p class="blk-head"><span class="blk-tag">Theorem 42</span></p>
+      <p>
+        Let <i>e</i><sub>1</sub>, <i>e</i><sub>2</sub> ∈ 𝔈<sup>𝒜</sup><sub>Σ</sub> and let every key at which
+        operations of both occur be commutative (<a class="xref" href="#d39">Definition 39</a>). Then
+        <i>e</i><sub>1</sub> and <i>e</i><sub>2</sub> are independent (<a class="xref" href="#d19">Definition 19</a>).
+      </p>
+      <details class="proof">
+        <summary>Proof</summary>
+        <p>
+          By induction on the construction of <a class="xref" href="#d41">Definition 41</a>, 𝔐(<i>e</i><sub>i</sub>)
+          lies in the submonoid generated by the generators of the operations occurring in <i>e</i><sub>i</sub>: the
+          unit generates the trivial monoid, and a stage is a ⋄-composite of <i>a</i><sup>Σ</sup>(<i>x</i>) with a
+          member, to which <a class="xref" href="#l18">Lemma 18</a>(2) applies.
+        </p>
+        <p>
+          For clause (1) of <a class="xref" href="#d19">Definition 19</a> it is therefore enough, by
+          <a class="xref" href="#l18">Lemma 18</a>(1), that a generator of an operation occurring in
+          <i>e</i><sub>1</sub> commute with a generator of one occurring in <i>e</i><sub>2</sub>. Where the two
+          operations lie at distinct keys this is <a class="xref" href="#t40">Theorem 40</a>, and where they lie at
+          one key that key carries operations of both and is commutative by hypothesis.
+        </p>
+        <p>
+          For clause (2), take <i>g</i> ∈ 𝔐(<i>e</i><sub>2</sub>), a composite of generators of the operations
+          occurring in <i>e</i><sub>2</sub>, and induct on the construction of <i>e</i><sub>1</sub>. The unit yields
+          <span class="op">id</span><sub>Σ</sub> at every state. At a stage, let
+          (<i>δ</i>, <i>s</i>, <i>b</i>) = <i>a</i><sup>Σ</sup>(<i>x</i>)(<i>σ</i>) and
+          (<i>ε</i>, <i>t</i>) = <i>e</i><sub>b</sub>(<i>δ</i>), so that the stage yields <i>s</i> ∘ <i>t</i> at
+          <i>σ</i>. Independence of the operations, applied to one generator of <i>g</i> at a time, yields <i>s</i>
+          and <i>b</i> again at <i>g</i>(<i>σ</i>), so the same continuation <i>e</i><sub>b</sub> is chosen, and
+          clause (1) puts the state it runs from at <i>g</i>(<i>δ</i>), where the induction hypothesis yields <i>t</i>
+          again. The stage therefore yields <i>s</i> ∘ <i>t</i> at <i>g</i>(<i>σ</i>). &#9633;
+        </p>
+      </details>
+      <!--BL:t42-->
+    </div>
+    <p>
+      Every interaction between a component and its environment passes through the context, and the type family 𝒱 is
+      unconstrained, so a system may bind every location it shares across components at a key of its own
+      (<a class="xref" href="#s3-3-1">Section 3.3.1</a>). A component&#8217;s effect function is then the lift of a
+      coeffect-mediated one along the coeffect projection, and independence transfers to that lift, whose
+      transformations move the projection alone. The assumption <a class="xref" href="#s3-1-3">Section 3.1.3</a>
+      leaves open is met that way, and with it the temporal composability of a whole system of components.
+    </p>
+    <p>
+      What the decomposition divides is a computation&#8217;s commuting part from its order-sensitive part. The
+      commuting part is carried by the effects: a component performs them in whatever order its task calls for, and
+      <a class="xref" href="#c21">Corollary 21</a> reverts them in whatever order the system finds convenient, no two
+      components constraining each other. The order-sensitive part is carried by the coeffects, since a key whose
+      operations do not commute is one whose order has to be imposed from outside the effects, and two places are
+      available for imposing it. Within one component the accumulator imposes it, reverting in LIFO order whatever the
+      effects (<a class="xref" href="#t16">Theorem 16</a>). Across components a declared coeffect imposes it, one
+      component providing what another declares and the provision preceding the declaration&#8217;s satisfaction
+      (<a class="xref" href="#s3-2-2">Section 3.2.2</a>). Composability is thereby had at the grain of components
+      rather than of single effects, which is the scale <a class="xref" href="#s4">Section 4</a> works at.
+    </p>
+    <p>
+      Two limits of the theorem are worth naming. Binding every shared location at a key is the paradigm&#8217;s
+      discipline and not a property of the construction, so a location the system cannot reify as a coeffect lies
+      outside the boundary of <a class="xref" href="#s6-1">Section 6.1</a> and outside the theorem with it. And
+      commutativity of a key is a property of the interface that key publishes, so meeting it is an obligation on the
+      component providing the key rather than on the components consuming it.
+    </p>
+  </section>
+
+  <section class="psec" id="s3-3-3">
+    <h5 class="ph"><span class="pno">3.3.3</span> Situating the Context Paradigm</h5>
+    <p>
+      Programming paradigms differ fundamentally in how they handle side effects. Two established poles define the
+      spectrum:
+    </p>
+    <p>
+      <strong>Explicit state threading (functional).</strong> To preserve referential transparency, purely functional
+      languages model side effects as explicit transformations on state. The <code>State</code> monad
+      <i>S</i> → (<i>A</i>, <i>S</i>) [23] threads an environment through every computation. This approach yields
+      strong compositional guarantees: effects are visible in types and amenable to equational reasoning. However, it
+      imposes significant ergonomic costs: every function in the call chain must accept and return the state
+      parameter, even when it merely passes the state through unchanged. As the number of effect dimensions grows
+      (logging, configuration, I/O), monadic stacking or effect-handler boilerplate proliferates.
+    </p>
+    <p>
+      <strong>Implicit mutation (imperative/OOP).</strong> Mainstream imperative languages permit components to modify
+      shared state and access dependencies without explicit declaration at the call site. On the effect side, a
+      representative example is React&#8217;s <code>useEffect</code> hook: it registers a persistent side effect on
+      the component&#8217;s internal fiber, yet neither the effect target nor the registration mechanism appears as an
+      explicit parameter&#8212;identification relies on call-order position within hidden runtime state. On the
+      coeffect side, Java&#8217;s service locator pattern (e.g., Spring&#8217;s
+      <code>ApplicationContext.getBean(...)</code>) retrieves dependencies from a process-wide registry at runtime,
+      requiring null checks and type casts at each call site; dependency relationships are implicit and scattered
+      across the codebase. More generally, understanding how <code>f()</code> modifies or depends on the system
+      requires reading its implementation transitively. Refactoring becomes fragile because moving or removing a call
+      may silently break distant invariants.
+    </p>
+    <p>
+      The context paradigm combines the traceability of the functional approach with the ergonomics of the imperative
+      approach. Effects and coeffects are both mediated through an explicit context parameter. Each operation is
+      therefore attributable to the specific context on which it was invoked, and hence to the component that context
+      belongs to.
+    </p>
+    <p>
+      Beyond combining the strengths of both poles, the context paradigm lets the developer handle each effect and
+      dependency individually and composes them into the system&#8217;s behavior automatically. For revertible
+      effects, the developer supplies the inverse of each atomic operation, and the inverse of any composite follows
+      by composition (<a class="xref" href="#s3-1">Section 3.1</a>), so a component&#8217;s teardown is derived from
+      its loading rather than written alongside it. For reactive coeffects, a component declares only the dependencies
+      it needs, and the runtime resolves and re-wires them automatically
+      (<a class="xref" href="#s3-2">Section 3.2</a>), keeping them consistently wired as providers are added, removed,
+      or replaced. In both directions, correctness that would otherwise rest on developer discipline becomes a
+      structural property of the paradigm.
+    </p>
+  </section>
+</section>

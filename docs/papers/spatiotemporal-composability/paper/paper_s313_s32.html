@@ -141,7 +141,7 @@
 
   <p>LIFO order is one such permutation, and <a class="xref" href="#t16">Theorem 16</a> reverts in it with no hypothesis at all.
   What independence buys is every other order, and with it the sequence that interleaves several
-  components, which <a class="xref" href="#beyond">Section 4.4.2</a> carries to a trace of a whole system.</p>
+  components, which <a class="xref" href="#s4-4-2">Section 4.4.2</a> carries to a trace of a whole system.</p>
 
   <p>Together, these constructions constitute <em>revertible effects</em>: each effect function in 𝔈<sup>∗</sup><sub><i>Γ</i></sub> explicitly
   provides its own inverse, <span class="op">effect</span> tracks these inverses on the effect context ∂<i>Γ</i>, and the ⋄ operation
@@ -155,11 +155,11 @@
   <p>Two things the criterion leaves out, and both arrive once several components are in play:
   reverting out of the order the accumulator imposes, and a sequence that interleaves the
   effects of others. Independence delivers them (<a class="xref" href="#c21">Corollary 21</a>), and it is a condition on the
-  effects rather than a property of the construction, <a class="xref" href="#beyond">Section 3.3.2</a> being where the discipline that
-  meets it is identified and <a class="xref" href="#beyond">Section 4.4.2</a> where the guarantee is read of a whole system’s trace.
+  effects rather than a property of the construction, <a class="xref" href="#s3-3-2">Section 3.3.2</a> being where the discipline that
+  meets it is identified and <a class="xref" href="#s4-4-2">Section 4.4.2</a> where the guarantee is read of a whole system’s trace.
   Where independence fails, the order has to be carried elsewhere: within one component by
-  the accumulator, which reverts in LIFO order whatever the effects (<a class="xref" href="#beyond">Section 4.3.2</a>), and across
-  components by a declared coeffect, which orders one activation against another (<a class="xref" href="#beyond">Section 4.3.1</a>).</p>
+  the accumulator, which reverts in LIFO order whatever the effects (<a class="xref" href="#s4-3-2">Section 4.3.2</a>), and across
+  components by a declared coeffect, which orders one activation against another (<a class="xref" href="#s4-3-1">Section 4.3.1</a>).</p>
 </section>
 
 <section class="psec" id="s3-2">
@@ -239,7 +239,7 @@
     <div class="blk blk-def" id="d24">
       <p class="blk-head"><span class="blk-tag">Definition 24</span></p>
       <p>A <em>coeffect</em> at a key <i>k</i> is a triple (𝒱<sub><i>k</i></sub>, ≈<sub><i>k</i></sub>, 𝒜<sub><i>k</i></sub>), where 𝒱<sub><i>k</i></sub> is the value type of
-      <a class="xref" href="#d22">Definition 22</a>, ≈<sub><i>k</i></sub> is an equivalence relation on 𝒱<sub><i>k</i></sub> up to which values at <i>k</i> are compared (<a class="xref" href="#beyond">Section 3.3.2</a>),
+      <a class="xref" href="#d22">Definition 22</a>, ≈<sub><i>k</i></sub> is an equivalence relation on 𝒱<sub><i>k</i></sub> up to which values at <i>k</i> are compared (<a class="xref" href="#s3-3-2">Section 3.3.2</a>),
       and 𝒜<sub><i>k</i></sub> is a set of <em>coeffect operations</em>, the operations the value bound at <i>k</i> provides to a component
       holding it. An operation <i>a</i> ∈ 𝒜<sub><i>k</i></sub> carries an argument type <i>X</i><sub><i>a</i></sub> and an outcome type <i>B</i><sub><i>a</i></sub>, and acts
       on the value alone:</p>
@@ -266,7 +266,7 @@
     (<a class="xref" href="#d28">Definition 28</a>), two keys sharing a realm sharing one binding. An operation whose behaviour
     turns on another key reads that key’s value into its argument <i>X</i><sub><i>a</i></sub>, and the reactive discipline of
     the next subsection is what holds the value fixed for as long as the component that read it runs
-    (<a class="xref" href="#beyond">Theorem 63</a>).</p>
+    (<a class="xref" href="#t63">Theorem 63</a>).</p>
   </section>
 
   <section class="psec" id="s3-2-2">
@@ -325,7 +325,7 @@
     by effect functions. The reactive invariant is: an activating transition triggers execution of
     the component’s effects (with full effect tracking), whereas a deactivating transition triggers
     recovery by applying the accumulator. The precise operational semantics of these transitions
-    depend on their interaction with control flows, and are developed in <a class="xref" href="#beyond">Section 4</a>.</p>
+    depend on their interaction with control flows, and are developed in <a class="xref" href="#s4">Section 4</a>.</p>
 
     <p>What <span class="op">set</span> and <span class="op">notify</span> deliver together is <em>local spatial composability</em>, local in the same sense as
     before, the guarantee being read of one component’s coeffects taken by themselves. We take that
@@ -342,7 +342,7 @@
     <i>k</i> readable for as long as <i>B</i>’s own teardown needs it, nor hold <i>A</i>’s recovery back until <i>B</i>
     has finished. Ordering a withdrawal after the deactivations it causes is a condition on other
     components rather than on the one acting, so it belongs to the global form of the guarantee,
-    and <a class="xref" href="#beyond">Section 4.3.1</a> supplies the machinery it takes.</p>
+    and <a class="xref" href="#s4-3-1">Section 4.3.1</a> supplies the machinery it takes.</p>
   </section>
 
   <section class="psec" id="s3-2-3">
@@ -369,13 +369,13 @@
         aliases the input, and recovery runs the inverse to undo the mutation.</li>
         <li><em>Derived</em> realization leaves the input intact and returns a fresh context deriving from it,
         with the identity as its inverse; recovery discards the derived context. A context derived
-        from another is what the recursive structure of <a class="xref" href="#beyond">Definition 32</a> carries.</li>
+        from another is what the recursive structure of <a class="xref" href="#d32">Definition 32</a> carries.</li>
       </ul>
       <!--BL:d27-->
     </div>
 
     <p>In a purely functional setting the two coincide, and an imperative host may choose either per
-    operation; <a class="xref" href="#beyond">Section 5.1.2</a> implements both. Isolation and interception are given derived realization
+    operation; <a class="xref" href="#s5-1-2">Section 5.1.2</a> implements both. Isolation and interception are given derived realization
     outright: each produces a fresh context whose own table differs from the inherited one, so
     each is typed below as a map from context to context rather than as an effect function. Nothing
     in the shared table changes, so there is no inverse to track and nothing for <a class="xref" href="#d12">Definition 12</a> to lift,

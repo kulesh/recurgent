@@ -6,10 +6,11 @@
 #
 # Assembly steps:
 #   1. Inject the reproduced paper fragments (paper/*.html) into the template.
-#   2. Segment cordis.rb by class, syntax-highlight it, and turn every
-#      paper citation in comments and strings into a trace link.
-#   3. Extract excerpts from theorem_checks.rb; embed demo_hot_swap.rb whole.
-#   4. Run theorem_checks.rb and demo_hot_swap.rb; embed their real output.
+#   2. Segment cordis.rb, cordis_calculus.rb, and cordis_loader.rb by class,
+#      syntax-highlight them, and turn every paper citation in comments and
+#      strings into a trace link.
+#   3. Extract excerpts from the check suites; embed the demos whole.
+#   4. Run both check suites and both demos; embed their real output.
 #   5. Replace the paper's diagram placeholders with hand-drawn SVG figures.
 #   6. Inject "In the Ruby" backlink rows under every cited paper block.
 #   7. Verify every internal link resolves; refuse to write the page otherwise.
@@ -23,39 +24,61 @@ Encoding.default_internal = Encoding::UTF_8
 
 DIR = __dir__
 
-# --- anchors present in the reproduced excerpt --------------------------------
+# --- anchors present in the reproduced paper ----------------------------------
 
-DEFS  = [1, 2, 3, 6, 8, 9, 12, 17, 19, 22, 23, 24, 25, 26, 27, 28, 29].freeze
-THMS  = [4, 5, 7, 10, 11, 13, 14, 15, 16, 20].freeze
+DEFS  = [1, 2, 3, 6, 8, 9, 12, 17, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 39,
+         41, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 58, 60, 65, 67, 69, 74].freeze
+THMS  = [4, 5, 7, 10, 11, 13, 14, 15, 16, 20, 40, 42, 59, 61, 63, 64, 66, 73].freeze
+LEMMAS = [18, 35, 38, 54, 55, 56, 57, 68, 70, 71, 72].freeze
+CORS = [21, 62].freeze
 SECTIONS = %w[
   s1 s1-1 s1-2 s1-2-1 s1-2-2 s1-2-3 s1-3
   s2 s2-1 s2-2 s2-3
   s3 s3-1 s3-1-1 s3-1-2 s3-1-3 s3-2 s3-2-1 s3-2-2 s3-2-3
+  s3-3 s3-3-1 s3-3-2 s3-3-3
+  s4 s4-1 s4-2 s4-3 s4-3-1 s4-3-2 s4-3-3 s4-3-4 s4-4 s4-4-1 s4-4-2 s4-4-3 s4-4-4 s4-4-5
+  s5 s5-1 s5-1-1 s5-1-2 s5-1-3 s5-1-4 s5-2 s5-2-1 s5-2-2 s5-3
+  s6 s6-1 s6-2 s6-3 s6-4 s6-5 s6-6 s6-7
+  s7 s7-1 s7-2 s7-3 s7-4 s8 refs
 ].freeze
-EQS = (1..28).to_a.freeze
+EQS = (1..65).to_a.freeze
+ALGS = (1..10).to_a.freeze
+RULES = %w[
+  rule-o-insert rule-o-retire rule-o-remove rule-l-reload rule-l-unload-base
+  rule-l-begin rule-l-iter rule-l-finish rule-l-divert rule-l-raise rule-l-leave rule-l-unload
+].freeze
 
 TEMPORAL = SECTIONS.select { |s| s.start_with?("s3-1") } + ["s3"] +
            DEFS.select { |n| n < 22 }.map { |n| "d#{n}" } +
-           THMS.map { |n| "t#{n}" } + %w[l18 c21] + (4..19).map { |n| "eq#{n}" }
+           THMS.select { |n| n <= 20 }.map { |n| "t#{n}" } + %w[l18 c21] + (4..19).map { |n| "eq#{n}" }
 SPATIAL = SECTIONS.select { |s| s.start_with?("s3-2") } +
-          DEFS.select { |n| n >= 22 }.map { |n| "d#{n}" } + (20..28).map { |n| "eq#{n}" }
+          DEFS.grep(22..31).map { |n| "d#{n}" } + (20..30).map { |n| "eq#{n}" }
+NEUTRAL = SECTIONS.select { |s| s.start_with?("s1", "s2", "s6", "s7", "s8", "refs") } + (1..3).map { |n| "eq#{n}" }
 
+# Everything §3.3–§5 — where the two dimensions meet — carries the third hue.
 def hue_class(anchor)
   return "tr-t" if TEMPORAL.include?(anchor)
   return "tr-s" if SPATIAL.include?(anchor)
+  return "tr-n" if NEUTRAL.include?(anchor)
 
-  "tr-n"
+  "tr-u"
 end
 
+# rubocop:disable Metrics/CyclomaticComplexity -- one arm per anchor family
 def anchor_exists?(anchor)
   case anchor
   when /\Ad(\d+)\z/ then DEFS.include?(Regexp.last_match(1).to_i)
   when /\At(\d+)\z/ then THMS.include?(Regexp.last_match(1).to_i)
+  when /\Al(\d+)\z/ then LEMMAS.include?(Regexp.last_match(1).to_i)
+  when /\Ac(\d+)\z/ then CORS.include?(Regexp.last_match(1).to_i)
   when /\Aeq(\d+)\z/ then EQS.include?(Regexp.last_match(1).to_i)
-  when "l18", "c21" then true
+  when /\Aalg(\d+)\z/ then ALGS.include?(Regexp.last_match(1).to_i)
+  when /\A(?:tbl|fig)[12]\z/ then true
+  when /\Arule-/ then RULES.include?(anchor)
   else SECTIONS.include?(anchor)
   end
 end
+# rubocop:enable Metrics/CyclomaticComplexity
 
 def trace_link(anchor, text)
   target = anchor_exists?(anchor) ? anchor : "beyond"
@@ -134,7 +157,7 @@ end
 
 CORDIS_SEGMENTS = %w[
   Effect EffectContext Independence Satisfaction CoeffectContext
-  Coeffects Coeffect IsolatedContext Component ActivationScope System
+  Coeffects Coeffect InterceptedContext IsolatedContext Component ActivationScope System
 ].freeze
 
 # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -162,6 +185,38 @@ def cordis_segments
   ordered.each_with_index do |(name, start), idx|
     stop = idx + 1 < ordered.length ? ordered[idx + 1][1] : final_end
     segments[name] = (start...stop)
+  end
+  segments.transform_values do |range|
+    seg = lines[range]
+    seg.pop while seg.last && seg.last.strip.empty?
+    [seg, range.first + 1]
+  end
+end
+# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+# Segment cordis_calculus.rb by its 4-space-indented class declarations; the
+# prelude (the modeling-choices header) is a segment of its own.
+# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+def calculus_segments
+  lines = File.readlines(File.join(DIR, "cordis_calculus.rb"))
+  decls = {}
+  lines.each_with_index do |line, i|
+    next unless line =~ /\A    class (\w+)/
+
+    name = Regexp.last_match(1)
+    decls[name] = i if %w[Component Fiber Machine].include?(name) && !decls.key?(name)
+  end
+  starts = decls.transform_values do |i|
+    start = i
+    start -= 1 while start.positive? && lines[start - 1] =~ /\A    #/
+    start
+  end
+  ordered = starts.sort_by { |_, v| v }
+  final_end = lines.length - 2 # keep Machine's own end; drop the two closing module ends
+  segments = { "CalcPrelude" => (0...ordered.first[1]) }
+  ordered.each_with_index do |(name, start), idx|
+    stop = idx + 1 < ordered.length ? ordered[idx + 1][1] : final_end
+    segments["Calc#{name}"] = (start...stop)
   end
   segments.transform_values do |range|
     seg = lines[range]
@@ -328,14 +383,67 @@ FIG_LIFT = <<~SVG.freeze
   </figure>
 SVG
 
+FIG_LIFECYCLE1 = <<~SVG.freeze
+  <figure class="pfig" id="fig1">
+    <div class="figwrap">
+    <svg viewBox="0 0 440 130" role="img" aria-label="Base component lifecycle: two states, Inactive and Active, with L-Reload from Inactive to Active and L-Unload back." #{FIG_STYLE}>
+      <defs><marker id="flc1-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"></path></marker></defs>
+      <rect x="30" y="45" width="120" height="40" rx="8" fill="var(--bg-sunken)" stroke="currentColor"></rect>
+      <text x="90" y="70" text-anchor="middle" font-size="13" fill="currentColor">Inactive</text>
+      <rect x="290" y="45" width="120" height="40" rx="8" fill="var(--bg-sunken)" stroke="currentColor"></rect>
+      <text x="350" y="70" text-anchor="middle" font-size="13" fill="currentColor">Active</text>
+      <line x1="152" y1="55" x2="286" y2="55" stroke="currentColor" stroke-width="1.3" marker-end="url(#flc1-a)"></line>
+      <text x="220" y="45" text-anchor="middle" font-size="11.5" fill="var(--muted)">L-Reload</text>
+      <line x1="286" y1="76" x2="152" y2="76" stroke="currentColor" stroke-width="1.3" marker-end="url(#flc1-a)"></line>
+      <text x="220" y="96" text-anchor="middle" font-size="11.5" fill="var(--muted)">L-Unload</text>
+    </svg>
+    </div>
+    <figcaption>Figure 1 — Base component lifecycle.</figcaption>
+  </figure>
+SVG
+
+FIG_LIFECYCLE2 = <<~SVG.freeze
+  <figure class="pfig" id="fig2">
+    <div class="figwrap">
+    <svg viewBox="0 0 660 320" role="img" aria-label="Lifecycle with transitions in progress: L-Begin from Inactive to Reloading; L-Iter loops on Reloading; L-Finish to Active; L-Divert and L-Raise from Reloading down to Unloading; L-Leave from Active to Unloading; L-Unload from Unloading back to Inactive. The two transition states are outlined." #{FIG_STYLE}>
+      <defs><marker id="flc2-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"></path></marker></defs>
+      <rect x="270" y="60" width="130" height="40" rx="8" fill="var(--temporal-soft)" stroke="var(--temporal)" stroke-width="1.6"></rect>
+      <text x="335" y="85" text-anchor="middle" font-size="13" fill="var(--temporal)">Reloading</text>
+      <rect x="40" y="150" width="120" height="40" rx="8" fill="var(--bg-sunken)" stroke="currentColor"></rect>
+      <text x="100" y="175" text-anchor="middle" font-size="13" fill="currentColor">Inactive</text>
+      <rect x="510" y="150" width="120" height="40" rx="8" fill="var(--bg-sunken)" stroke="currentColor"></rect>
+      <text x="570" y="175" text-anchor="middle" font-size="13" fill="currentColor">Active</text>
+      <rect x="270" y="240" width="130" height="40" rx="8" fill="var(--temporal-soft)" stroke="var(--temporal)" stroke-width="1.6"></rect>
+      <text x="335" y="265" text-anchor="middle" font-size="13" fill="var(--temporal)">Unloading</text>
+      <path d="M 300 56 C 310 22, 360 22, 370 56" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#flc2-a)"></path>
+      <text x="335" y="24" text-anchor="middle" font-size="11.5" fill="var(--muted)">L-Iter</text>
+      <line x1="130" y1="146" x2="272" y2="96" stroke="currentColor" stroke-width="1.2" marker-end="url(#flc2-a)"></line>
+      <text x="168" y="106" text-anchor="middle" font-size="11.5" fill="var(--muted)">L-Begin</text>
+      <line x1="398" y1="96" x2="540" y2="146" stroke="currentColor" stroke-width="1.2" marker-end="url(#flc2-a)"></line>
+      <text x="502" y="106" text-anchor="middle" font-size="11.5" fill="var(--muted)">L-Finish</text>
+      <line x1="335" y1="104" x2="335" y2="236" stroke="currentColor" stroke-width="1.2" marker-end="url(#flc2-a)"></line>
+      <text x="378" y="160" text-anchor="middle" font-size="11.5" fill="var(--muted)">L-Divert</text>
+      <text x="376" y="176" text-anchor="middle" font-size="11.5" fill="var(--muted)">L-Raise</text>
+      <line x1="540" y1="194" x2="398" y2="246" stroke="currentColor" stroke-width="1.2" marker-end="url(#flc2-a)"></line>
+      <text x="497" y="234" text-anchor="middle" font-size="11.5" fill="var(--muted)">L-Leave</text>
+      <line x1="272" y1="246" x2="130" y2="194" stroke="currentColor" stroke-width="1.2" marker-end="url(#flc2-a)"></line>
+      <text x="172" y="234" text-anchor="middle" font-size="11.5" fill="var(--muted)">L-Unload</text>
+    </svg>
+    </div>
+    <figcaption>Figure 2 — Lifecycle with transitions in progress; the two transition states are outlined.</figcaption>
+  </figure>
+SVG
+
 def replace_diagrams(html)
-  html.gsub(%r{<p class="diagram-note">(.*?)</p>}m) do
+  html.gsub(%r{<p class="diagram-note"[^>]*>(.*?)</p>}m) do
     note = Regexp.last_match(1)
     case note
     when /Two stacked/ then FIG_LIFT
     when /chain of commutative/ then FIG_CHAIN
     when /commutative square/ then FIG_SQUARE
     when /A triangle in which/ then FIG_WITNESS
+    when /\[Figure 1/ then FIG_LIFECYCLE1
+    when /\[Figure 2/ then FIG_LIFECYCLE2
     else Regexp.last_match(0)
     end
   end
@@ -345,11 +453,13 @@ end
 
 template = File.read(File.join(DIR, "guide.template.html"))
 
-paper = %w[paper_s1 paper_s2 paper_s31 paper_s313_s32]
+paper = %w[paper_s1 paper_s2 paper_s31 paper_s313_s32 paper_s323b_s33 paper_s4a paper_s4b paper_s5 paper_s678]
         .map { |f| File.read(File.join(DIR, "paper", "#{f}.html")) }
         .join("\n")
 html = template.sub("<!--@@PAPER@@-->") { paper }
 html = replace_diagrams(html)
+# Wide paper tables scroll inside their own container, never the page.
+html = html.gsub(%r{(<table class="ptable"[^>]*>.*?</table>)}m) { %(<div class="tblwrap">#{Regexp.last_match(1)}</div>) }
 
 # Code sections: segment name -> [backlink target id, label]
 SEGMENT_HOME = {
@@ -361,10 +471,18 @@ SEGMENT_HOME = {
   "CoeffectContext" => %w[rb-coeffect-context CoeffectContext],
   "Coeffects" => %w[rb-coeffects Coeffects],
   "Coeffect" => %w[rb-coeffect Coeffect],
+  "InterceptedContext" => %w[rb-interception InterceptedContext],
   "IsolatedContext" => %w[rb-isolated IsolatedContext],
   "Component" => %w[rb-component Component],
   "ActivationScope" => %w[rb-component ActivationScope],
-  "System" => %w[rb-system System]
+  "System" => %w[rb-system System],
+  "CalcPrelude" => %w[rb-calculus Calculus],
+  "CalcComponent" => %w[rb-calculus-objects Calculus::Component],
+  "CalcFiber" => %w[rb-calculus-objects Calculus::Fiber],
+  "CalcMachine" => %w[rb-calculus-machine Calculus::Machine],
+  "LoaderEntry" => %w[rb-loader-core Loader::Entry],
+  "LoaderReconciler" => %w[rb-loader-core Loader::Reconciler],
+  "LoaderHMR" => %w[rb-hmr Loader::HMR]
 }.freeze
 
 backlinks = Hash.new { |h, k| h[k] = [] }
@@ -381,6 +499,23 @@ cordis_segments.each do |name, (seg, first_line)|
   html = html.sub("@@CODE:#{name}@@") { rendered }
 end
 
+calculus_segments.each do |name, (seg, first_line)|
+  rendered = render_code(seg, first_line, "cordis_calculus.rb")
+  collect_backlinks(rendered, SEGMENT_HOME.fetch(name), backlinks)
+  html = html.sub("@@CODE:#{name}@@") { rendered }
+end
+
+loader_lines = File.readlines(File.join(DIR, "cordis_loader.rb"))
+{
+  "LoaderEntry" => extract(loader_lines, /\A    # Definition 74/, /\A    end$/),
+  "LoaderReconciler" => extract(loader_lines, /\A    # The loader keeps/, /\A    end$/),
+  "LoaderHMR" => extract(loader_lines, /\A    # -{5,}/, /\A    end$/)
+}.each do |key, (seg, first_line)|
+  rendered = render_code(seg, first_line, "cordis_loader.rb")
+  collect_backlinks(rendered, SEGMENT_HOME.fetch(key), backlinks)
+  html = html.sub("@@CODE:#{key}@@") { rendered }
+end
+
 checks_lines = File.readlines(File.join(DIR, "theorem_checks.rb"))
 {
   "assign" => extract(checks_lines, /\A# --- Sample contexts/, /\Adef same_fn\?/, inclusive: false),
@@ -391,17 +526,38 @@ checks_lines = File.readlines(File.join(DIR, "theorem_checks.rb"))
   html = html.sub("@@EXCERPT:#{key}@@") { rendered }
 end
 
+calc_checks_lines = File.readlines(File.join(DIR, "calculus_checks.rb"))
+{
+  "t63" => extract(calc_checks_lines, /\Acheck "Theorem 63/, /\Aend$/),
+  "confluence" => extract(calc_checks_lines, /\Acheck "Theorem 73 \(dynamic/, /\Aend$/)
+}.each do |key, (seg, first_line)|
+  rendered = render_code(seg, first_line, "calculus_checks.rb")
+  collect_backlinks(rendered, %w[rb-checks calculus_checks.rb], backlinks)
+  html = html.sub("@@EXCERPT:#{key}@@") { rendered }
+end
+
+demo2_lines = File.readlines(File.join(DIR, "demo_reconcile.rb"))
+demo2_rendered = render_code(demo2_lines.map(&:dup).tap { |l| l.pop while l.last&.strip&.empty? }, 1, "demo_reconcile.rb")
+collect_backlinks(demo2_rendered, %w[rb-demo2 demo_reconcile.rb], backlinks)
+html = html.sub("@@CODE:demo2@@") { demo2_rendered }
+
 demo_lines = File.readlines(File.join(DIR, "demo_hot_swap.rb"))
 demo_rendered = render_code(demo_lines.map(&:dup).tap { |l| l.pop while l.last&.strip&.empty? }, 1, "demo_hot_swap.rb")
 collect_backlinks(demo_rendered, %w[rb-demo demo_hot_swap.rb], backlinks)
 html = html.sub("@@CODE:demo@@") { demo_rendered }
 
 checks_out = render_terminal("theorem_checks.rb", capture("theorem_checks.rb"))
+calculus_out = render_terminal("calculus_checks.rb", capture("calculus_checks.rb"))
 demo_out = render_terminal("demo_hot_swap.rb", capture("demo_hot_swap.rb"))
+reconcile_out = render_terminal("demo_reconcile.rb", capture("demo_reconcile.rb"))
 collect_backlinks(checks_out, %w[rb-checks theorem_checks.rb], backlinks)
+collect_backlinks(calculus_out, %w[rb-checks calculus_checks.rb], backlinks)
 collect_backlinks(demo_out, %w[rb-demo demo_hot_swap.rb], backlinks)
+collect_backlinks(reconcile_out, %w[rb-demo2 demo_reconcile.rb], backlinks)
 html = html.sub("@@OUT:checks@@") { checks_out }
+html = html.sub("@@OUT:calculus@@") { calculus_out }
 html = html.sub("@@OUT:demo@@") { demo_out }
+html = html.sub("@@OUT:reconcile@@") { reconcile_out }
 
 # Inject "In the Ruby" rows into the cited paper blocks.
 html = html.gsub(/<!--BL:([\w-]+)-->/) do
