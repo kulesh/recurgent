@@ -1,2 +1,7 @@
 [tools]
 ruby = "3.4.7"
+
+# API keys from the macOS Keychain (secret set NAME), only while in this project.
+[env]
+ANTHROPIC_API_KEY = "{{ exec(command='secret get ANTHROPIC_API_KEY') }}"
+OPENAI_API_KEY = "{{ exec(command='secret get OPENAI_API_KEY') }}"
