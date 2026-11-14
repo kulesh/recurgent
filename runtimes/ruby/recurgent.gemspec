@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*.rb"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "anthropic", "~> 1.0"
+  spec.add_dependency "anthropic", ">= 1", "< 3"
   spec.add_dependency "base64" # required by anthropic on Ruby >= 3.4
   spec.add_dependency "rss" # stdlib gem; required for generated RSS parsing code on Ruby >= 3.4
 
